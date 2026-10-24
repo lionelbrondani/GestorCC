@@ -1,4 +1,4 @@
-import { TIPOS_EVENTO, type Config, type Evento, type Pessoa, type Sessao } from '@shared';
+import { TIPOS_EVENTO, validarEvento, type Config, type Evento, type Pessoa, type Sessao } from '@shared';
 import { Plus, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import { Alerta, Botao, Campo, Cartao } from '../../componentes';
@@ -43,13 +43,11 @@ export function EventoForm({
   async function enviar(e: React.FormEvent) {
     e.preventDefault();
     setErro(null);
-    if (!ev.nome.trim()) return setErro('Informe o nome do evento.');
-    if (!lista.length) return setErro('O evento precisa de ao menos uma sessão.');
-    if (lista.some((s) => !s.data)) return setErro('Todas as sessões precisam de data.');
-    if (ev.pagamento === 'externo' && !ev.pagadorExterno?.trim()) return setErro('Informe quem paga os bolsistas neste evento externo.');
     const normalizadas = lista.map((s) =>
       s.horarioADefinir ? { ...s, chegada: null, inicio: null, fim: null } : { ...s, chegada: s.chegada || null, inicio: s.inicio || null, fim: s.fim || null },
     );
+    const problema = validarEvento(ev, normalizadas);
+    if (problema) return setErro(problema);
     try {
       await aoSalvar(ev, normalizadas);
     } catch (err) {

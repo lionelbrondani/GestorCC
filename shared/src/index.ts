@@ -17,3 +17,4 @@ export * from './almox';
 export * from './contratos';
 export * from './api/acoes';
 export * from './infraestrutura';
+export * from './eventos';
