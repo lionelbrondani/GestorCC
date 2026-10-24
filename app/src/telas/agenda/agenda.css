@@ -93,6 +93,7 @@
 /* ---------- Impressão da agenda ---------- */
 .agenda-impressa {
   padding: 16px;
+  page: agenda;
 }
 .agenda-impressa td:first-child {
   text-align: left;
@@ -105,9 +106,7 @@
 .agenda-impressa .feriado td {
   background: #f1f1f1;
 }
-@media print {
-  @page {
-    size: A4 portrait;
-    margin: 12mm;
-  }
+@page agenda {
+  size: A4 portrait;
+  margin: 12mm;
 }

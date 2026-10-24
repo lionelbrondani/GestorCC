@@ -153,3 +153,43 @@
 .estrelas button[data-ativa='true'] {
   color: var(--cor-destaque-escuro);
 }
+
+/* ---------- Impressão no formato tradicional ---------- */
+.escala-impressa {
+  padding: 16px;
+  page: escala;
+}
+.escala-impressa .pagina-impressao {
+  position: relative;
+}
+.escala-impressa th {
+  font-size: 8.5pt;
+  font-weight: 700;
+  vertical-align: top;
+  min-width: 52px;
+}
+.escala-impressa th .dia {
+  font-weight: 400;
+}
+.escala-impressa th .evento {
+  text-transform: uppercase;
+  margin: 4px 0;
+}
+.escala-impressa td {
+  font-size: 9.5pt;
+  height: 20px;
+}
+.escala-impressa td.nome,
+.escala-impressa tr.chegada td:first-child {
+  text-align: left;
+  white-space: nowrap;
+  font-weight: 600;
+}
+.escala-impressa tr.chegada td {
+  background: #f1f1f1;
+  font-weight: 700;
+}
+@page escala {
+  size: A4 landscape;
+  margin: 10mm;
+}

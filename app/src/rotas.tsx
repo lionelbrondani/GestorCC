@@ -6,6 +6,7 @@ import { EstadoVazio } from './componentes';
 import { Agenda } from './telas/agenda/Agenda';
 import { EventoDetalhe } from './telas/agenda/EventoDetalhe';
 import { ImprimirAgenda } from './telas/agenda/ImprimirAgenda';
+import { ImprimirEscala } from './telas/escalas/ImprimirEscala';
 import { Escalas } from './telas/escalas/Escalas';
 import { Inicio } from './telas/inicio/InicioGestor';
 import { Login } from './telas/login/Login';
@@ -44,7 +45,7 @@ export const ROTAS: RouteObject[] = [
       { path: '/agenda/imprimir', element: comPermissao(['eventos'], <ImprimirAgenda />) },
       { path: '/agenda/:eventoId', element: comPermissao(['eventos'], <EventoDetalhe />) },
       { path: '/escalas', element: comPermissao(['escalas'], <Escalas />) },
-      { path: '/escalas/imprimir', element: comPermissao(['escalas'], tela('/escalas/imprimir')) },
+      { path: '/escalas/imprimir', element: comPermissao(['escalas'], <ImprimirEscala />) },
       { path: '/pagamentos', element: comPermissao(['pagamentos'], tela('/pagamentos')) },
       { path: '/pagamentos/novo', element: comPermissao(['pagamentos'], tela('/pagamentos/novo'), 'editar') },
       { path: '/pagamentos/:loteId', element: comPermissao(['pagamentos'], tela('/pagamentos/:loteId')) },
