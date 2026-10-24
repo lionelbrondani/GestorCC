@@ -72,3 +72,19 @@
   transform: rotate(45deg);
   background: var(--cor-destaque);
 }
+
+.ficha {
+  font-family: Arial, sans-serif;
+  font-size: 10pt;
+  color: #000;
+}
+.ficha p {
+  margin: 0 0 6px;
+}
+.ficha table {
+  margin: 8px 0 12px;
+}
+.ficha th,
+.ficha td {
+  text-align: left;
+}

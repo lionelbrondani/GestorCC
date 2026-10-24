@@ -8,6 +8,9 @@ import { EventoDetalhe } from './telas/agenda/EventoDetalhe';
 import { ImprimirAgenda } from './telas/agenda/ImprimirAgenda';
 import { ImprimirEscala } from './telas/escalas/ImprimirEscala';
 import { Escalas } from './telas/escalas/Escalas';
+import { LoteDetalhe } from './telas/pagamentos/LoteDetalhe';
+import { NovoLote } from './telas/pagamentos/NovoLote';
+import { Pagamentos } from './telas/pagamentos/Pagamentos';
 import { Inicio } from './telas/inicio/InicioGestor';
 import { Login } from './telas/login/Login';
 import { Avisos } from './telas/pessoal/Avisos';
@@ -46,9 +49,9 @@ export const ROTAS: RouteObject[] = [
       { path: '/agenda/:eventoId', element: comPermissao(['eventos'], <EventoDetalhe />) },
       { path: '/escalas', element: comPermissao(['escalas'], <Escalas />) },
       { path: '/escalas/imprimir', element: comPermissao(['escalas'], <ImprimirEscala />) },
-      { path: '/pagamentos', element: comPermissao(['pagamentos'], tela('/pagamentos')) },
-      { path: '/pagamentos/novo', element: comPermissao(['pagamentos'], tela('/pagamentos/novo'), 'editar') },
-      { path: '/pagamentos/:loteId', element: comPermissao(['pagamentos'], tela('/pagamentos/:loteId')) },
+      { path: '/pagamentos', element: comPermissao(['pagamentos'], <Pagamentos />) },
+      { path: '/pagamentos/novo', element: comPermissao(['pagamentos'], <NovoLote />, 'editar') },
+      { path: '/pagamentos/:loteId', element: comPermissao(['pagamentos'], <LoteDetalhe />) },
       { path: '/contratos', element: comPermissao(['contratos'], tela('/contratos')) },
       { path: '/contratos/fundep', element: comPermissao(['contratos'], tela('/contratos/fundep'), 'editar') },
       { path: '/contratos/:id', element: comPermissao(['contratos'], tela('/contratos/:id')) },
