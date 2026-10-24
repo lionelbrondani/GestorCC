@@ -1,5 +1,8 @@
 import {
   alertasContrato,
+  diasEmAberto,
+  ROTULO_STATUS_OCORRENCIA,
+  STATUS_ABERTOS,
   contaNaEscala,
   estoqueCritico,
   formatarData,
@@ -124,6 +127,20 @@ export async function executarConsulta(c: Consulta, api: ApiCliente, hoje: DataI
             .filter((x) => x.alertas.length)
             .map(({ c2, alertas }) => ({ texto: `Contrato ${c2.numero} · ${eventos.find((e) => e.id === c2.eventoId)?.nome ?? ''}`, detalhe: alertas.join(', '), link: `/contratos/${c2.id}` })),
           vazio: 'Nenhum contrato com pendência.',
+        };
+      }
+      case 'ocorrenciasAbertas': {
+        const lista = (await api.chamar('infra.listar', null)).filter(
+          (o) => STATUS_ABERTOS.includes(o.status) && (!c.termo || semAcento(`${o.titulo} ${o.descricao} ${o.categoria}`).includes(semAcento(c.termo))),
+        );
+        return {
+          titulo: c.termo ? `Ocorrências abertas: "${c.termo}"` : 'Ocorrências de infraestrutura abertas',
+          itens: lista.map((o) => ({
+            texto: `#${o.numero} ${o.titulo}`,
+            detalhe: `${o.local} · ${ROTULO_STATUS_OCORRENCIA[o.status]}${o.chamadoNumero ? ` · chamado ${o.chamadoNumero}` : ''} · ${diasEmAberto(o, hoje)} dia(s)`,
+            link: `/infra/${o.id}`,
+          })),
+          vazio: 'Nenhuma ocorrência aberta com esse termo.',
         };
       }
       case 'lotesEmAberto': {

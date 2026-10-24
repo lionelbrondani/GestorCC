@@ -18,6 +18,7 @@ import {
   type Feriado,
   type Lote,
   type LoteItem,
+  type Ocorrencia,
   type Pessoa,
   type Sessao,
 } from '@shared';
@@ -351,6 +352,48 @@ function criarContratos(): { contratantes: Contratante[]; contratos: Contrato[] 
   return { contratantes, contratos };
 }
 
+function criarOcorrencias(): { ocorrencias: Ocorrencia[]; pendentes: Banco['respostasFormularioInfra'] } {
+  const base = { foto: null, chamadoNumero: '', chamadoLink: '', chamadoAbertoEm: null, resolvidaEm: null } as const;
+  const h = (quando: string, de: Ocorrencia['status'] | null, para: Ocorrencia['status'], observacao = '', quemId = 'p02') => ({ quando, quemId, de, para, observacao });
+  const ocorrencias: Ocorrencia[] = [
+    { ...base, id: 'oc1', numero: 1, titulo: 'Lâmpada queimada no camarim 2', descricao: 'Lâmpada do espelho, lado esquerdo.', categoria: 'Iluminação',
+      local: 'Camarins', prioridade: 'baixa', status: 'resolvida', origem: 'app', relatorNome: 'Tainá Cardoso', relatorPessoaId: 'p05',
+      criadaEm: '2026-10-02T16:10', resolvidaEm: '2026-10-03T10:00',
+      historico: [h('2026-10-02T17:00', 'nova', 'analise'), h('2026-10-03T10:00', 'analise', 'resolvida', 'Trocada pela equipe com lâmpada do almoxarifado.')] },
+    { ...base, id: 'oc2', numero: 2, titulo: 'Vazamento na pia do banheiro feminino do hall', descricao: 'Água escorrendo por baixo da pia, chão molhado.',
+      categoria: 'Hidráulica', local: 'Banheiros', prioridade: 'alta', status: 'chamado', origem: 'formulario', relatorNome: 'Equipe de limpeza',
+      relatorContato: 'limpeza@exemplo.com', criadaEm: '2026-10-07T09:30', chamadoNumero: '2026/004812', chamadoLink: 'https://exemplo.ufsm.br/chamados/004812',
+      chamadoAbertoEm: '2026-10-08T11:00',
+      historico: [h('2026-10-07T14:00', 'nova', 'analise'), h('2026-10-08T11:00', 'analise', 'chamado', 'Registro do sifão precisa de troca; pedido à manutenção.')] },
+    { ...base, id: 'oc3', numero: 3, titulo: 'Ar-condicionado da sala VIP não gela', descricao: 'Liga, mas sai ar quente.', categoria: 'Ar-condicionado',
+      local: 'Sala VIP', prioridade: 'media', status: 'atendimento', origem: 'formulario', relatorNome: 'Produção do evento', criadaEm: '2026-10-12T19:40',
+      chamadoNumero: '2026/004990', chamadoLink: 'https://exemplo.ufsm.br/chamados/004990', chamadoAbertoEm: '2026-10-13T09:00',
+      historico: [h('2026-10-13T08:30', 'nova', 'analise'), h('2026-10-13T09:00', 'analise', 'chamado'), h('2026-10-21T10:00', 'chamado', 'atendimento', 'Técnico veio, aguardando peça.')] },
+    { ...base, id: 'oc4', numero: 4, titulo: 'Torneira pingando no camarim 1', descricao: '', categoria: 'Hidráulica', local: 'Camarins', prioridade: 'baixa',
+      status: 'analise', origem: 'app', relatorNome: 'Camila Freitas', relatorPessoaId: 'p07', criadaEm: '2026-10-20T21:15',
+      historico: [h('2026-10-21T09:00', 'nova', 'analise', 'Ver se tem reparo no almoxarifado.')] },
+    { ...base, id: 'oc5', numero: 5, titulo: 'Poltrona quebrada na fileira K', descricao: 'Assento K-14 solto.', categoria: 'Mobiliário', local: 'Plateia',
+      prioridade: 'media', status: 'nova', origem: 'app', relatorNome: 'Beatriz Lopes', relatorPessoaId: 'p10', criadaEm: '2026-10-23T22:40', eventoId: 'e07', historico: [] },
+    { ...base, id: 'oc6', numero: 6, titulo: 'Infiltração no teto do mezanino', descricao: 'Mancha aumentando depois da chuva.', categoria: 'Civil (paredes, pisos, telhado)',
+      local: 'Mezanino', prioridade: 'alta', status: 'chamado', origem: 'formulario', relatorNome: 'Segurança do prédio', criadaEm: '2026-10-19T08:00',
+      chamadoNumero: '2026/005103', chamadoLink: 'https://exemplo.ufsm.br/chamados/005103', chamadoAbertoEm: '2026-10-20T10:30',
+      historico: [h('2026-10-19T10:00', 'nova', 'analise'), h('2026-10-20T10:30', 'analise', 'chamado')] },
+    { ...base, id: 'oc7', numero: 7, titulo: 'Interruptor solto na coxia', descricao: '', categoria: 'Elétrica', local: 'Coxias', prioridade: 'baixa',
+      status: 'naoProcede', origem: 'formulario', relatorNome: 'Técnico de som (produção)', criadaEm: '2026-10-15T13:00', resolvidaEm: '2026-10-15T16:00',
+      historico: [h('2026-10-15T16:00', 'nova', 'naoProcede', 'Já tinha sido fixado na véspera.')] },
+    { ...base, id: 'oc8', numero: 8, titulo: 'Refletor piscando na vara 3', descricao: 'Durante o ensaio o refletor do centro piscou várias vezes.',
+      categoria: 'Som e luz cênica', local: 'Palco', prioridade: 'media', status: 'nova', origem: 'formulario', relatorNome: 'Produção do evento',
+      criadaEm: '2026-10-24T09:20', historico: [] },
+  ];
+  const pendentes: Banco['respostasFormularioInfra'] = [
+    { ...base, titulo: 'Lâmpada queimada no banheiro masculino', descricao: 'Banheiro do mezanino, a do fundo.', categoria: 'Iluminação', local: 'Banheiros',
+      prioridade: 'baixa', status: 'nova', origem: 'formulario', relatorNome: 'Público do evento', criadaEm: '2026-10-24T10:05' },
+    { ...base, titulo: 'Porta de emergência emperrada', descricao: 'A barra antipânico da saída lateral esquerda não destrava.', categoria: 'Civil (paredes, pisos, telhado)',
+      local: 'Plateia', prioridade: 'urgente', status: 'nova', origem: 'formulario', relatorNome: 'Brigada de incêndio', criadaEm: '2026-10-24T10:40' },
+  ];
+  return { ocorrencias, pendentes };
+}
+
 export function criarFixtures(hoje: string): Banco {
   const { pessoas, dados } = criarPessoas();
   const bolsistas = pessoas.filter((p) => p.tipo === 'bolsista');
@@ -441,6 +484,13 @@ export function criarFixtures(hoje: string): Banco {
 
   const { contratantes, contratos } = criarContratos();
   const { itens, movimentos } = criarAlmox(hoje);
+  const { ocorrencias, pendentes } = criarOcorrencias();
+  // Lâmpada usada na ocorrência #1 (resolvida pela equipe com material do almoxarifado).
+  const lampada = itens.find((i) => i.nomeComum === 'Lâmpada LED 12W')!;
+  const ajusteLampada = movimentos.find((m) => m.cod === lampada.cod && m.tipo === 'ajuste')!;
+  ajusteLampada.qtd += 1;
+  movimentos.push({ id: 'm-oc1', quando: '2026-10-03T10:00', tipo: 'saida', cod: lampada.cod, qtd: -1, valorUnitario: lampada.valor,
+    retiradoPorPessoaId: 'p02', finalidade: 'Ocorrência #1', ocorrenciaId: 'oc1' });
 
   const avisos: Aviso[] = [
     { id: 'a1', titulo: 'Uniforme nos eventos', texto: 'Lembrem de vir de camiseta preta e calça escura em todos os eventos. Crachá é obrigatório.',
@@ -487,6 +537,8 @@ export function criarFixtures(hoje: string): Banco {
     contratantes, almoxItens: itens, almoxMovimentos: movimentos,
     autorizadosExternos: ['Equipe de limpeza terceirizada', 'Técnico de som (produção)'],
     pedidos: [],
+    ocorrencias,
+    respostasFormularioInfra: pendentes,
     avisos,
     notificacoes: [
       { id: 'n1', pessoaId: 'p09', texto: 'Sua escala de novembro foi publicada.', link: '/minhas-escalas', criadaEm: '2026-10-21T10:00', lida: false },

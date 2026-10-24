@@ -30,6 +30,7 @@ export function InicioGestor() {
   const almox = useConsulta('almox.listar', null, { habilitada: pode(p, 'almoxEstoque', 'ver') });
   const contratos = useConsulta('contratos.listar', null, { habilitada: pode(p, 'contratos', 'ver') });
   const avisos = useConsulta('avisos.listar', null);
+  const ocorrencias = useConsulta('infra.listar', null, { habilitada: pode(p, 'infraestrutura', 'ver') });
 
   if (periodo.isLoading || escalas.isLoading) return <Carregando />;
 
@@ -41,7 +42,7 @@ export function InicioGestor() {
   const pendencias = calcularPendencias({
     sessoes: periodo.sessoes, escalas: escalas.data ?? [], eventos: periodo.eventos, rodadas: rodadas.data ?? [],
     disponibilidades: disp.data ?? [], pessoas: pessoas.lista, itens: almox.data?.itens ?? [], contratos: contratos.data?.contratos ?? [],
-    hoje: h, permissoes: p,
+    ocorrencias: ocorrencias.data ?? [], hoje: h, permissoes: p,
   });
   const ano = h.slice(0, 4);
   const doAno = (contratos.data?.contratos ?? []).filter((c) => c.numero.endsWith(ano) && c.statusContrato !== 'Cancelado');

@@ -68,6 +68,9 @@ export function InicioBolsista() {
           <EstadoVazio titulo="Nenhuma escala marcada" texto="Assim que você for escalado, o próximo evento aparece aqui." />
         )}
       </Cartao>
+      <Link to="/relatar" className="cc-botao" data-variante="secundario" style={{ alignSelf: 'flex-start' }}>
+        Viu algum problema no prédio? Relatar
+      </Link>
       {fixados.map((a) => (
         <CartaoAviso key={a.id} aviso={a} compacto />
       ))}

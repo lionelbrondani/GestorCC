@@ -22,8 +22,17 @@ describe('ehGestor', () => {
 });
 
 describe('MODULOS', () => {
-  it('lista os 12 módulos do spec com nome', () => {
-    expect(MODULOS).toHaveLength(12);
+  it('lista os 13 módulos do spec com nome', () => {
+    expect(MODULOS).toHaveLength(13);
     expect(MODULOS.every((m) => m.nome.length > 0)).toBe(true);
+  });
+});
+
+describe('infraestrutura', () => {
+  it('gestor edita, operação vê e eventual não acessa', () => {
+    expect(pode(MODELOS.gestor, 'infraestrutura', 'editar')).toBe(true);
+    expect(pode(MODELOS.operacao, 'infraestrutura', 'ver')).toBe(true);
+    expect(pode(MODELOS.operacao, 'infraestrutura', 'editar')).toBe(false);
+    expect(pode(MODELOS.eventual, 'infraestrutura', 'ver')).toBe(false);
   });
 });

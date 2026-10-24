@@ -1,5 +1,6 @@
 import {
   alertasContrato,
+  chamadosAtrasados,
   contaNaEscala,
   estoqueCritico,
   formatarData,
@@ -11,13 +12,14 @@ import {
   type Disponibilidade,
   type Escala,
   type Evento,
+  type Ocorrencia,
   type Permissoes,
   type Pessoa,
   type Rodada,
   type Sessao,
 } from '@shared';
 
-export type Pendencia = { tipo: 'presenca' | 'rodada' | 'vagas' | 'estoque' | 'contrato'; texto: string; link: string };
+export type Pendencia = { tipo: 'presenca' | 'rodada' | 'vagas' | 'estoque' | 'contrato' | 'infra'; texto: string; link: string };
 
 const TEXTO_ALERTA: Record<AlertaContrato, string> = {
   faturaVencendo: 'fatura vence em breve',
@@ -36,6 +38,7 @@ export function calcularPendencias(dados: {
   pessoas: Pessoa[];
   itens: AlmoxItem[];
   contratos: Contrato[];
+  ocorrencias?: Ocorrencia[];
   hoje: DataISO;
   permissoes: Permissoes;
 }): Pendencia[] {
@@ -87,6 +90,15 @@ export function calcularPendencias(dados: {
           link: `/contratos/${c.id}`,
         });
       }
+    }
+  }
+
+  if (pode(permissoes, 'infraestrutura', 'editar')) {
+    const ocorrencias = dados.ocorrencias ?? [];
+    const novas = ocorrencias.filter((o) => o.status === 'nova');
+    if (novas.length) lista.push({ tipo: 'infra', texto: `${novas.length} ocorrência(s) de infraestrutura para analisar`, link: '/infra' });
+    for (const o of chamadosAtrasados(ocorrencias, hoje)) {
+      lista.push({ tipo: 'infra', texto: `Chamado ${o.chamadoNumero} (#${o.numero} ${o.titulo}) aberto há mais de 7 dias`, link: `/infra/${o.id}` });
     }
   }
 

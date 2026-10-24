@@ -17,6 +17,10 @@ describe('interpretarSimulado', () => {
     expect(interpretarSimulado('quem trabalha amanhã?', '2026-10-24')).toEqual({ nome: 'escalaDoDia', data: '2026-10-25' });
     expect(interpretarSimulado('quem trabalha 05/12?', '2026-10-24')).toEqual({ nome: 'escalaDoDia', data: '2026-12-05' });
   });
+  it('ocorrências de infraestrutura', () => {
+    expect(interpretarSimulado('quais vazamentos estão abertos?', '2026-10-24')).toEqual({ nome: 'ocorrenciasAbertas', termo: 'vazamento' });
+    expect(interpretarSimulado('tem chamado de infraestrutura atrasado?', '2026-10-24')).toEqual({ nome: 'ocorrenciasAbertas', termo: '' });
+  });
   it('sem interpretação', () => {
     expect(interpretarSimulado('bom dia', '2026-10-24')).toBeNull();
   });

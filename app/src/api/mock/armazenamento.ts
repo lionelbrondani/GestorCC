@@ -17,6 +17,7 @@ import type {
   Lote,
   LoteItem,
   Notificacao,
+  Ocorrencia,
   Pessoa,
   RegistroHistorico,
   Rodada,
@@ -45,6 +46,9 @@ export interface Banco {
   almoxMovimentos: AlmoxMovimento[];
   autorizadosExternos: string[];
   pedidos: AlmoxPedido[];
+  ocorrencias: Ocorrencia[];
+  /** Respostas do formulário de problemas ainda não importadas (simula a planilha do Google Form). */
+  respostasFormularioInfra: Omit<Ocorrencia, 'id' | 'numero' | 'historico'>[];
   avisos: Aviso[];
   notificacoes: Notificacao[];
   historico: RegistroHistorico[];
@@ -52,7 +56,7 @@ export interface Banco {
 }
 
 const CHAVE = 'gestorcc-prototipo';
-const VERSAO_BANCO = 2;
+const VERSAO_BANCO = 3;
 
 export interface Armazenamento {
   banco: Banco;

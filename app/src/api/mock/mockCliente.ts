@@ -6,6 +6,9 @@ import {
   normalizarMatricula,
   pode,
   validarRetirada,
+  validarTransicao,
+  ROTULO_STATUS_OCORRENCIA,
+  type Ocorrencia,
   type Acao,
   type Entrada,
   type Escala,
@@ -112,6 +115,10 @@ const REGRAS: Record<Acao, Regra> = {
   'almox.pedidos': ['almoxEstoque', 'ver'],
   'almox.criarPedido': ['almoxEstoque', 'editar'],
   'almox.receber': ['almoxEstoque', 'editar'],
+  'infra.listar': 'logado',
+  'infra.relatar': 'logado',
+  'infra.atualizar': ['infraestrutura', 'editar'],
+  'infra.importarFormulario': ['infraestrutura', 'editar'],
   'avisos.listar': 'logado',
   'avisos.salvar': ['mural', 'editar'],
   'avisos.confirmarLeitura': 'logado',
@@ -446,9 +453,9 @@ const handlers: Handlers = {
     if (!pode(p, 'almoxEstoque', 'ver') && !pode(p, 'almoxSaidas', 'ver')) throw SEM_PERMISSAO();
     return { itens: ctx.banco.almoxItens, autorizadosExternos: ctx.banco.autorizadosExternos };
   },
-  'almox.movimentos': ({ cod }, ctx) =>
+  'almox.movimentos': ({ cod, ocorrenciaId }, ctx) =>
     ctx.banco.almoxMovimentos
-      .filter((m) => !cod || formatarCod(m.cod) === formatarCod(cod))
+      .filter((m) => (!cod || formatarCod(m.cod) === formatarCod(cod)) && (!ocorrenciaId || m.ocorrenciaId === ocorrenciaId))
       .sort((a, b) => b.quando.localeCompare(a.quando)),
   'almox.salvarItem': (item, ctx) => {
     const cod = formatarCod(item.cod);
@@ -479,6 +486,7 @@ const handlers: Handlers = {
       return {
         id: novoId('m'), quando: ctx.agora, tipo: 'saida' as const, cod: item.cod, qtd: -i.qtd, valorUnitario: item.valor,
         retiradoPorPessoaId: d.retiradoPorPessoaId, retiradoPorExterno: d.retiradoPorExterno, eventoId: d.eventoId, finalidade: d.finalidade,
+        ocorrenciaId: d.ocorrenciaId,
       };
     });
     ctx.banco.almoxMovimentos.push(...movs);
@@ -511,6 +519,49 @@ const handlers: Handlers = {
     pedido.status = pedido.itens.every((i) => i.qtdRecebida >= i.qtdPedida) ? 'recebido' : 'parcial';
     registrar(ctx, 'pedido', pedidoId, `registrou recebimento (${pedido.status})`);
     return pedido;
+  },
+
+  'infra.listar': (_d, ctx) =>
+    ctx.banco.ocorrencias
+      .filter((o) => pode(ctx.eu!.permissoes, 'infraestrutura', 'ver') || o.relatorPessoaId === ctx.eu!.id)
+      .sort((a, b) => b.criadaEm.localeCompare(a.criadaEm)),
+  'infra.relatar': (d, ctx) => {
+    if (!d.titulo.trim()) throw erro('TITULO', 'Conte em poucas palavras o que aconteceu.');
+    if (!d.local) throw erro('LOCAL', 'Informe onde está o problema.');
+    const o = novaOcorrencia(ctx, {
+      ...d, status: 'nova', origem: 'app', relatorNome: ctx.eu!.nome, relatorPessoaId: ctx.eu!.id, criadaEm: ctx.agora,
+      chamadoNumero: '', chamadoLink: '', chamadoAbertoEm: null, resolvidaEm: null,
+    });
+    return o;
+  },
+  'infra.atualizar': (d, ctx) => {
+    const o = ctx.banco.ocorrencias.find((x) => x.id === d.id);
+    if (!o) throw erro('NAO_ENCONTRADO', 'Ocorrência não encontrada.');
+    if (d.chamadoNumero !== undefined) o.chamadoNumero = d.chamadoNumero.trim();
+    if (d.chamadoLink !== undefined) o.chamadoLink = d.chamadoLink.trim();
+    if (d.prioridade) o.prioridade = d.prioridade;
+    if (d.categoria) o.categoria = d.categoria;
+    if (d.local) o.local = d.local;
+    if (d.para) {
+      const problema = validarTransicao(o, d.para, { chamadoNumero: o.chamadoNumero, observacao: d.observacao });
+      if (problema) throw erro('TRANSICAO', problema);
+      o.historico.push({ quando: ctx.agora, quemId: ctx.eu!.id, de: o.status, para: d.para, observacao: d.observacao.trim() });
+      o.status = d.para;
+      if (d.para === 'chamado') o.chamadoAbertoEm = ctx.agora;
+      if (d.para === 'resolvida' || d.para === 'naoProcede') o.resolvidaEm = ctx.agora;
+      if (o.relatorPessoaId) notificar(ctx, [o.relatorPessoaId], `Sua ocorrência #${o.numero} (${o.titulo}) agora está: ${ROTULO_STATUS_OCORRENCIA[d.para]}.`, '/relatar');
+    } else if (d.observacao.trim()) {
+      o.historico.push({ quando: ctx.agora, quemId: ctx.eu!.id, de: null, para: o.status, observacao: d.observacao.trim() });
+    }
+    registrar(ctx, 'ocorrencia', o.id, d.para ? `situação: ${ROTULO_STATUS_OCORRENCIA[d.para]}` : 'atualizou a ocorrência', d.observacao);
+    return o;
+  },
+  'infra.importarFormulario': (_d, ctx) => {
+    const pendentes = ctx.banco.respostasFormularioInfra;
+    for (const r of pendentes) novaOcorrencia(ctx, r);
+    ctx.banco.respostasFormularioInfra = [];
+    registrar(ctx, 'ocorrencia', 'formulario', `importou ${pendentes.length} resposta(s) do formulário`);
+    return { importadas: pendentes.length };
   },
 
   'avisos.listar': (_d, ctx) => {
@@ -561,6 +612,15 @@ const handlers: Handlers = {
     return c;
   },
 };
+
+function novaOcorrencia(ctx: Contexto, dados: Omit<Ocorrencia, 'id' | 'numero' | 'historico'>): Ocorrencia {
+  const numero = Math.max(0, ...ctx.banco.ocorrencias.map((o) => o.numero)) + 1;
+  const o: Ocorrencia = { ...dados, id: novoId('oc'), numero, historico: [] };
+  ctx.banco.ocorrencias.push(o);
+  const responsaveis = ctx.banco.pessoas.filter((p) => p.ativo && pode(p.permissoes, 'infraestrutura', 'editar')).map((p) => p.id);
+  notificar(ctx, responsaveis, `Nova ocorrência #${numero}: ${o.titulo} (${o.local}).`, `/infra/${o.id}`);
+  return o;
+}
 
 function cancelarSessao(ctx: Contexto, sessaoId: Id, justificativa: string) {
   const s = ctx.banco.sessoes.find((x) => x.id === sessaoId);

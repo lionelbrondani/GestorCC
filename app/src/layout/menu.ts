@@ -14,6 +14,8 @@ import {
   UserRound,
   Users,
   Wallet,
+  Wrench,
+  TriangleAlert,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -30,6 +32,7 @@ export const ITENS_GESTAO: ItemMenu[] = [
   { rota: '/pagamentos', rotulo: 'Pagamentos', icone: Banknote, modulo: 'pagamentos' },
   { rota: '/contratos', rotulo: 'Contratos', icone: FileSignature, modulo: 'contratos' },
   { rota: '/almox', rotulo: 'Almoxarifado', icone: Package, modulo: 'almoxEstoque' },
+  { rota: '/infra', rotulo: 'Infraestrutura', icone: Wrench, modulo: 'infraestrutura' },
   { rota: '/mural', rotulo: 'Mural', icone: Megaphone, modulo: 'mural' },
   { rota: '/pessoas', rotulo: 'Pessoas', icone: Users, modulo: 'pessoas' },
   { rota: '/formularios', rotulo: 'Formulários', icone: FileText, modulo: 'formularios' },
@@ -43,6 +46,7 @@ export const ITENS_PESSOAIS: ItemMenu[] = [
   { rota: '/disponibilidade', rotulo: 'Disponibilidade', icone: ClipboardList },
   { rota: '/ganhos', rotulo: 'Ganhos', icone: Wallet },
   { rota: '/avisos', rotulo: 'Avisos', icone: Bell },
+  { rota: '/relatar', rotulo: 'Relatar problema', icone: TriangleAlert },
   { rota: '/perfil', rotulo: 'Perfil', icone: UserRound },
 ];
 

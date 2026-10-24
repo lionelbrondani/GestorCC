@@ -22,6 +22,9 @@ import { Formularios } from './telas/formularios/Formularios';
 import { Mural } from './telas/mural/Mural';
 import { PessoaForm } from './telas/pessoas/PessoaForm';
 import { Pessoas } from './telas/pessoas/Pessoas';
+import { Infra } from './telas/infra/Infra';
+import { OcorrenciaDetalhe } from './telas/infra/OcorrenciaDetalhe';
+import { Relatar } from './telas/infra/Relatar';
 import { Inicio } from './telas/inicio/InicioGestor';
 import { Login } from './telas/login/Login';
 import { Avisos } from './telas/pessoal/Avisos';
@@ -47,6 +50,9 @@ export const ROTAS: RouteObject[] = [
       { path: '/ganhos', element: <MeusGanhos /> },
       { path: '/avisos', element: <Avisos /> },
       { path: '/perfil', element: <Perfil /> },
+      { path: '/relatar', element: <Relatar /> },
+      { path: '/infra', element: comPermissao(['infraestrutura'], <Infra />) },
+      { path: '/infra/:id', element: comPermissao(['infraestrutura'], <OcorrenciaDetalhe />) },
       { path: '/agenda', element: comPermissao(['eventos'], <Agenda />) },
       { path: '/agenda/imprimir', element: comPermissao(['eventos'], <ImprimirAgenda />) },
       { path: '/agenda/:eventoId', element: comPermissao(['eventos'], <EventoDetalhe />) },

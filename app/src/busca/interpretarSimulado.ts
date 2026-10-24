@@ -10,7 +10,8 @@ export type Consulta =
   | { nome: 'saldoItem'; termo: string }
   | { nome: 'estoqueCritico' }
   | { nome: 'contratosPendentes' }
-  | { nome: 'lotesEmAberto' };
+  | { nome: 'lotesEmAberto' }
+  | { nome: 'ocorrenciasAbertas'; termo: string };
 
 const DIAS: Record<string, string> = { domingo: 'DOM', segunda: 'SEG', terca: 'TER', quarta: 'QUA', quinta: 'QUI', sexta: 'SEX', sabado: 'SÁB' };
 
@@ -36,6 +37,14 @@ export function interpretarSimulado(pergunta: string, hoje: DataISO): Consulta |
 
   const saldo = t.match(/^(?:quanto|quantos|quantas|qual o saldo|saldo)\b.*?\b(?:de|do|da|dos|das)\s+(.+)$/);
   if (saldo) return { nome: 'saldoItem', termo: saldo[1].trim() };
+  const TERMOS_INFRA: [RegExp, string][] = [
+    [/vazament/, 'vazamento'], [/lampada|lampadas/, 'lampada'], [/torneira/, 'torneira'], [/infiltra/, 'infiltracao'],
+    [/ar.condicionado/, 'ar-condicionado'], [/poltrona/, 'poltrona'],
+  ];
+  if (/infraestrutura|ocorrencia|manutencao|chamados? (da|na) ufsm|chamados?.*(abert|atrasad)/.test(t) || TERMOS_INFRA.some(([r]) => r.test(t))) {
+    const achado = TERMOS_INFRA.find(([r]) => r.test(t));
+    return { nome: 'ocorrenciasAbertas', termo: achado ? achado[1] : '' };
+  }
   if (/estoque (critico|minimo|baixo)|precisa comprar|falta comprar|lista de compras/.test(t)) return { nome: 'estoqueCritico' };
   if (/contrato/.test(t) && /(pendent|atras|ecad|iss|fatura|vencid)/.test(t)) return { nome: 'contratosPendentes' };
   if (/\blotes?\b|pagamentos? (em aberto|pendentes?)/.test(t)) return { nome: 'lotesEmAberto' };

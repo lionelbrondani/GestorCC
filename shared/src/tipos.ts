@@ -206,6 +206,7 @@ export interface AlmoxMovimento {
   eventoId?: Id;
   finalidade?: string;
   pedidoId?: Id;
+  ocorrenciaId?: Id;
   motivo?: string;
 }
 
@@ -215,6 +216,35 @@ export interface AlmoxPedido {
   solicitanteId: Id;
   status: 'aberto' | 'parcial' | 'recebido' | 'cancelado';
   itens: { cod: string; qtdPedida: number; qtdRecebida: number; valorEstimado: Centavos }[];
+}
+
+export type StatusOcorrencia = 'nova' | 'analise' | 'chamado' | 'atendimento' | 'resolvida' | 'naoProcede';
+export type PrioridadeOcorrencia = 'baixa' | 'media' | 'alta' | 'urgente';
+
+export interface Ocorrencia {
+  id: Id;
+  /** Número sequencial para citar no dia a dia (ex.: #12). */
+  numero: number;
+  titulo: string;
+  descricao: string;
+  categoria: string;
+  local: string;
+  prioridade: PrioridadeOcorrencia;
+  status: StatusOcorrencia;
+  origem: 'formulario' | 'app';
+  relatorNome: string;
+  relatorPessoaId?: Id;
+  relatorContato?: string;
+  eventoId?: Id;
+  criadaEm: string;
+  /** Foto reduzida (data URL no protótipo; arquivo no Drive na fase 1). */
+  foto: string | null;
+  /** Chamado aberto no sistema de chamados da UFSM. */
+  chamadoNumero: string;
+  chamadoLink: string;
+  chamadoAbertoEm: string | null;
+  resolvidaEm: string | null;
+  historico: { quando: string; quemId: Id; de: StatusOcorrencia | null; para: StatusOcorrencia; observacao: string }[];
 }
 
 export interface Aviso {

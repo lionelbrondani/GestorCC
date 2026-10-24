@@ -20,6 +20,9 @@ import type {
   Lote,
   LoteItem,
   Notificacao,
+  Ocorrencia,
+  PrioridadeOcorrencia,
+  StatusOcorrencia,
   Pessoa,
   RegistroHistorico,
   Rodada,
@@ -82,7 +85,7 @@ export interface Acoes {
   'contratantes.salvar': A<Contratante, Contratante>;
 
   'almox.listar': A<null, { itens: AlmoxItem[]; autorizadosExternos: string[] }>;
-  'almox.movimentos': A<{ cod?: string }, AlmoxMovimento[]>;
+  'almox.movimentos': A<{ cod?: string; ocorrenciaId?: Id }, AlmoxMovimento[]>;
   'almox.salvarItem': A<AlmoxItem, AlmoxItem>;
   'almox.ajustar': A<{ cod: string; qtd: number; motivo: string }, AlmoxItem>;
   'almox.retirar': A<
@@ -92,12 +95,33 @@ export interface Acoes {
       retiradoPorExterno?: string;
       finalidade: string;
       eventoId?: Id;
+      ocorrenciaId?: Id;
     },
     AlmoxMovimento[]
   >;
   'almox.pedidos': A<null, AlmoxPedido[]>;
   'almox.criarPedido': A<{ itens: { cod: string; qtdPedida: number; valorEstimado: Centavos }[] }, AlmoxPedido>;
   'almox.receber': A<{ pedidoId: Id; itens: { cod: string; qtd: number }[] }, AlmoxPedido>;
+
+  'infra.listar': A<null, Ocorrencia[]>;
+  'infra.relatar': A<
+    { titulo: string; descricao: string; categoria: string; local: string; prioridade: PrioridadeOcorrencia; foto: string | null; eventoId?: Id },
+    Ocorrencia
+  >;
+  'infra.atualizar': A<
+    {
+      id: Id;
+      para?: StatusOcorrencia;
+      observacao: string;
+      chamadoNumero?: string;
+      chamadoLink?: string;
+      prioridade?: PrioridadeOcorrencia;
+      categoria?: string;
+      local?: string;
+    },
+    Ocorrencia
+  >;
+  'infra.importarFormulario': A<null, { importadas: number }>;
 
   'avisos.listar': A<null, Aviso[]>;
   'avisos.salvar': A<Aviso, Aviso>;
