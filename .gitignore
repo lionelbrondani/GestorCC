@@ -14,3 +14,8 @@ dist/
 # Sistema
 .DS_Store
 Thumbs.db
+
+# API (Apps Script)
+api/dist/
+api/ambientes/*/.clasp.json
+.clasprc.json

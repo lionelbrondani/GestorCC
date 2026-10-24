@@ -1,11 +1,15 @@
 {
   "name": "gestorcc",
   "private": true,
-  "workspaces": ["shared", "app"],
+  "workspaces": [
+    "shared",
+    "app",
+    "api"
+  ],
   "scripts": {
-    "test": "npm run test -w shared && npm run test -w app",
+    "test": "npm run test -w shared && npm run test -w api && npm run test -w app",
     "build": "npm run build -w app",
     "dev": "npm run dev -w app",
-    "typecheck": "tsc -p shared --noEmit && tsc -p app --noEmit"
+    "typecheck": "tsc -p shared --noEmit && tsc -p api --noEmit && tsc -p app --noEmit"
   }
 }
