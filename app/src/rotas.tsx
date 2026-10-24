@@ -14,6 +14,7 @@ import { Pagamentos } from './telas/pagamentos/Pagamentos';
 import { ContratoDetalhe } from './telas/contratos/ContratoDetalhe';
 import { Contratos } from './telas/contratos/Contratos';
 import { SolicitarFundep } from './telas/contratos/SolicitarFundep';
+import { Almox } from './telas/almox/Almox';
 import { Inicio } from './telas/inicio/InicioGestor';
 import { Login } from './telas/login/Login';
 import { Avisos } from './telas/pessoal/Avisos';
@@ -58,7 +59,7 @@ export const ROTAS: RouteObject[] = [
       { path: '/contratos', element: comPermissao(['contratos'], <Contratos />) },
       { path: '/contratos/fundep', element: comPermissao(['contratos'], <SolicitarFundep />, 'editar') },
       { path: '/contratos/:id', element: comPermissao(['contratos'], <ContratoDetalhe />) },
-      { path: '/almox', element: comPermissao(['almoxEstoque', 'almoxSaidas'], tela('/almox')) },
+      { path: '/almox', element: comPermissao(['almoxEstoque', 'almoxSaidas'], <Almox />) },
       { path: '/mural', element: comPermissao(['mural'], tela('/mural'), 'editar') },
       { path: '/pessoas', element: comPermissao(['pessoas'], tela('/pessoas')) },
       { path: '/pessoas/:id', element: comPermissao(['pessoas'], tela('/pessoas/:id')) },
