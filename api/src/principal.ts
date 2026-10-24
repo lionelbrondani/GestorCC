@@ -1,7 +1,8 @@
 /// <reference types="google-apps-script" />
 // Ponto de entrada do Apps Script. As funções exportadas viram globais pelo rodapé do build.
 
-export const VERSAO_API = '0.1.0';
+import { VERSAO_API } from './versao';
+export { VERSAO_API };
 
 function json(corpo: unknown): GoogleAppsScript.Content.TextOutput {
   return ContentService.createTextOutput(JSON.stringify(corpo)).setMimeType(ContentService.MimeType.JSON);
