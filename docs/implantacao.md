@@ -16,39 +16,46 @@ Tudo cabe nos planos gratuitos do Google e do Firebase, sem cartão de crédito.
 
 ## 1. O que é preciso antes de começar
 
-- Uma conta Google do setor. É ela que vai ser dona das planilhas e da API. Use a mesma conta em todos os passos.
+- Uma conta Google do setor. É ela que vai ser dona das planilhas e da API.
+- Uma conta Google para o site (Firebase). Pode ser a do setor ou outra conta gratuita, se a do setor não tiver acesso ao Firebase. O site não guarda nenhum dado: ele só conversa com a API.
 - No computador:
   - [Node.js](https://nodejs.org) versão 20 ou mais nova;
   - a pasta do projeto, já com `npm install` rodado na raiz.
-- Ativar a API do Apps Script para essa conta: abra <https://script.google.com/home/usersettings> e ligue **"API do Google Apps Script"**.
 
-## 2. Entrar com a conta do setor
+## 2. Gerar o código da API
 
 Abra o terminal na pasta do projeto e rode:
 
 ```
-cd api
-npx clasp login
+npm run build -w api
 ```
 
-O navegador abre. Escolha a conta do setor e autorize. Depois volte para a raiz com `cd ..`.
+Isso gera dois arquivos na pasta `api/dist`:
+
+- `Code.js`: a API inteira;
+- `appsscript.json`: o manifesto.
+
+O mesmo código serve para teste e para produção.
 
 ## 3. Criar os projetos da API (teste e produção)
 
+Tudo pelo navegador, com a conta do setor:
+
 1. Abra <https://script.google.com> e clique em **Novo projeto**.
 2. Dê o nome **GestorCC API - teste**.
-3. Em **Configurações do projeto** (ícone de engrenagem), copie o **ID do script**.
-4. Na pasta do projeto, copie `api/ambientes/teste/.clasp.json.exemplo` para `api/ambientes/teste/.clasp.json`.
-5. Troque `COLE_AQUI_O_ID_DO_PROJETO_TESTE` pelo ID que você copiou.
-6. Repita os passos 1 a 5 para **GestorCC API - produção**, usando a pasta `api/ambientes/producao`.
+3. Em **Configurações do projeto** (ícone de engrenagem), marque **"Mostrar arquivo de manifesto 'appsscript.json' no editor"**.
+4. Volte ao editor (ícone `< >`) e abra o `appsscript.json`. Troque todo o conteúdo pelo de `api/dist/appsscript.json`.
+5. Abra o `Código.gs`, apague tudo e cole o conteúdo de `api/dist/Code.js`. Salve com Ctrl+S.
+6. Confira a lista de funções na barra de cima. Devem aparecer `doPost`, `doGet`, `instalar`, `backupDiario` e `gatilhoMinutos`.
+7. Repita os passos 1 a 6 para **GestorCC API - produção**.
 
-Os arquivos `.clasp.json` ficam só no seu computador. Eles não vão para o git.
-
-Agora envie o código:
-
-```
-npm run deploy:api:teste
-```
+> **Atalho opcional (clasp):** se a conta permitir a "API do Google Apps Script" (<https://script.google.com/home/usersettings>), dá para enviar o código pelo terminal em vez de colar:
+>
+> 1. Rode `npx clasp login` dentro de `api`.
+> 2. Copie `api/ambientes/teste/.clasp.json.exemplo` para `.clasp.json` e cole nele o **ID do script**.
+> 3. Rode `npm run deploy:api:teste`.
+>
+> Contas institucionais costumam bloquear o clasp. Nesse caso, siga o caminho manual acima.
 
 ## 4. Preencher as propriedades e rodar `instalar`
 
@@ -95,6 +102,8 @@ Se a conta institucional da UFSM não mostrar a opção "Qualquer pessoa", pare 
 
 ## 6. Criar o site no Firebase
 
+Use a conta escolhida para o site no passo 1. Se for uma conta diferente da do setor, registre com a equipe quem é a dona: é ela que publica as versões novas do site.
+
 1. Abra <https://console.firebase.google.com>.
 2. Crie um projeto, por exemplo `gestorcc`. Fique no plano **Spark (gratuito)** e não ative o Google Analytics.
 3. No menu **Hosting**, clique em **Começar** e siga até o fim.
@@ -102,7 +111,7 @@ Se a conta institucional da UFSM não mostrar a opção "Qualquer pessoa", pare 
 5. Na raiz do projeto, copie `.firebaserc.exemplo` para `.firebaserc` e preencha:
    - o ID do projeto Firebase;
    - os nomes dos dois sites.
-6. Entre com a conta do setor:
+6. Entre com a conta do site:
 
    ```
    npx --yes firebase-tools@13.29.1 login
@@ -122,12 +131,14 @@ Se a conta institucional da UFSM não mostrar a opção "Qualquer pessoa", pare 
 
 4. Abra o endereço do site de teste e entre com o e-mail e a matrícula do primeiro gestor. O sistema pede uma senha nova na hora.
 
-Quando o teste estiver aprovado, repita os passos 4, 5 e 7 para produção:
+Quando o teste estiver aprovado, faça o mesmo para produção:
 
-```
-npm run deploy:api:producao
-npm run deploy:app:producao
-```
+1. Repita os passos 4 e 5 no projeto **GestorCC API - produção**.
+2. Publique o site de produção:
+
+   ```
+   npm run deploy:app:producao
+   ```
 
 Os arquivos `.env.teste`, `.env.producao` e `.firebaserc` ficam só no seu computador.
 
@@ -163,11 +174,11 @@ Os arquivos `.env.teste`, `.env.producao` e `.firebaserc` ficam só no seu compu
 1. Atualize a pasta do projeto e rode `npm install` na raiz.
 2. Rode `npm test`. Tudo precisa passar.
 3. Atualize o teste primeiro:
-   1. Rode `npm run deploy:api:teste`.
+   1. Rode `npm run build -w api` e cole o `api/dist/Code.js` novo no `Código.gs` do projeto de teste. Salve. Quem usa o clasp roda `npm run deploy:api:teste`.
    2. No editor do Apps Script de teste, abra **Implantar → Gerenciar implantações**.
    3. Clique no lápis da implantação existente, escolha **Versão: Nova versão** e clique em **Implantar**. Assim o URL `/exec` continua o mesmo e o `.env` não muda.
    4. Rode `npm run deploy:app:teste` e confira o site.
-4. Se estiver tudo certo, faça o mesmo com `deploy:api:producao` e `deploy:app:producao`.
+4. Se estiver tudo certo, faça o mesmo no projeto de produção e rode `npm run deploy:app:producao`.
 
 Se uma versão nova exigir `instalar` de novo (para criar abas novas), as notas da versão avisam.
 
