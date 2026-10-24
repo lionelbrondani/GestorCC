@@ -59,6 +59,21 @@ const limpa = (s: unknown) => String(s ?? '').trim();
 
 const CREDENCIAIS = () => new ErroApi('CREDENCIAIS', 'E-mail ou senha incorretos.');
 
+/** Recuperação pelo editor do Apps Script (só o dono da conta chega lá): a senha volta a ser a matrícula. */
+export function recuperarAcesso(portas: Portas, email: string, matricula: string): string {
+  const alvo = email.trim().toLowerCase();
+  const pessoa = portas.repo.listar<{ id: string; emailAcademico: string; ativo: boolean }>('pessoas').find(
+    (p) => p.ativo && p.emailAcademico.trim().toLowerCase() === alvo,
+  );
+  if (!pessoa) throw new Error(`Ninguém ativo com o e-mail ${alvo}.`);
+  const cred = credencialDe(portas, pessoa.id);
+  const nova = criarCredencialInicial(portas.cripto, pessoa.id, limpa(matricula), (cred?.versaoToken ?? 0) + 1);
+  if (cred) portas.repo.atualizar('credenciais', nova);
+  else portas.repo.inserir('credenciais', nova);
+  registrar({ portas, eu: null, idRequisicao: '' }, 'pessoa', pessoa.id, 'senha voltou para a matrícula (recuperação de acesso pelo editor)', null, null);
+  return pessoa.id;
+}
+
 export const handlersAuth: Handlers = {
   'auth.entrar': ({ email, senha }, ctx) => {
     const { repo, relogio, cripto } = ctx.portas;

@@ -9,7 +9,7 @@ import { tratarRequisicao, type Handlers } from './nucleo/roteador';
 import { VERSAO_API } from './versao';
 
 export { backupDiario } from './backup';
-export { instalar } from './instalar';
+export { instalar, recuperarAcessoGestor } from './instalar';
 export { VERSAO_API };
 
 const HANDLERS: Handlers = { ...handlersAuth, ...handlersPessoas, ...handlersAvisos, ...handlersSistema };

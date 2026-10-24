@@ -6,7 +6,7 @@ import { fileURLToPath, URL } from 'node:url';
 const raiz = fileURLToPath(new URL('.', import.meta.url));
 
 // O Apps Script só enxerga funções declaradas no topo do arquivo.
-const GLOBAIS = ['doPost', 'doGet', 'instalar', 'backupDiario', 'gatilhoMinutos'];
+const GLOBAIS = ['doPost', 'doGet', 'instalar', 'recuperarAcessoGestor', 'backupDiario', 'gatilhoMinutos'];
 const rodape = GLOBAIS.map((f) => `function ${f}(e) { return __gestor.${f}(e); }`).join('\n');
 
 mkdirSync(`${raiz}dist`, { recursive: true });

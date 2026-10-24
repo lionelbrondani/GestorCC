@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { handlersAuth } from '../src/acoes/auth';
+import { handlersAuth, recuperarAcesso } from '../src/acoes/auth';
 import { BOLSISTA, criarAmbiente, GESTOR } from './apoio';
 
 const ambiente = () => criarAmbiente({ handlers: { ...handlersAuth, 'pessoas.listar': () => [] } });
@@ -109,5 +109,24 @@ describe('esqueci e redefinir senha', () => {
     const amb = ambiente();
     amb.chamar('auth.trocarSenha', { atual: BOLSISTA.matricula, nova: 'novaSenha123' }, { token: amb.token('p02') });
     expect(JSON.stringify(amb.repo.listar('historico'))).not.toMatch(/novaSenha123|hash|sal/);
+  });
+});
+
+describe('recuperar acesso pelo editor', () => {
+  it('volta a senha para a matrícula, encerra as sessões e exige troca no próximo login', () => {
+    const amb = ambiente();
+    amb.chamar('auth.trocarSenha', { atual: GESTOR.matricula, nova: 'esqueciEssa1' }, { token: amb.token('p01') });
+    const sessao = amb.token('p01', 2);
+
+    expect(recuperarAcesso(amb.portas, ' Gestor@UFSM.br ', GESTOR.matricula)).toBe('p01');
+
+    expect(amb.chamar('pessoas.listar', null, { token: sessao })).toMatchObject({ erro: { codigo: 'SESSAO' } });
+    const login = amb.chamar('auth.entrar', { email: GESTOR.emailAcademico, senha: GESTOR.matricula }) as Ok<{ senhaInicial: boolean }>;
+    expect(login.dados.senhaInicial).toBe(true);
+    expect(JSON.stringify(amb.repo.listar('historico'))).toContain('recuperação de acesso');
+  });
+
+  it('e-mail que não é de ninguém ativo é recusado', () => {
+    expect(() => recuperarAcesso(ambiente().portas, 'ninguem@ufsm.br', '123')).toThrow('ninguem@ufsm.br');
   });
 });

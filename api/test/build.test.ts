@@ -16,6 +16,7 @@ describe('build para o Apps Script', () => {
     const codigo = readFileSync(arquivo, 'utf8');
     expect(codigo).toContain('function doPost(');
     expect(codigo).toContain('function instalar(');
+    expect(codigo).toContain('function recuperarAcessoGestor(');
     expect(codigo).not.toMatch(/^import /m);
     expect(codigo).not.toContain('require(');
   });

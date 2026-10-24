@@ -1,8 +1,9 @@
 /// <reference types="google-apps-script" />
 import { MODELOS, MODULOS } from '@shared';
-import { criarCredencialInicial } from './acoes/auth';
+import { criarCredencialInicial, handlersAuth, recuperarAcesso } from './acoes/auth';
 import { abrirPlanilha, portasGas, propriedadesGas } from './adaptadores/gas';
 import { paraBase64Url } from './auth/bytes';
+import { tratarRequisicao } from './nucleo/roteador';
 import type { NomeTabela, Planilha } from './nucleo/portas';
 import { cabecalhos, ESQUEMA } from './tabelas/esquema';
 
@@ -92,4 +93,16 @@ export function instalar(): void {
     portas.repo.inserir('credenciais', criarCredencialInicial(portas.cripto, id, matricula));
   }
   console.log(`GestorCC instalado na pasta "${pasta.getName()}" (${pasta.getUrl()}).`);
+}
+
+/** Rodar pelo editor se o primeiro gestor perder o acesso: a senha volta a ser a matrícula das propriedades. */
+export function recuperarAcessoGestor(): void {
+  const email = exigir('EMAIL_PRIMEIRO_GESTOR');
+  const matricula = exigir('MATRICULA_PRIMEIRO_GESTOR');
+  recuperarAcesso(portasGas(), email, matricula);
+  // confere relendo a planilha, pelo mesmo caminho do site; um erro inesperado aparece no registro de execução
+  const pedido = { acao: 'auth.entrar', idRequisicao: `recuperar-${Date.now()}`, dados: { email, senha: matricula } };
+  const r = JSON.parse(tratarRequisicao(JSON.stringify(pedido), portasGas(), handlersAuth));
+  if (!r.ok) throw new Error(`A senha voltou para a matrícula, mas o login ainda falha (${r.erro.codigo}).`);
+  console.log('Acesso recuperado. Entre no site com o e-mail e a matrícula; o sistema vai pedir uma senha nova.');
 }

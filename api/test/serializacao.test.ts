@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { cabecalhos, ESQUEMA } from '../src/tabelas/esquema';
-import { linhaParaObjeto, objetoParaLinha } from '../src/tabelas/serializacao';
+import { linhaParaObjeto, objetoParaLinha, paraCelula } from '../src/tabelas/serializacao';
 
 describe('esquema', () => {
   it('toda tabela começa com id e tem os carimbos de alteração', () => {
@@ -69,5 +69,20 @@ describe('leitura tolerante', () => {
       pedeConfirmacao: false, autorId: 'p1', criadoEm: '2026-10-24T10:00', atualizadoEm: '2026-10-24T10:00', atualizadoPor: 'p1',
     };
     expect(linhaParaObjeto('avisos', c, objetoParaLinha('avisos', c, aviso))).toEqual(aviso);
+  });
+});
+
+describe('gravação na planilha', () => {
+  it('texto vai com apóstrofo, para o Sheets não transformar em fórmula, número ou data', () => {
+    expect(paraCelula('+abc/def==')).toBe("'+abc/def==");
+    expect(paraCelula('=SOMA(1)')).toBe("'=SOMA(1)");
+    expect(paraCelula('01234567890')).toBe("'01234567890");
+    expect(paraCelula('2026-10-24T10:00')).toBe("'2026-10-24T10:00");
+  });
+
+  it('número, booleano e célula vazia vão como estão', () => {
+    expect(paraCelula(2000)).toBe(2000);
+    expect(paraCelula(true)).toBe(true);
+    expect(paraCelula('')).toBe('');
   });
 });

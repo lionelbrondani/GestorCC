@@ -3,7 +3,7 @@
 import { ErroApi } from '@shared';
 import type { Cache, Cripto, Email, NomeTabela, Planilha, Portas, Propriedades, Relogio, Repositorio, Trava } from '../nucleo/portas';
 import { cabecalhos, ESQUEMA } from '../tabelas/esquema';
-import { linhaParaObjeto, objetoParaLinha } from '../tabelas/serializacao';
+import { linhaParaObjeto, objetoParaLinha, paraCelula } from '../tabelas/serializacao';
 
 const FUSO = 'America/Sao_Paulo';
 
@@ -110,7 +110,7 @@ export function repositorioGas(relogio: Relogio): Repositorio {
       if (a.linhas.some((x) => x.id === r.id)) throw new Error(`Registro repetido em ${t}: ${r.id}`);
       const agora = relogio.agora();
       const obj = { ...r, criadoEm: agora, atualizadoEm: agora, atualizadoPor: autor } as Record<string, unknown>;
-      a.folha.appendRow(objetoParaLinha(t, a.cab, obj));
+      a.folha.appendRow(objetoParaLinha(t, a.cab, obj).map(paraCelula));
       a.linhas.push(obj);
     },
     atualizar(t, r) {
@@ -119,7 +119,7 @@ export function repositorioGas(relogio: Relogio): Repositorio {
       const linha = linhaNaFolha(a, r.id);
       if (i < 0 || linha < 0) throw new Error(`Registro inexistente em ${t}: ${r.id}`);
       const obj = { ...r, criadoEm: a.linhas[i].criadoEm, atualizadoEm: relogio.agora(), atualizadoPor: autor } as Record<string, unknown>;
-      a.folha.getRange(linha, 1, 1, a.cab.length).setValues([objetoParaLinha(t, a.cab, obj)]);
+      a.folha.getRange(linha, 1, 1, a.cab.length).setValues([objetoParaLinha(t, a.cab, obj).map(paraCelula)]);
       a.linhas[i] = obj;
     },
     remover(t, id) {

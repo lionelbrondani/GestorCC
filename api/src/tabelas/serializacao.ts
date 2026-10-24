@@ -47,6 +47,14 @@ function escrever(valor: unknown, tipo: TipoColuna): unknown {
   return valor;
 }
 
+/**
+ * Valor pronto para a célula. Texto vai com apóstrofo: o Sheets guarda como texto, sem virar fórmula
+ * (hash começando com "+"), número (CPF com zero à esquerda) ou data. O apóstrofo não volta na leitura.
+ */
+export function paraCelula(valor: unknown): unknown {
+  return typeof valor === 'string' && valor !== '' ? `'${valor}` : valor;
+}
+
 /** Converte uma linha da planilha em objeto, localizando as colunas pelo nome do cabeçalho. */
 export function linhaParaObjeto(tabela: NomeTabela, cab: string[], linha: unknown[]): Record<string, unknown> {
   const obj: Record<string, unknown> = {};
