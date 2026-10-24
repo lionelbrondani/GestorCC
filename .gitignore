@@ -1,0 +1,16 @@
+# Material de referência com dados sigilosos — nunca versionar
+referencias/
+
+# Dependências e builds
+node_modules/
+dist/
+.firebase/
+
+# Segredos e configuração local
+.env
+.env.*
+.clasprc.json
+
+# Sistema
+.DS_Store
+Thumbs.db
