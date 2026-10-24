@@ -3,7 +3,10 @@ import type { ReactNode } from 'react';
 import type { RouteObject } from 'react-router-dom';
 import { Exige, LayoutAutenticado } from './auth/RotaProtegida';
 import { EstadoVazio } from './componentes';
-import { InicioBolsista } from './telas/inicio/InicioBolsista';
+import { Agenda } from './telas/agenda/Agenda';
+import { EventoDetalhe } from './telas/agenda/EventoDetalhe';
+import { ImprimirAgenda } from './telas/agenda/ImprimirAgenda';
+import { Inicio } from './telas/inicio/InicioGestor';
 import { Login } from './telas/login/Login';
 import { Avisos } from './telas/pessoal/Avisos';
 import { MeusGanhos } from './telas/pessoal/MeusGanhos';
@@ -30,15 +33,15 @@ export const ROTAS: RouteObject[] = [
   {
     element: <LayoutAutenticado />,
     children: [
-      { path: '/', element: <InicioBolsista /> },
+      { path: '/', element: <Inicio /> },
       { path: '/minhas-escalas', element: <MinhasEscalas /> },
       { path: '/disponibilidade', element: <MinhaDisponibilidade /> },
       { path: '/ganhos', element: <MeusGanhos /> },
       { path: '/avisos', element: <Avisos /> },
       { path: '/perfil', element: <Perfil /> },
-      { path: '/agenda', element: comPermissao(['eventos'], tela('/agenda')) },
-      { path: '/agenda/imprimir', element: comPermissao(['eventos'], tela('/agenda/imprimir')) },
-      { path: '/agenda/:eventoId', element: comPermissao(['eventos'], tela('/agenda/:eventoId')) },
+      { path: '/agenda', element: comPermissao(['eventos'], <Agenda />) },
+      { path: '/agenda/imprimir', element: comPermissao(['eventos'], <ImprimirAgenda />) },
+      { path: '/agenda/:eventoId', element: comPermissao(['eventos'], <EventoDetalhe />) },
       { path: '/escalas', element: comPermissao(['escalas'], tela('/escalas')) },
       { path: '/escalas/imprimir', element: comPermissao(['escalas'], tela('/escalas/imprimir')) },
       { path: '/pagamentos', element: comPermissao(['pagamentos'], tela('/pagamentos')) },
