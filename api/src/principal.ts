@@ -9,6 +9,7 @@ import { handlersSistema } from './acoes/sistema';
 import { portasGas, travaGas } from './adaptadores/gas';
 import { sincronizarPendentes } from './agenda/sincronizar';
 import { tratarRequisicao, type Handlers } from './nucleo/roteador';
+import { gerarRelatoriosPendentes } from './relatorios/agenda';
 import { VERSAO_API } from './versao';
 
 export { backupDiario } from './backup';
@@ -29,11 +30,16 @@ export function doGet(): GoogleAppsScript.Content.TextOutput {
   return json(JSON.stringify({ ok: true, dados: { versao: VERSAO_API } }));
 }
 
-/** A cada 5 minutos: refaz o que o Google Agenda não aceitou na hora. Com o sistema ocupado, pula esta rodada. */
+/**
+ * A cada 5 minutos: refaz o que o Google Agenda não aceitou na hora e reescreve as abas AGENDA marcadas.
+ * Com o sistema ocupado, pula esta rodada.
+ */
 export function gatilhoMinutos(): void {
   try {
     travaGas.executar(() => {
-      sincronizarPendentes(portasGas());
+      const portas = portasGas();
+      sincronizarPendentes(portas);
+      gerarRelatoriosPendentes(portas);
     }, 10_000);
   } catch (e) {
     if (!(e instanceof ErroApi && e.codigo === 'SISTEMA_OCUPADO')) throw e;

@@ -1,5 +1,6 @@
 import { ehGestor, ErroApi, type Config, type Feriado, type RegistroHistorico } from '@shared';
 import { exigirVersao, registrar, type Contexto, type Handlers } from '../nucleo/roteador';
+import { marcarAgendaPendente } from '../relatorios/agenda';
 import { VERSAO_API } from '../versao';
 
 /** Valores iniciais do spec (seção 4.1). */
@@ -65,10 +66,12 @@ export const handlersSistema: Handlers = {
 
   'feriados.salvar': ({ ano, feriados }, ctx) => {
     const { repo } = ctx.portas;
-    for (const f of repo.listar<{ id: string; data: string }>('feriados')) if (f.data.startsWith(String(ano))) repo.remover('feriados', f.id);
+    const antigos = repo.listar<{ id: string; data: string }>('feriados').filter((f) => f.data.startsWith(String(ano)));
+    for (const f of antigos) repo.remover('feriados', f.id);
     const doAno = feriados.filter((f) => f.data.startsWith(String(ano)));
     for (const f of doAno) repo.inserir('feriados', { id: f.data, data: f.data, nome: f.nome.trim() });
     registrar(ctx, 'config', 'feriados', `atualizou feriados de ${ano}`, null, null);
+    marcarAgendaPendente(ctx.portas.props, [...antigos, ...doAno].map((f) => f.data.slice(0, 7)));
     return doAno;
   },
 

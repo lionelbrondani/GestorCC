@@ -133,6 +133,17 @@ export function repositorioGas(relogio: Relogio): Repositorio {
         .filter((l) => l.some((v) => v !== ''))
         .map((l) => Object.fromEntries(cab.map((c, i) => [String(c), l[i]])));
     },
+    escreverAbaLivre(p, nome, linhas) {
+      const doc = planilha(p);
+      const folha = doc.getSheetByName(nome) ?? doc.insertSheet(nome);
+      folha.clearContents();
+      if (!linhas.length) return;
+      const largura = Math.max(...linhas.map((l) => l.length));
+      const matriz = linhas.map((l) => [...l, ...Array<string>(largura - l.length).fill('')].map(paraCelula));
+      folha.getRange(1, 1, matriz.length, largura).setValues(matriz);
+      folha.getRange(1, 1, 1, largura).setFontWeight('bold').setBackground('#232323').setFontColor('#F5C518');
+      folha.setFrozenRows(1);
+    },
     definirAutor(pessoaId) {
       autor = pessoaId;
     },

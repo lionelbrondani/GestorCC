@@ -27,6 +27,8 @@ export interface Repositorio {
   remover(tabela: NomeTabela, id: string): void;
   /** Lê uma aba fora do esquema (ex.: IMPORTAR_PESSOAS), usando a primeira linha como cabeçalho. */
   lerAbaLivre(planilha: Planilha, aba: string): Record<string, unknown>[];
+  /** Reescreve uma aba fora do esquema (relatórios): cria se faltar, limpa e grava as linhas; a primeira é o cabeçalho. */
+  escreverAbaLivre(planilha: Planilha, aba: string, linhas: string[][]): void;
   /** Quem está gravando (vai para atualizadoPor). */
   definirAutor(pessoaId: string): void;
 }

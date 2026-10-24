@@ -29,9 +29,10 @@ export function criarRepositorioMemoria(
   inicial: Partial<Record<NomeTabela, Registro[]>> = {},
   relogio: Relogio = relogioFixo('2026-10-24T10:00'),
   abasLivres: Partial<Record<string, Record<string, unknown>[]>> = {},
-): Repositorio & { dump(): Partial<Record<NomeTabela, Registro[]>> } {
+): Repositorio & { dump(): Partial<Record<NomeTabela, Registro[]>>; abaLivre(planilha: Planilha, aba: string): string[][] | undefined } {
   const dados: Partial<Record<NomeTabela, Registro[]>> = copiar(inicial);
   const tabela = (t: NomeTabela) => (dados[t] ??= []);
+  const escritas = new Map<string, string[][]>();
   const repo = {
     quem: '',
     listar<T extends { id: string }>(t: NomeTabela): T[] {
@@ -57,6 +58,11 @@ export function criarRepositorioMemoria(
     lerAbaLivre(planilha: Planilha, aba: string) {
       return copiar(abasLivres[`${planilha}:${aba}`] ?? []);
     },
+    escreverAbaLivre(planilha: Planilha, aba: string, linhas: string[][]) {
+      escritas.set(`${planilha}:${aba}`, copiar(linhas));
+    },
+    /** Só nos testes: o que foi escrito numa aba livre. */
+    abaLivre: (planilha: Planilha, aba: string): string[][] | undefined => escritas.get(`${planilha}:${aba}`),
     dump: () => copiar(dados),
   };
   return repo;

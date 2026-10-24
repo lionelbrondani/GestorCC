@@ -1,6 +1,7 @@
 import { ErroApi, validarEvento, type Evento, type Sessao } from '@shared';
 import { removerDaAgenda, sincronizarAgenda } from '../agenda/sincronizar';
 import { exigirVersao, novoId, registrar, type Contexto, type Handlers } from '../nucleo/roteador';
+import { marcarAgendaPendente } from '../relatorios/agenda';
 
 export interface LinhaEvento {
   id: string;
@@ -133,6 +134,13 @@ function cancelarSessao(ctx: Contexto, sessaoId: string, justificativa: string):
   return [sessaoId];
 }
 
+/** Leva o cancelamento para a agenda do setor e marca os meses da aba AGENDA para refazer. */
+function aposCancelar(ctx: Contexto, sessaoIds: string[]) {
+  sincronizarAgenda(ctx.portas, sessaoIds);
+  const meses = linhasSessoes(ctx).filter((s) => sessaoIds.includes(s.id)).map((s) => s.data.slice(0, 7));
+  marcarAgendaPendente(ctx.portas.props, meses);
+}
+
 export const handlersEventos: Handlers = {
   'eventos.listar': ({ de, ate }, ctx) => {
     const sessoes = linhasSessoes(ctx).filter((s) => s.data >= de && s.data <= ate).sort(ordemSessao);
@@ -180,16 +188,17 @@ export const handlersEventos: Handlers = {
 
     removerDaAgenda(ctx.portas, removidas.map((s) => s.googleEventoId));
     sincronizarAgenda(ctx.portas, linhasSessoes(ctx).filter((s) => s.eventoId === id).map((s) => s.id));
+    marcarAgendaPendente(ctx.portas.props, [...existentes, ...sessoes].map((s) => s.data.slice(0, 7)));
     return doEvento(ctx, id);
   },
 
   'eventos.cancelar': ({ eventoId, justificativa }, ctx) => {
-    sincronizarAgenda(ctx.portas, cancelarEvento(ctx, eventoId, exigirJustificativa(justificativa)));
+    aposCancelar(ctx, cancelarEvento(ctx, eventoId, exigirJustificativa(justificativa)));
     return null;
   },
 
   'sessoes.cancelar': ({ sessaoId, justificativa }, ctx) => {
-    sincronizarAgenda(ctx.portas, cancelarSessao(ctx, sessaoId, exigirJustificativa(justificativa)));
+    aposCancelar(ctx, cancelarSessao(ctx, sessaoId, exigirJustificativa(justificativa)));
     return null;
   },
 };
