@@ -4,7 +4,7 @@ import { montarPessoa, type Contexto } from './historico';
 import type { Portas } from './portas';
 import { ACOES_FASE } from './regras';
 
-export { comPermissoes, montarPessoa, novoId, registrar, type Contexto } from './historico';
+export { comPermissoes, montarPessoa, notificar, novoId, registrar, type Contexto } from './historico';
 
 export type Handler<A extends Acao> = (dados: Entrada<A>, ctx: Contexto) => Saida<A>;
 export type Handlers = Partial<{ [A in Acao]: Handler<A> }>;

@@ -48,3 +48,9 @@ export function comPermissoes(linha: LinhaPessoa, todas: LinhaPermissao[]): Pess
   const { criadoEm: _c, atualizadoPor: _a, ...resto } = linha as LinhaPessoa & { criadoEm?: string; atualizadoPor?: string };
   return { ...resto, convitesAgenda: resto.convitesAgenda || null, permissoes };
 }
+
+export function notificar(ctx: Contexto, pessoaIds: string[], texto: string, link: string): void {
+  for (const pessoaId of new Set(pessoaIds)) {
+    ctx.portas.repo.inserir('notificacoes', { id: novoId(ctx.portas, 'n'), pessoaId, texto, link, lida: false });
+  }
+}
