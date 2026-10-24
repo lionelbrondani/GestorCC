@@ -77,7 +77,7 @@ Antes de rodar, preencha as propriedades:
 
    | Propriedade | O que colocar |
    |---|---|
-   | `EMAIL_PRIMEIRO_GESTOR` | e-mail de quem vai administrar o sistema. Use o mesmo e-mail que essa pessoa terá na lista de importação da equipe (passo 9), senão ela fica com dois cadastros. |
+   | `EMAIL_PRIMEIRO_GESTOR` | e-mail de quem vai administrar o sistema (é o login dessa pessoa) |
    | `NOME_PRIMEIRO_GESTOR` | nome completo dessa pessoa |
    | `MATRICULA_PRIMEIRO_GESTOR` | matrícula dessa pessoa (vira a senha inicial) |
 
@@ -162,7 +162,7 @@ Os arquivos `.env.teste`, `.env.producao` e `.firebaserc` ficam só no seu compu
    - os campos de CPF em diante são opcionais.
 3. No GestorCC, abra **Pessoas e acessos → Importar da planilha → Importar agora**.
 4. Confira o relatório:
-   - quem já tinha cadastro com o mesmo e-mail é atualizado;
+   - quem já tinha cadastro com a mesma matrícula só tem os dados pessoais (CPF, banco, camiseta…) completados. O e-mail e o perfil dessa pessoa não mudam;
    - quem é novo entra com o perfil Eventual e a matrícula como senha inicial;
    - linhas com problema (CPF inválido, e-mail repetido…) aparecem com o número da linha. Corrija na planilha e importe de novo.
 5. Ajuste os perfis de acesso de quem precisa de mais do que Eventual.
