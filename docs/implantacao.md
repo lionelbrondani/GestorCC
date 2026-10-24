@@ -114,7 +114,7 @@ Use a conta escolhida para o site no passo 1. Se for uma conta diferente da do s
 6. Entre com a conta do site:
 
    ```
-   npx --yes firebase-tools@13.29.1 login
+   npm run firebase -- login
    ```
 
 ## 7. Configurar e publicar o app
