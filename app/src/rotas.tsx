@@ -3,6 +3,7 @@ import type { ReactNode } from 'react';
 import type { RouteObject } from 'react-router-dom';
 import { Exige, LayoutAutenticado } from './auth/RotaProtegida';
 import { EstadoVazio } from './componentes';
+import { Busca } from './layout/Busca';
 import { Notificacoes } from './layout/Notificacoes';
 import { Agenda } from './telas/agenda/Agenda';
 import { EventoDetalhe } from './telas/agenda/EventoDetalhe';
@@ -38,7 +39,7 @@ const comPermissao = (modulos: Modulo[], el: ReactNode, nivel: 'ver' | 'editar' 
 export const ROTAS: RouteObject[] = [
   { path: '/entrar', element: <Login /> },
   {
-    element: <LayoutAutenticado notificacoes={<Notificacoes />} />,
+    element: <LayoutAutenticado busca={<Busca />} notificacoes={<Notificacoes />} />,
     children: [
       { path: '/', element: <Inicio /> },
       { path: '/minhas-escalas', element: <MinhasEscalas /> },

@@ -7,7 +7,6 @@ import { useEu } from '../../auth/SessaoContexto';
 import { Alerta, Botao, Carregando } from '../../componentes';
 import { copiarTexto } from '../escalas/dadosEscalas';
 import type { useDadosPagamentos } from './dadosPagamentos';
-import { baixarArquivo, gerarFichaDocx } from './fichaDocx';
 
 function fichaEmTexto(f: Ficha): string {
   const linhas = f.linhas.map((l) => [l.ordem, l.nome, l.matricula, l.cpf, l.banco, l.agencia, l.conta, formatarReais(l.valor)].join('\t'));
@@ -117,7 +116,12 @@ export function FichaIndicacao({ lote, dados }: { lote: Lote; dados: ReturnType<
         >
           <Copy size={16} aria-hidden /> Copiar para o e-mail
         </Botao>
-        <Botao onClick={async () => baixarArquivo(await gerarFichaDocx(ficha), `ficha-indicacao-${lote.id}.docx`)}>
+        <Botao
+          onClick={async () => {
+            const { baixarArquivo, gerarFichaDocx } = await import('./fichaDocx');
+            baixarArquivo(await gerarFichaDocx(ficha), `ficha-indicacao-${lote.id}.docx`);
+          }}
+        >
           <Download size={16} aria-hidden /> Baixar .docx
         </Botao>
         <Botao onClick={() => window.print()}>
