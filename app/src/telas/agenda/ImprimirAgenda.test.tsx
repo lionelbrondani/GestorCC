@@ -3,7 +3,7 @@ import { renderizar } from '../../teste/renderizar';
 
 describe('Imprimir agenda do mês', () => {
   it('lista todos os dias de novembro com feriados e horários a definir', async () => {
-    await renderizar({ pessoa: 'gestor', rota: '/agenda/imprimir?mes=2026-11' });
+    await renderizar({ pessoa: 'gestor', rota: '/agenda/imprimir?mes=2026-11&modelo=legado' });
     expect(await screen.findByRole('heading', { name: 'NOVEMBRO/2026' })).toBeInTheDocument();
     const tabela = screen.getByRole('table');
     const linhas = within(tabela).getAllByRole('row').slice(1);

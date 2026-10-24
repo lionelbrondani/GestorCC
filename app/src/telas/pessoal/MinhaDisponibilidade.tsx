@@ -6,32 +6,36 @@ import { useEu } from '../../auth/SessaoContexto';
 import { Alerta, Carregando, Cartao, EstadoVazio, Etiqueta, Pagina } from '../../componentes';
 import { agora, janela } from '../../util/hoje';
 import { dataLonga, horarioTexto, tituloSessao } from '../../util/sessoes';
+import { CalendarioDisponibilidade, type Resposta } from './CalendarioDisponibilidade';
 import './pessoal.css';
 
-function SimNao({
-  rotulo,
-  valor,
-  desabilitado,
-  aoMarcar,
-  salvo,
-}: {
-  rotulo: string;
-  valor: boolean | undefined;
-  desabilitado: boolean;
-  aoMarcar: (v: boolean) => void;
-  salvo: boolean;
-}) {
+function SimNao({ rotulo, valor, desabilitado, aoMarcar }: { rotulo: string; valor: Resposta; desabilitado: boolean; aoMarcar: (v: boolean) => void }) {
   return (
-    <div className="linha" role="group" aria-label={`Disponibilidade para ${rotulo}`}>
-      {salvo && <span className="salvo">Salvo</span>}
-      <div className="sim-nao">
-        <button data-valor="sim" aria-pressed={valor === true} disabled={desabilitado} onClick={() => aoMarcar(true)}>
-          Sim
-        </button>
-        <button data-valor="nao" aria-pressed={valor === false} disabled={desabilitado} onClick={() => aoMarcar(false)}>
-          Não
-        </button>
-      </div>
+    <div className="sim-nao" role="group" aria-label={`Disponibilidade para ${rotulo}`}>
+      <button data-valor="sim" aria-pressed={valor === true} disabled={desabilitado} onClick={() => aoMarcar(true)}>
+        Sim
+      </button>
+      <button data-valor="nao" aria-pressed={valor === false} disabled={desabilitado} onClick={() => aoMarcar(false)}>
+        Não
+      </button>
+    </div>
+  );
+}
+
+function Legenda() {
+  return (
+    <div className="disp-legenda pequeno texto-2" aria-hidden>
+      <span>
+        <i data-estado="sim" /> Sim
+      </span>
+      <span>
+        <i data-estado="nao" /> Não
+      </span>
+      <span>
+        <i data-estado="pendente" /> Sem resposta
+      </span>
+      <span className="so-desktop">Toque na sessão para alternar.</span>
+      <span className="so-celular">Toque no dia para responder.</span>
     </div>
   );
 }
@@ -45,14 +49,18 @@ export function MinhaDisponibilidade() {
   const idsPeriodo = periodo.sessoes.map((s) => s.id);
   const disp = useConsulta('disponibilidades.listar', { sessaoIds: idsPeriodo });
   const marcar = useMutacao('disponibilidades.marcar', ['disponibilidades.listar']);
-  const [salvos, setSalvos] = useState<Set<string>>(new Set());
+  const [otimista, setOtimista] = useState<Map<string, boolean>>(new Map());
+  const [diaSelecionado, setDiaSelecionado] = useState<string | null>(null);
+  const [status, setStatus] = useState<'salvando' | 'salvo' | null>(null);
   const [erro, setErro] = useState<string | null>(null);
 
   if (periodo.isLoading || rodadas.isLoading || disp.isLoading) return <Carregando />;
 
   const momento = agora();
-  const minhaDisp = new Map((disp.data ?? []).filter((d) => d.pessoaId === eu.id).map((d) => [d.sessaoId, d.disponivel]));
+  const doServidor = new Map((disp.data ?? []).filter((d) => d.pessoaId === eu.id).map((d) => [d.sessaoId, d.disponivel]));
+  const resposta = (id: string): Resposta => (otimista.has(id) ? otimista.get(id) : doServidor.get(id));
   const jaEscalado = new Set((escalas.data ?? []).filter((e) => e.pessoaId === eu.id && e.status !== 'cancelado').map((e) => e.sessaoId));
+  const titulo = (s: Sessao) => tituloSessao(periodo.evento.get(s.eventoId), s);
 
   const convocacoes = periodo.sessoes.filter(
     (s) => s.status === 'ativa' && s.convocacao && s.convocacao.abertaAte >= momento && !jaEscalado.has(s.id),
@@ -61,61 +69,49 @@ export function MinhaDisponibilidade() {
 
   async function aoMarcar(s: Sessao, v: boolean) {
     setErro(null);
+    setOtimista((m) => new Map(m).set(s.id, v));
+    setStatus('salvando');
     try {
       await marcar.mutateAsync({ sessaoId: s.id, disponivel: v });
-      setSalvos((atual) => new Set(atual).add(s.id));
+      setStatus('salvo');
     } catch (e) {
+      setOtimista((m) => {
+        const n = new Map(m);
+        n.delete(s.id);
+        return n;
+      });
+      setStatus(null);
       setErro((e as Error).message);
     }
   }
 
-  function listaPorDia(sessoes: Sessao[], encerrada: boolean) {
-    const porDia = new Map<string, Sessao[]>();
-    for (const s of [...sessoes].sort((a, b) => a.data.localeCompare(b.data) || (a.chegada ?? '').localeCompare(b.chegada ?? ''))) {
-      porDia.set(s.data, [...(porDia.get(s.data) ?? []), s]);
-    }
-    return [...porDia.entries()].map(([dia, lista]) => (
-      <div key={dia} className="dia-grupo">
-        <h3>{dataLonga(dia)}</h3>
-        {lista.map((s) => {
-          const ev = periodo.evento.get(s.eventoId);
-          const titulo = tituloSessao(ev, s);
-          return (
-            <div key={s.id} className="disp-sessao">
-              <div>
-                <div className="negrito">
-                  {titulo} {s.status === 'cancelada' && <Etiqueta tom="neutro">Cancelada</Etiqueta>}
-                </div>
-                <div className="pequeno texto-2">{horarioTexto(s)}</div>
-              </div>
-              <SimNao
-                rotulo={titulo}
-                valor={minhaDisp.get(s.id)}
-                desabilitado={encerrada || s.status === 'cancelada'}
-                aoMarcar={(v) => aoMarcar(s, v)}
-                salvo={salvos.has(s.id)}
-              />
-            </div>
-          );
-        })}
+  const linhaSessao = (s: Sessao, encerrada: boolean) => (
+    <div key={s.id} className="disp-sessao">
+      <div>
+        <div className="negrito">
+          {titulo(s)} {s.status === 'cancelada' && <Etiqueta tom="neutro">Cancelada</Etiqueta>}
+        </div>
+        <div className="pequeno texto-2">{horarioTexto(s)}</div>
       </div>
-    ));
-  }
+      <SimNao rotulo={titulo(s)} valor={resposta(s.id)} desabilitado={encerrada || s.status === 'cancelada'} aoMarcar={(v) => aoMarcar(s, v)} />
+    </div>
+  );
 
   return (
-    <Pagina titulo="Minha disponibilidade" subtitulo="Marque Sim nas sessões em que você pode trabalhar. Tudo é salvo na hora.">
+    <Pagina titulo="Minha disponibilidade" subtitulo="Marque nos dias em que você pode trabalhar. Tudo é salvo na hora.">
       {erro && <Alerta tom="erro">{erro}</Alerta>}
 
       {convocacoes.length > 0 && (
         <Cartao destaque titulo="Precisamos de mais gente">
           <div className="pilha-2">
             {convocacoes.map((s) => (
-              <p key={s.id} className="pequeno">
-                {tituloSessao(periodo.evento.get(s.eventoId), s)}: +{s.convocacao!.vagas} vaga(s) — responda até{' '}
-                {formatarDataHora(s.convocacao!.abertaAte)}
-              </p>
+              <div key={s.id} className="pilha-2">
+                <p className="pequeno">
+                  {dataLonga(s.data)} · +{s.convocacao!.vagas} vaga(s) — responda até {formatarDataHora(s.convocacao!.abertaAte)}
+                </p>
+                {linhaSessao(s, false)}
+              </div>
             ))}
-            <div className="pilha">{listaPorDia(convocacoes, false)}</div>
           </div>
         </Cartao>
       )}
@@ -127,12 +123,21 @@ export function MinhaDisponibilidade() {
       {abertas.map((r) => {
         const encerrada = r.prazo < momento;
         const sessoes = periodo.sessoes.filter((s) => r.sessaoIds.includes(s.id));
-        const respondidas = sessoes.filter((s) => minhaDisp.has(s.id)).length;
+        const meses = [...new Set(sessoes.map((s) => s.data.slice(0, 7)))].sort();
+        const respondidas = sessoes.filter((s) => resposta(s.id) !== undefined).length;
+        const diasComSessao = [...new Set(sessoes.map((s) => s.data))].sort();
+        const dia = diaSelecionado && diasComSessao.includes(diaSelecionado) ? diaSelecionado : diasComSessao[0];
+        const doDia = sessoes.filter((s) => s.data === dia).sort((a, b) => (a.chegada ?? '99').localeCompare(b.chegada ?? '99'));
         return (
           <Cartao
             key={r.id}
             titulo={`Rodada ${r.nome}`}
-            acoes={<Etiqueta tom={encerrada ? 'neutro' : 'destaque'}>{encerrada ? 'Encerrada' : `Até ${formatarDataHora(r.prazo)}`}</Etiqueta>}
+            acoes={
+              <>
+                {status && <span className="salvo">{status === 'salvando' ? 'Salvando…' : 'Salvo'}</span>}
+                <Etiqueta tom={encerrada ? 'neutro' : 'destaque'}>{encerrada ? 'Encerrada' : `Até ${formatarDataHora(r.prazo)}`}</Etiqueta>
+              </>
+            }
           >
             <div className="pilha">
               {encerrada ? (
@@ -142,7 +147,26 @@ export function MinhaDisponibilidade() {
                   Você respondeu {respondidas} de {sessoes.length} sessões. Sem resposta conta como indisponível.
                 </p>
               )}
-              {listaPorDia(sessoes, encerrada)}
+              <Legenda />
+              {meses.map((mes) => (
+                <CalendarioDisponibilidade
+                  key={mes}
+                  mes={mes}
+                  sessoes={sessoes.filter((s) => s.data.startsWith(mes))}
+                  titulo={titulo}
+                  resposta={resposta}
+                  desabilitado={encerrada}
+                  diaSelecionado={dia ?? null}
+                  aoSelecionarDia={setDiaSelecionado}
+                  aoMarcar={aoMarcar}
+                />
+              ))}
+              {dia && (
+                <div className="disp-painel-dia">
+                  <h3>{dataLonga(dia)}</h3>
+                  {doDia.map((s) => linhaSessao(s, encerrada))}
+                </div>
+              )}
             </div>
           </Cartao>
         );

@@ -1,4 +1,4 @@
-import { diaDaSemana, formatarData, type Evento, type Pessoa, type Sessao } from '@shared';
+import { diaDaSemana, formatarData, mesExtenso, type Evento, type Pessoa, type Sessao } from '@shared';
 
 export function tituloSessao(evento: Evento | undefined, sessao: Sessao): string {
   const nome = evento?.nome ?? 'Evento';
@@ -12,6 +12,11 @@ export function dataLonga(d: string): string {
 export function horarioTexto(s: Sessao): string {
   if (s.horarioADefinir || !s.chegada) return 'Horário a definir';
   return `Chegada ${s.chegada}${s.inicio ? ` · início ${s.inicio}` : ''}${s.fim ? ` · fim ${s.fim}` : ''}`;
+}
+
+/** '2026-10-02' → 'OUT/26' (para selos de data). */
+export function mesCurto(d: string): string {
+  return `${mesExtenso(Number(d.slice(5, 7))).slice(0, 3)}/${d.slice(2, 4)}`;
 }
 
 export function chegadaTexto(s: Sessao): string {

@@ -20,7 +20,7 @@ describe('Imprimir escala (formato tradicional)', () => {
     const escalas = await api.chamar('escalas.listar', { de: '2026-10-01', ate: '2026-10-31' });
     const marcadas = escalas.filter((e) => publicadas.some((s) => s.id === e.sessaoId) && ['publicado', 'realizado', 'faltou'].includes(e.status));
 
-    await act(() => router.navigate('/escalas/imprimir?mes=2026-10'));
+    await act(() => router.navigate('/escalas/imprimir?mes=2026-10&modelo=legado'));
 
     await waitFor(() => expect(screen.getAllByRole('table')).toHaveLength(3));
     expect(screen.getAllByText('TABELA DE ESCALA DOS BOLSISTAS')).toHaveLength(3);

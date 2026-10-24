@@ -6,7 +6,7 @@ import { useConsulta } from '../../api/hooks';
 import { useEu } from '../../auth/SessaoContexto';
 import { Abas, Carregando, Cartao, EstadoVazio, Etiqueta, Pagina } from '../../componentes';
 import { hoje, janela } from '../../util/hoje';
-import { chegadaTexto, dataLonga, linkGoogleAgenda, tituloSessao } from '../../util/sessoes';
+import { chegadaTexto, dataLonga, linkGoogleAgenda, mesCurto, tituloSessao } from '../../util/sessoes';
 import { AvisoAgendaPessoal } from './AgendaGoogle';
 import './pessoal.css';
 
@@ -64,7 +64,7 @@ export function MinhasEscalas() {
                   <div className="escala-data" aria-hidden>
                     <small>{diaDaSemanaCurto(s.data)}</small>
                     <strong>{s.data.slice(8, 10)}</strong>
-                    <small>{s.data.slice(5, 7)}/{s.data.slice(2, 4)}</small>
+                    <small>{mesCurto(s.data)}</small>
                   </div>
                   <div className="pilha-2">
                     <div className="linha-entre">

@@ -88,3 +88,158 @@
 .ficha td {
   text-align: left;
 }
+
+/* ---------- Modelos "atualizados" de impressão ---------- */
+.impresso {
+  background: #fff;
+  color: #1a1a1a;
+  font-family: var(--fonte-texto);
+  padding: 20px 24px;
+  border: 1px solid var(--cor-borda);
+  border-radius: 10px;
+}
+.impresso-cabecalho {
+  display: flex;
+  align-items: stretch;
+  gap: 16px;
+  margin-bottom: 18px;
+  border-bottom: 3px solid var(--cor-destaque);
+  padding-bottom: 12px;
+}
+.impresso-faixa {
+  background: #232323;
+  border-radius: 6px;
+  padding: 8px 12px;
+  display: grid;
+  place-items: center;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+.impresso-faixa img {
+  height: 46px;
+}
+.impresso-cabecalho h1 {
+  font-size: 15pt;
+  letter-spacing: 0.02em;
+}
+.impresso-cabecalho p {
+  font-size: 10pt;
+  color: #555;
+  margin-top: 2px;
+}
+.impresso-bloco {
+  display: grid;
+  grid-template-columns: 58px 1fr;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid #ddd;
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+.impresso-data {
+  background: #232323;
+  color: #f5c518;
+  border-radius: 6px;
+  text-align: center;
+  font-family: var(--fonte-titulo);
+  font-weight: 700;
+  padding: 4px 0;
+  line-height: 1.1;
+  align-self: start;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+.impresso-data small {
+  display: block;
+  font-size: 7pt;
+  color: #e9e9e6;
+  letter-spacing: 0.06em;
+}
+.impresso-data strong {
+  font-size: 15pt;
+}
+.impresso-bloco h2 {
+  font-size: 11pt;
+}
+.impresso-meta {
+  font-size: 9pt;
+  color: #444;
+  margin: 2px 0 6px;
+}
+.impresso-meta strong {
+  color: #1a1a1a;
+}
+.impresso-nomes {
+  columns: 3;
+  column-gap: 16px;
+  font-size: 9.5pt;
+  margin: 0;
+  padding-left: 16px;
+}
+.impresso-rotulo {
+  font-size: 7.5pt;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #777;
+  margin-top: 4px;
+}
+.impresso-semana h2.semana-titulo {
+  font-size: 9pt;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #666;
+  margin: 14px 0 2px;
+  padding: 4px 8px;
+  background: #fdf3cc;
+  border-left: 3px solid #f5c518;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+.impresso-feriado {
+  font-size: 9pt;
+  color: #b3261e;
+  padding: 4px 0 4px 70px;
+}
+.impresso-resumo {
+  margin-top: 18px;
+  break-inside: avoid;
+}
+.impresso-resumo h2 {
+  font-size: 10pt;
+  margin-bottom: 6px;
+}
+.impresso-resumo ul {
+  columns: 4;
+  column-gap: 16px;
+  font-size: 9pt;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.impresso-rodape {
+  margin-top: 16px;
+  font-size: 8pt;
+  color: #888;
+  text-align: right;
+}
+.impresso-retrato {
+  page: retrato;
+}
+@page retrato {
+  size: A4 portrait;
+  margin: 12mm;
+}
+@media print {
+  .impresso {
+    border: none;
+    padding: 0;
+  }
+}
+@media (max-width: 699px) {
+  .impresso-nomes {
+    columns: 2;
+  }
+  .impresso-resumo ul {
+    columns: 2;
+  }
+}
