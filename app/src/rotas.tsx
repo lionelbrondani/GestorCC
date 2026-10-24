@@ -11,6 +11,9 @@ import { Escalas } from './telas/escalas/Escalas';
 import { LoteDetalhe } from './telas/pagamentos/LoteDetalhe';
 import { NovoLote } from './telas/pagamentos/NovoLote';
 import { Pagamentos } from './telas/pagamentos/Pagamentos';
+import { ContratoDetalhe } from './telas/contratos/ContratoDetalhe';
+import { Contratos } from './telas/contratos/Contratos';
+import { SolicitarFundep } from './telas/contratos/SolicitarFundep';
 import { Inicio } from './telas/inicio/InicioGestor';
 import { Login } from './telas/login/Login';
 import { Avisos } from './telas/pessoal/Avisos';
@@ -52,9 +55,9 @@ export const ROTAS: RouteObject[] = [
       { path: '/pagamentos', element: comPermissao(['pagamentos'], <Pagamentos />) },
       { path: '/pagamentos/novo', element: comPermissao(['pagamentos'], <NovoLote />, 'editar') },
       { path: '/pagamentos/:loteId', element: comPermissao(['pagamentos'], <LoteDetalhe />) },
-      { path: '/contratos', element: comPermissao(['contratos'], tela('/contratos')) },
-      { path: '/contratos/fundep', element: comPermissao(['contratos'], tela('/contratos/fundep'), 'editar') },
-      { path: '/contratos/:id', element: comPermissao(['contratos'], tela('/contratos/:id')) },
+      { path: '/contratos', element: comPermissao(['contratos'], <Contratos />) },
+      { path: '/contratos/fundep', element: comPermissao(['contratos'], <SolicitarFundep />, 'editar') },
+      { path: '/contratos/:id', element: comPermissao(['contratos'], <ContratoDetalhe />) },
       { path: '/almox', element: comPermissao(['almoxEstoque', 'almoxSaidas'], tela('/almox')) },
       { path: '/mural', element: comPermissao(['mural'], tela('/mural'), 'editar') },
       { path: '/pessoas', element: comPermissao(['pessoas'], tela('/pessoas')) },

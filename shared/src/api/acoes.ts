@@ -77,6 +77,8 @@ export interface Acoes {
 
   'contratos.listar': A<null, { contratos: Contrato[]; aditivos: Aditivo[]; contratantes: Contratante[] }>;
   'contratos.salvar': A<Contrato, Contrato>;
+  'contratos.salvarAditivo': A<Aditivo, Aditivo>;
+  'contratantes.salvar': A<Contratante, Contratante>;
 
   'almox.listar': A<null, { itens: AlmoxItem[]; autorizadosExternos: string[] }>;
   'almox.movimentos': A<{ cod?: string }, AlmoxMovimento[]>;

@@ -101,6 +101,8 @@ const REGRAS: Record<Acao, Regra> = {
   'externos.registrarEnvio': ['pagamentos', 'editar'],
   'contratos.listar': ['contratos', 'ver'],
   'contratos.salvar': ['contratos', 'editar'],
+  'contratos.salvarAditivo': ['contratos', 'editar'],
+  'contratantes.salvar': ['contratos', 'editar'],
   'almox.listar': 'logado',
   'almox.movimentos': ['almoxEstoque', 'ver'],
   'almox.salvarItem': ['almoxEstoque', 'editar'],
@@ -407,6 +409,24 @@ const handlers: Handlers = {
     if (i >= 0) ctx.banco.contratos[i] = salvo;
     else ctx.banco.contratos.push(salvo);
     registrar(ctx, 'contrato', salvo.id, i >= 0 ? 'alterou contrato' : 'criou contrato');
+    return salvo;
+  },
+
+  'contratos.salvarAditivo': (ad, ctx) => {
+    const salvo = { ...ad, id: ad.id || novoId('ad') };
+    const i = ctx.banco.aditivos.findIndex((x) => x.id === salvo.id);
+    if (i >= 0) ctx.banco.aditivos[i] = salvo;
+    else ctx.banco.aditivos.push(salvo);
+    registrar(ctx, 'contrato', salvo.contratoId, i >= 0 ? 'alterou aditivo' : 'registrou aditivo');
+    return salvo;
+  },
+  'contratantes.salvar': (k, ctx) => {
+    if (!k.razaoSocial.trim()) throw erro('RAZAO_SOCIAL', 'Informe a razão social ou o nome do contratante.');
+    const salvo = { ...k, id: k.id || novoId('k') };
+    const i = ctx.banco.contratantes.findIndex((x) => x.id === salvo.id);
+    if (i >= 0) ctx.banco.contratantes[i] = salvo;
+    else ctx.banco.contratantes.push(salvo);
+    registrar(ctx, 'contratante', salvo.id, i >= 0 ? 'alterou contratante' : 'cadastrou contratante');
     return salvo;
   },
 
