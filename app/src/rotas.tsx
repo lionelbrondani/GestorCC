@@ -3,7 +3,13 @@ import type { ReactNode } from 'react';
 import type { RouteObject } from 'react-router-dom';
 import { Exige, LayoutAutenticado } from './auth/RotaProtegida';
 import { EstadoVazio } from './componentes';
+import { InicioBolsista } from './telas/inicio/InicioBolsista';
 import { Login } from './telas/login/Login';
+import { Avisos } from './telas/pessoal/Avisos';
+import { MeusGanhos } from './telas/pessoal/MeusGanhos';
+import { MinhaDisponibilidade } from './telas/pessoal/MinhaDisponibilidade';
+import { MinhasEscalas } from './telas/pessoal/MinhasEscalas';
+import { Perfil } from './telas/pessoal/Perfil';
 
 function EmConstrucao() {
   return <EstadoVazio titulo="Em construção" texto="Esta tela chega nas próximas etapas do protótipo." />;
@@ -24,12 +30,12 @@ export const ROTAS: RouteObject[] = [
   {
     element: <LayoutAutenticado />,
     children: [
-      { path: '/', element: tela('/') },
-      { path: '/minhas-escalas', element: tela('/minhas-escalas') },
-      { path: '/disponibilidade', element: tela('/disponibilidade') },
-      { path: '/ganhos', element: tela('/ganhos') },
-      { path: '/avisos', element: tela('/avisos') },
-      { path: '/perfil', element: tela('/perfil') },
+      { path: '/', element: <InicioBolsista /> },
+      { path: '/minhas-escalas', element: <MinhasEscalas /> },
+      { path: '/disponibilidade', element: <MinhaDisponibilidade /> },
+      { path: '/ganhos', element: <MeusGanhos /> },
+      { path: '/avisos', element: <Avisos /> },
+      { path: '/perfil', element: <Perfil /> },
       { path: '/agenda', element: comPermissao(['eventos'], tela('/agenda')) },
       { path: '/agenda/imprimir', element: comPermissao(['eventos'], tela('/agenda/imprimir')) },
       { path: '/agenda/:eventoId', element: comPermissao(['eventos'], tela('/agenda/:eventoId')) },

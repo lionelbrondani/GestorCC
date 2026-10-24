@@ -5,6 +5,7 @@ import { ApiContexto } from '../api/cliente';
 import { criarMockCliente } from '../api/mock/mockCliente';
 import { SessaoProvedor, type SessaoInicial } from '../auth/SessaoContexto';
 import { FUTURO_ROTEADOR, ROTAS } from '../rotas';
+import { definirHoje } from '../util/hoje';
 
 export const CONTAS = {
   gestor: { email: 'gestor@ufsm.br', senha: '1000000001' },
@@ -13,6 +14,7 @@ export const CONTAS = {
 } as const;
 
 export async function renderizar(opcoes: { pessoa?: keyof typeof CONTAS | null; rota?: string; hoje?: string } = {}) {
+  definirHoje(opcoes.hoje ?? '2026-10-24');
   const api = criarMockCliente({ latenciaMs: 0, persistir: false, hoje: opcoes.hoje });
   let inicial: SessaoInicial | null = null;
   const conta = opcoes.pessoa === undefined ? 'gestor' : opcoes.pessoa;
