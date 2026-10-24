@@ -25,6 +25,8 @@ export interface Repositorio {
   remover(tabela: NomeTabela, id: string): void;
   /** Lê uma aba fora do esquema (ex.: IMPORTAR_PESSOAS), usando a primeira linha como cabeçalho. */
   lerAbaLivre(planilha: Planilha, aba: string): Record<string, unknown>[];
+  /** Quem está gravando (vai para atualizadoPor). */
+  definirAutor(pessoaId: string): void;
 }
 
 export interface Cripto {

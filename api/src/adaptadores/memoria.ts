@@ -27,7 +27,7 @@ export function criarRepositorioMemoria(
   inicial: Partial<Record<NomeTabela, Registro[]>> = {},
   relogio: Relogio = relogioFixo('2026-10-24T10:00'),
   abasLivres: Partial<Record<string, Record<string, unknown>[]>> = {},
-): Repositorio & { dump(): Partial<Record<NomeTabela, Registro[]>>; quem: string } {
+): Repositorio & { dump(): Partial<Record<NomeTabela, Registro[]>> } {
   const dados: Partial<Record<NomeTabela, Registro[]>> = copiar(inicial);
   const tabela = (t: NomeTabela) => (dados[t] ??= []);
   const repo = {
@@ -48,6 +48,9 @@ export function criarRepositorioMemoria(
     },
     remover(t: NomeTabela, id: string) {
       dados[t] = tabela(t).filter((x) => x.id !== id);
+    },
+    definirAutor(pessoaId: string) {
+      repo.quem = pessoaId;
     },
     lerAbaLivre(planilha: Planilha, aba: string) {
       return copiar(abasLivres[`${planilha}:${aba}`] ?? []);
