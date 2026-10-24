@@ -77,6 +77,12 @@ export function instalar(): void {
 
   const portas = portasGas();
   if (!propriedadesGas.obter('SEGREDO_TOKEN')) propriedadesGas.definir('SEGREDO_TOKEN', paraBase64Url(portas.cripto.aleatorio(32)));
+  if (!propriedadesGas.obter('AGENDA_ID')) {
+    // agenda Google do setor, na conta que roda o sistema (spec 7.11)
+    const agenda = Calendar.Calendars!.insert({ summary: 'Centro de Convenções UFSM', timeZone: 'America/Sao_Paulo' });
+    propriedadesGas.definir('AGENDA_ID', agenda.id!);
+    propriedadesGas.definir('AGENDA_CONTA', Calendar.Calendars!.get('primary').id!);
+  }
 
   garantirGatilho('backupDiario', () => ScriptApp.newTrigger('backupDiario').timeBased().everyDays(1).atHour(3).create());
   garantirGatilho('gatilhoMinutos', () => ScriptApp.newTrigger('gatilhoMinutos').timeBased().everyMinutes(5).create());

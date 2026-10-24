@@ -61,6 +61,25 @@ export interface Propriedades {
   definir(chave: string, valor: string): void;
 }
 
+/** Quando o evento acontece na agenda: dia inteiro (horário a definir) ou de 'AAAA-MM-DDTHH:MM' a 'AAAA-MM-DDTHH:MM'. */
+export type QuandoAgenda = { diaInteiro: true; dia: string } | { diaInteiro: false; inicio: string; fim: string };
+
+export interface EventoAgenda {
+  titulo: string;
+  descricao: string;
+  quando: QuandoAgenda;
+  convidados: string[];
+}
+
+/** Agenda Google do setor. Nunca manda e-mail: criar, alterar e remover são silenciosos. */
+export interface AgendaGoogle {
+  /** Falso enquanto o `instalar` não criou a agenda. */
+  ligada(): boolean;
+  /** Cria (id null) ou atualiza; devolve o id do evento no Google. Lança erro se o Google falhar. */
+  salvar(id: string | null, evento: EventoAgenda): string;
+  remover(id: string): void;
+}
+
 export interface Portas {
   repo: Repositorio;
   cripto: Cripto;
@@ -68,4 +87,5 @@ export interface Portas {
   cache: Cache;
   relogio: Relogio;
   props: Propriedades;
+  agenda: AgendaGoogle;
 }

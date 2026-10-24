@@ -19,6 +19,24 @@ describe('configurações', () => {
     expect(CONFIG_PADRAO.diariaPadrao).toBe(8000);
   });
 
+  it('a agenda do setor vem das propriedades criadas pelo instalar, não do que foi salvo', () => {
+    const amb = ambiente();
+    const t = amb.token('p01');
+    const obter = () => (amb.chamar('config.obter', null, { token: t }) as Ok<Config>).dados.agendaSetor;
+    expect(obter()).toEqual({ nome: 'Centro de Convenções UFSM', conta: '', link: '', conectada: false });
+
+    amb.portas.props.definir('AGENDA_ID', 'abc123@group.calendar.google.com');
+    amb.portas.props.definir('AGENDA_CONTA', 'setor@exemplo.com');
+    const esperado = {
+      nome: 'Centro de Convenções UFSM', conta: 'setor@exemplo.com', conectada: true,
+      link: `https://calendar.google.com/calendar/render?cid=${encodeURIComponent('abc123@group.calendar.google.com')}`,
+    };
+    expect(obter()).toEqual(esperado);
+    const salvo = (amb.chamar('config.obter', null, { token: t }) as Ok<Config>).dados;
+    amb.chamar('config.salvar', { ...salvo, agendaSetor: { nome: 'x', conta: 'y', link: 'z', conectada: false } }, { token: t });
+    expect(obter()).toEqual(esperado);
+  });
+
   it('bolsista não altera configurações', () => {
     const amb = ambiente();
     expect(amb.chamar('config.salvar', CONFIG_PADRAO, { token: amb.token('p02') })).toMatchObject({ erro: { codigo: 'SEM_PERMISSAO' } });

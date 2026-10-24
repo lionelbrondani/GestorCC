@@ -1,4 +1,5 @@
 import { ErroApi, validarEvento, type Evento, type Sessao } from '@shared';
+import { removerDaAgenda, sincronizarAgenda } from '../agenda/sincronizar';
 import { exigirVersao, novoId, registrar, type Contexto, type Handlers } from '../nucleo/roteador';
 
 export interface LinhaEvento {
@@ -176,16 +177,19 @@ export const handlersEventos: Handlers = {
 
     const { atualizadoEm: _a, atualizadoPor: _p, ...antes } = anterior ?? ({} as LinhaEvento);
     registrar(ctx, 'evento', id, anterior ? 'alterou evento' : 'criou evento', anterior ? antes : null, linha);
+
+    removerDaAgenda(ctx.portas, removidas.map((s) => s.googleEventoId));
+    sincronizarAgenda(ctx.portas, linhasSessoes(ctx).filter((s) => s.eventoId === id).map((s) => s.id));
     return doEvento(ctx, id);
   },
 
   'eventos.cancelar': ({ eventoId, justificativa }, ctx) => {
-    cancelarEvento(ctx, eventoId, exigirJustificativa(justificativa));
+    sincronizarAgenda(ctx.portas, cancelarEvento(ctx, eventoId, exigirJustificativa(justificativa)));
     return null;
   },
 
   'sessoes.cancelar': ({ sessaoId, justificativa }, ctx) => {
-    cancelarSessao(ctx, sessaoId, exigirJustificativa(justificativa));
+    sincronizarAgenda(ctx.portas, cancelarSessao(ctx, sessaoId, exigirJustificativa(justificativa)));
     return null;
   },
 };

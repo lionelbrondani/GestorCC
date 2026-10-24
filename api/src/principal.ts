@@ -1,11 +1,13 @@
 /// <reference types="google-apps-script" />
 // Ponto de entrada do Apps Script. As funções exportadas viram globais pelo rodapé do build.
+import { ErroApi } from '@shared';
 import { handlersAuth } from './acoes/auth';
 import { handlersAvisos } from './acoes/avisos';
 import { handlersPessoas } from './acoes/pessoas';
 import { handlersEventos } from './acoes/eventos';
 import { handlersSistema } from './acoes/sistema';
-import { portasGas } from './adaptadores/gas';
+import { portasGas, travaGas } from './adaptadores/gas';
+import { sincronizarPendentes } from './agenda/sincronizar';
 import { tratarRequisicao, type Handlers } from './nucleo/roteador';
 import { VERSAO_API } from './versao';
 
@@ -27,6 +29,13 @@ export function doGet(): GoogleAppsScript.Content.TextOutput {
   return json(JSON.stringify({ ok: true, dados: { versao: VERSAO_API } }));
 }
 
+/** A cada 5 minutos: refaz o que o Google Agenda não aceitou na hora. Com o sistema ocupado, pula esta rodada. */
 export function gatilhoMinutos(): void {
-  // Reservado: importação do formulário de problemas, sincronização da agenda e relatórios chegam nas próximas fases.
+  try {
+    travaGas.executar(() => {
+      sincronizarPendentes(portasGas());
+    }, 10_000);
+  } catch (e) {
+    if (!(e instanceof ErroApi && e.codigo === 'SISTEMA_OCUPADO')) throw e;
+  }
 }
