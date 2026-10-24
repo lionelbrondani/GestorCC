@@ -129,3 +129,58 @@ describe('eventos.salvar e eventos.listar', () => {
     expect(acoes.every((h) => h.quemId === 'p01')).toBe(true);
   });
 });
+
+describe('cancelar evento e sessão', () => {
+  type LinhaHist = { id: string; entidade: string; entidadeId: string; acao: string; justificativa: string };
+  const historicoDe = (amb: ReturnType<typeof ambiente>, id: string) =>
+    amb.repo.listar<LinhaHist>('historico').filter((h) => h.entidadeId === id && h.acao.startsWith('cancelou'));
+
+  it('cancelar evento cancela todas as sessões e registra a justificativa', () => {
+    const amb = ambiente();
+    const r = amb.criar(evNovo(), [sesNova(), sesNova({ data: '2026-12-06' })]);
+    expect(amb.chamar('eventos.cancelar', { eventoId: r.evento.id, justificativa: 'Chuva forte' }, { token: amb.gestor })).toEqual({ ok: true, dados: null });
+    const l = amb.listar();
+    expect(l.eventos[0].status).toBe('cancelado');
+    expect(l.sessoes.map((s) => s.status)).toEqual(['cancelada', 'cancelada']);
+    expect(historicoDe(amb, r.evento.id)).toMatchObject([{ acao: 'cancelou o evento', justificativa: 'Chuva forte' }]);
+  });
+
+  it('cancelar uma sessão mantém o evento e as outras sessões ativas', () => {
+    const amb = ambiente();
+    const r = amb.criar(evNovo(), [sesNova(), sesNova({ data: '2026-12-06' })]);
+    const alvo = r.sessoes.find((s) => s.data === '2026-12-06')!;
+    expect(amb.chamar('sessoes.cancelar', { sessaoId: alvo.id, justificativa: 'Sala indisponível' }, { token: amb.gestor }).ok).toBe(true);
+    const l = amb.listar();
+    expect(l.eventos[0].status).toBe('ativo');
+    expect(l.sessoes.map((s) => [s.data, s.status])).toEqual([['2026-12-05', 'ativa'], ['2026-12-06', 'cancelada']]);
+    expect(historicoDe(amb, alvo.id)).toMatchObject([{ acao: 'cancelou a sessão', justificativa: 'Sala indisponível' }]);
+  });
+
+  it('justificativa em branco é recusada', () => {
+    const amb = ambiente();
+    const r = amb.criar();
+    const erro = { ok: false, erro: { codigo: 'JUSTIFICATIVA', mensagem: 'Informe o motivo do cancelamento.' } };
+    expect(amb.chamar('eventos.cancelar', { eventoId: r.evento.id, justificativa: '  ' }, { token: amb.gestor })).toEqual(erro);
+    expect(amb.chamar('sessoes.cancelar', { sessaoId: r.sessoes[0].id, justificativa: '' }, { token: amb.gestor })).toEqual(erro);
+  });
+
+  it('cancelar de novo não dá erro nem duplica o histórico', () => {
+    const amb = ambiente();
+    const r = amb.criar();
+    amb.chamar('eventos.cancelar', { eventoId: r.evento.id, justificativa: 'Chuva' }, { token: amb.gestor });
+    expect(amb.chamar('eventos.cancelar', { eventoId: r.evento.id, justificativa: 'Chuva' }, { token: amb.gestor }).ok).toBe(true);
+    expect(amb.chamar('sessoes.cancelar', { sessaoId: r.sessoes[0].id, justificativa: 'Chuva' }, { token: amb.gestor }).ok).toBe(true);
+    expect(historicoDe(amb, r.evento.id)).toHaveLength(1);
+    expect(historicoDe(amb, r.sessoes[0].id)).toHaveLength(0);
+  });
+
+  it('evento ou sessão inexistente', () => {
+    const amb = ambiente();
+    expect(amb.chamar('eventos.cancelar', { eventoId: 'e-nada', justificativa: 'x' }, { token: amb.gestor })).toEqual({
+      ok: false, erro: { codigo: 'NAO_ENCONTRADO', mensagem: 'Evento não encontrado.' },
+    });
+    expect(amb.chamar('sessoes.cancelar', { sessaoId: 's-nada', justificativa: 'x' }, { token: amb.gestor })).toEqual({
+      ok: false, erro: { codigo: 'NAO_ENCONTRADO', mensagem: 'Sessão não encontrada.' },
+    });
+  });
+});

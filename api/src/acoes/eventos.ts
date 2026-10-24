@@ -104,6 +104,34 @@ function doEvento(ctx: Contexto, eventoId: string) {
   return { evento: paraEvento(linha), sessoes: linhasSessoes(ctx).filter((s) => s.eventoId === eventoId).sort(ordemSessao).map(paraSessao) };
 }
 
+function exigirJustificativa(justificativa: string | undefined): string {
+  const texto = (justificativa ?? '').trim();
+  if (!texto) throw new ErroApi('JUSTIFICATIVA', 'Informe o motivo do cancelamento.');
+  return texto;
+}
+
+/** Cancela o evento e as sessões ainda ativas; devolve as sessões alteradas. Repetir não faz nada. */
+function cancelarEvento(ctx: Contexto, eventoId: string, justificativa: string): string[] {
+  const evento = linhasEventos(ctx).find((e) => e.id === eventoId);
+  if (!evento) throw new ErroApi('NAO_ENCONTRADO', 'Evento não encontrado.');
+  if (evento.status === 'cancelado') return [];
+  ctx.portas.repo.atualizar('eventos', { ...evento, status: 'cancelado' });
+  const ativas = linhasSessoes(ctx).filter((s) => s.eventoId === eventoId && s.status === 'ativa');
+  for (const s of ativas) ctx.portas.repo.atualizar('sessoes', { ...s, status: 'cancelada' });
+  // fase 3: escalas destas sessões viram "cancelado" (não são pagas) e os escalados são avisados
+  registrar(ctx, 'evento', eventoId, 'cancelou o evento', { status: 'ativo' }, { status: 'cancelado' }, justificativa);
+  return ativas.map((s) => s.id);
+}
+
+function cancelarSessao(ctx: Contexto, sessaoId: string, justificativa: string): string[] {
+  const sessao = linhasSessoes(ctx).find((s) => s.id === sessaoId);
+  if (!sessao) throw new ErroApi('NAO_ENCONTRADO', 'Sessão não encontrada.');
+  if (sessao.status === 'cancelada') return [];
+  ctx.portas.repo.atualizar('sessoes', { ...sessao, status: 'cancelada' });
+  registrar(ctx, 'sessao', sessaoId, 'cancelou a sessão', { status: 'ativa' }, { status: 'cancelada' }, justificativa);
+  return [sessaoId];
+}
+
 export const handlersEventos: Handlers = {
   'eventos.listar': ({ de, ate }, ctx) => {
     const sessoes = linhasSessoes(ctx).filter((s) => s.data >= de && s.data <= ate).sort(ordemSessao);
@@ -149,5 +177,15 @@ export const handlersEventos: Handlers = {
     const { atualizadoEm: _a, atualizadoPor: _p, ...antes } = anterior ?? ({} as LinhaEvento);
     registrar(ctx, 'evento', id, anterior ? 'alterou evento' : 'criou evento', anterior ? antes : null, linha);
     return doEvento(ctx, id);
+  },
+
+  'eventos.cancelar': ({ eventoId, justificativa }, ctx) => {
+    cancelarEvento(ctx, eventoId, exigirJustificativa(justificativa));
+    return null;
+  },
+
+  'sessoes.cancelar': ({ sessaoId, justificativa }, ctx) => {
+    cancelarSessao(ctx, sessaoId, exigirJustificativa(justificativa));
+    return null;
   },
 };

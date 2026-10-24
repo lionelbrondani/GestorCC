@@ -27,4 +27,6 @@ export const ACOES_FASE: Partial<Record<Acao, { regra: Regra; escrita: boolean }
   // fase 2: bolsistas também listam (vão precisar das sessões na fase 3)
   'eventos.listar': { regra: 'logado', escrita: false },
   'eventos.salvar': { regra: ['eventos', 'editar'], escrita: true },
+  'eventos.cancelar': { regra: ['eventos', 'editar'], escrita: true },
+  'sessoes.cancelar': { regra: ['eventos', 'editar'], escrita: true },
 };
