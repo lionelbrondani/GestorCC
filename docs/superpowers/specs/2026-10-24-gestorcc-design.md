@@ -10,7 +10,7 @@
 
 Substituir as planilhas e scripts avulsos usados hoje (Gerador de Escala 3.0, Almoxarifado CC 1.0, controle de contratos, fichas de pagamento montadas à mão) por um único webapp minimalista, com a identidade visual do CC, que:
 
-- centraliza eventos, escalas de bolsistas, pagamentos, contratos, almoxarifado e avisos;
+- centraliza eventos, escalas de bolsistas, pagamentos, contratos, almoxarifado, infraestrutura do prédio e avisos;
 - permite que bolsistas e servidores lancem disponibilidade e acompanhem as próprias escalas e ganhos pelo celular;
 - mantém os dados em Google Sheets numa pasta do Drive do setor, de forma que a equipe acostumada com planilhas continue **visualizando** tudo nelas (somente leitura);
 - tem custo zero de operação.
@@ -29,7 +29,7 @@ Uso diário: ~8 pessoas, ~4 simultâneas. Pico: ~30 pessoas na abertura da dispo
 
 ### 1.2 Fora do escopo desta especificação
 
-- Formulários próprios (solicitação de agenda, registro de problemas, ficha técnica). Eles serão scripts separados no futuro; o GestorCC só terá **links** para eles e, depois, telas de visualização das respostas.
+- Formulários próprios (solicitação de agenda, ficha técnica). O formulário de registro de problemas continua existindo e alimenta o módulo de Infraestrutura (seção 10.4). Eles serão scripts separados no futuro; o GestorCC só terá **links** para eles e, depois, telas de visualização das respostas.
 - Assinatura eletrônica de documentos (continua no PEN-SIE).
 - Revisão jurídica dos modelos de contrato (o módulo de contratos é uma **versão inicial**, a ser revista com a coordenação).
 
@@ -45,6 +45,7 @@ Uso diário: ~8 pessoas, ~4 simultâneas. Pico: ~30 pessoas na abertura da dispo
 │  Hosting, plano Spark)│    JSON    │  • fila de gravação (LockService)      │
 └───────────────────────┘            │  • geração de documentos (Docs/Drive)  │
                                      │  • rascunhos de e-mail (Gmail)         │
+                                     │  • agenda do setor (Google Agenda)     │
                                      │  • interpretação de perguntas (Gemini) │
                                      └───────┬──────────────┬─────────────┬───┘
                                              ▼              ▼             ▼
@@ -56,7 +57,7 @@ Uso diário: ~8 pessoas, ~4 simultâneas. Pico: ~30 pessoas na abertura da dispo
 | Componente | Tecnologia | Responsabilidade |
 |---|---|---|
 | **App** (`app/`) | React + TypeScript + Vite, React Router, TanStack Query, CSS Modules com variáveis de design, `vite-plugin-pwa` | Interface de gestores e bolsistas; cache de leituras; impressões |
-| **API** (`api/`) | Google Apps Script em TypeScript, empacotado com esbuild, publicado com `clasp` como aplicativo da Web ("executar como: conta do setor", "acesso: qualquer pessoa") | Única porta de entrada para os dados; valida sessão e permissão em toda ação |
+| **API** (`api/`) | Google Apps Script em TypeScript, empacotado com esbuild, publicado com `clasp` como aplicativo da Web ("executar como: conta do setor", "acesso: qualquer pessoa") | Única porta de entrada para os dados; valida sessão e permissão em toda ação; mantém a agenda Google do setor sincronizada (seção 7.11) |
 | **Regras compartilhadas** (`shared/`) | TypeScript puro, sem dependência de Google ou navegador | Regras de escala, alertas, auto-preenchimento, cálculo de pagamento, saldo do almoxarifado, checagem de permissões, tipos |
 | **Planilhas** | Google Sheets numa pasta do Drive do setor | Armazenamento |
 
@@ -124,7 +125,7 @@ Todas as tabelas têm `id` (texto curto único), `criadoEm`, `atualizadoEm` e `a
 
 | Tabela | Colunas principais |
 |---|---|
-| `pessoas` | nome, nomeCurto (exibição na escala, ex.: "ISABELA A."), emailAcademico (login), emailAlternativo, matricula, siape, tipo (`servidor`/`bolsista`), vinculo (`fixo`/`eventual`), experiente (bool), escalarMenos (bool), ativo (bool) |
+| `pessoas` | nome, nomeCurto (exibição na escala, ex.: "ISABELA A."), emailAcademico (login), emailAlternativo, matricula, siape, tipo (`servidor`/`bolsista`), vinculo (`fixo`/`eventual`), experiente (bool), escalarMenos (bool), ativo (bool), convitesAgenda (e-mail que recebe os convites do Google Agenda; vazio = desativado) |
 | `permissoes` | pessoaId, modulo, nivel (`nenhum`/`ver`/`editar`) |
 
 **Eventos e escalas**
@@ -132,7 +133,7 @@ Todas as tabelas têm `id` (texto curto único), `criadoEm`, `atualizadoEm` e `a
 | Tabela | Colunas principais |
 |---|---|
 | `eventos` | nome, tipo (`Congresso`/`Formatura`/`Show/Concerto`/`Corporativo`/`Outro`), organizador, contatoOrganizador, servidorResponsavelId, publicoEstimado, publicoReal, pagamento (`interno`/`externo`), pagadorExterno, instrumento (`contrato`/`termo`/`nenhum`), status (`ativo`/`cancelado`), observacoes |
-| `sessoes` | eventoId, data, rotulo (ex.: "Manhã", "Sessão 2"), chegada, inicio, fim, horarioADefinir (bool), vagasBolsistas (padrão 8), vagasServidores (padrão 1), diaria (vazio = valor padrão), minimoExperientes (padrão 1), status (`ativa`/`cancelada`), publicadaEm, convocacaoAbertaAte, convocacaoVagas |
+| `sessoes` | eventoId, data, rotulo (ex.: "Manhã", "Sessão 2"), chegada, inicio, fim, horarioADefinir (bool), vagasBolsistas (padrão 8), vagasServidores (padrão 1), diaria (vazio = valor padrão), minimoExperientes (padrão 1), status (`ativa`/`cancelada`), publicadaEm, convocacaoAbertaAte, convocacaoVagas, googleEventoId (evento correspondente na agenda do setor) |
 | `rodadas` | nome (ex.: "Dezembro/2026"), prazo (data e hora), status (`aberta`/`fechada`) |
 | `rodadaSessoes` | rodadaId, sessaoId |
 | `disponibilidades` | pessoaId, sessaoId, disponivel (bool), origem (`proprio`/`gestor`/`convocacao`), respondidoEm |
@@ -161,10 +162,17 @@ Todas as tabelas têm `id` (texto curto único), `criadoEm`, `atualizadoEm` e `a
 | Tabela | Colunas principais |
 |---|---|
 | `almoxItens` | cod (4 dígitos, texto), nomeAlmox, nomeComum, unidade, valor, categoria, qtdMinima, sala, status (`Ativo`/`Inativo`), saldo (calculado e mantido pela API) |
-| `almoxMovimentos` | tipo (`entrada`/`saida`/`ajuste`/`recebimento`), cod, qtd (com sinal), valorUnitario, retiradoPorPessoaId, retiradoPorExterno, eventoId, finalidade, pedidoId, motivo |
+| `almoxMovimentos` | tipo (`entrada`/`saida`/`ajuste`/`recebimento`), cod, qtd (com sinal), valorUnitario, retiradoPorPessoaId, retiradoPorExterno, eventoId, ocorrenciaId, finalidade, pedidoId, motivo |
 | `almoxAutorizadosExternos` | nome, ativo |
 | `almoxPedidos` | solicitanteId, status (`aberto`/`parcial`/`recebido`/`cancelado`) |
 | `almoxPedidoItens` | pedidoId, cod, qtdPedida, qtdRecebida, valorEstimado |
+
+**Infraestrutura**
+
+| Tabela | Colunas principais |
+|---|---|
+| `ocorrencias` | numero (sequencial), titulo, descricao, categoria, local, prioridade (`baixa`/`media`/`alta`/`urgente`), status (`nova`/`analise`/`chamado`/`atendimento`/`resolvida`/`naoProcede`), origem (`formulario`/`app`), relatorNome, relatorPessoaId, relatorContato, eventoId, fotoId (arquivo no Drive), chamadoNumero, chamadoLink, chamadoAbertoEm, resolvidaEm, respostaFormularioId (evita importar a mesma resposta duas vezes) |
+| `ocorrenciasHistorico` | ocorrenciaId, quando, quemId, de, para, observacao |
 
 **Comunicação e sistema**
 
@@ -176,7 +184,7 @@ Todas as tabelas têm `id` (texto curto único), `criadoEm`, `atualizadoEm` e `a
 | `historico` | quando, quemId, entidade, entidadeId, acao, antes, depois, justificativa (sem `atualizadoEm`) |
 | `config` | chave, valor |
 
-`config` guarda: valor padrão da diária (R$ 80,00), vagas padrão, edital e iniciativa da ficha de pagamento, número do projeto FUNDEP (30055), destinatários da FUNDEP, dados fixos dos modelos de contrato (signatária, processo da tabela de valores), limite diário de perguntas à busca, modelos de permissão, links dos formulários externos.
+`config` guarda: agenda Google do setor (id, nome e conta), valor padrão da diária (R$ 80,00), vagas padrão, edital e iniciativa da ficha de pagamento, número do projeto FUNDEP (30055), destinatários da FUNDEP, dados fixos dos modelos de contrato (signatária, processo da tabela de valores), limite diário de perguntas à busca, modelos de permissão, links dos formulários externos.
 
 ### 4.2 GestorCC-Sigiloso
 
@@ -223,6 +231,7 @@ Cada pessoa tem um nível por módulo: `nenhum`, `ver` ou `editar`. A API confer
 | Contratos | editar | nenhum | nenhum |
 | Almoxarifado — estoque | editar | editar | nenhum |
 | Almoxarifado — saídas | editar | editar | nenhum |
+| Infraestrutura (ocorrências) | editar | ver | nenhum |
 | Mural de avisos | editar | editar | ver |
 | Busca inteligente | editar | editar | nenhum |
 | Formulários (links) | ver | ver | nenhum |
@@ -231,7 +240,7 @@ Cada pessoa tem um nível por módulo: `nenhum`, `ver` ou `editar`. A API confer
 | Configurações | editar | nenhum | nenhum |
 
 - Gestor, Operação e Eventual são **modelos**. Ao cadastrar alguém, escolhe-se um modelo e depois se ajusta módulo a módulo.
-- Independentemente das permissões, toda pessoa ativa acessa: Início, Minhas escalas, Minha disponibilidade, Meus ganhos (se bolsista), Avisos e Perfil.
+- Independentemente das permissões, toda pessoa ativa acessa: Início, Minhas escalas, Minha disponibilidade, Meus ganhos (se bolsista), Avisos, Relatar problema e Perfil.
 - Toda alteração de permissão vai para o `historico`.
 
 ---
@@ -359,6 +368,26 @@ Nota mensal de 1 a 5 e observação por bolsista, visíveis só para quem tem ac
 ### 7.10 Estatísticas de eventos
 
 Total de eventos, público total e média, filtráveis por período e por tipo de evento.
+
+### 7.11 Integração com o Google Agenda
+
+**A) Agenda do setor, sempre sincronizada.** A conta do sistema (a do CC) mantém uma agenda Google "Centro de Convenções UFSM". A API, com o serviço de agenda do Apps Script, mantém um evento por sessão:
+
+- criar ou alterar sessão (data, horários, "a definir" → definido) cria ou atualiza o evento;
+- cancelar sessão ou evento marca o evento como cancelado (título prefixado com "CANCELADO –") e notifica os convidados;
+- descrição do evento: organizador, servidor responsável, horário de chegada e link para o evento no GestorCC (sem dados pessoais);
+- a equipe só assina essa agenda (leitura), sem login no GestorCC.
+
+A sincronização acontece na mesma gravação; se o Google falhar, a gravação no GestorCC vale mesmo assim e o evento é marcado para nova tentativa pelo gatilho de 5 minutos.
+
+**B) Convites para o bolsista (opcional).** No Perfil, a pessoa ativa "Receber minhas escalas no Google Agenda" e escolhe o e-mail (acadêmico ou alternativo). Com isso:
+
+- ao **publicar** a escala, ela é adicionada como convidada no evento da sessão na agenda do setor e o evento aparece no Google Agenda dela;
+- **trocas**, **horário definido** e **cancelamentos** se refletem na hora (convidado incluído ou removido, evento atualizado);
+- os convidados **não veem os e-mails uns dos outros** (opção de privacidade do evento, via serviço avançado de Agenda);
+- quem não ativa continua com o botão "Adicionar ao Google Agenda" (cópia única) em Minhas escalas.
+
+Sincronização nos dois sentidos (eventos criados no Google entrando no GestorCC) **não** faz parte do escopo: o GestorCC é a fonte única da agenda.
 
 ---
 
@@ -494,9 +523,31 @@ Na barra superior, para quem tem o módulo. Sem marca de "IA" na interface; as r
 4. Perguntas sobre como usar o sistema são respondidas com base em um manual de uso sem dados reais (`docs/manual/`), enviado como contexto.
 5. Limite configurável de perguntas por pessoa por dia. Se o limite do nível gratuito for atingido ou o Gemini falhar, a barra continua funcionando como busca comum, com a mensagem "Não consegui interpretar agora; veja os resultados da busca".
 
-**Consultas iniciais:** escala de um dia ou sessão; escalas de uma pessoa; próximos eventos; sessões com vagas faltando; quem não respondeu a rodada; saldo de um item; itens em estoque crítico; contratos com pendência; lotes em aberto.
+**Consultas iniciais:** ocorrências de infraestrutura abertas (com termo, ex.: "vazamentos"); escala de um dia ou sessão; escalas de uma pessoa; próximos eventos; sessões com vagas faltando; quem não respondeu a rodada; saldo de um item; itens em estoque crítico; contratos com pendência; lotes em aberto.
 
 ---
+
+### 10.4 Infraestrutura do prédio
+
+Controle de problemas do prédio (troca de torneiras e lâmpadas, vazamentos, infiltrações, ar-condicionado, mobiliário etc.) e dos chamados abertos no sistema de chamados da UFSM. Um servidor específico tem o nível `editar`; demais gestores podem ter `ver`.
+
+**Entrada das ocorrências (duas origens):**
+
+1. **Formulário de registro de problemas** (Google Form já usado, para quem é de fora). A API lê as respostas novas da planilha do formulário — pelo gatilho de 5 minutos e pelo botão "Importar respostas do formulário" — e cria uma ocorrência `nova` por resposta, guardando o id da resposta para não importar em dobro.
+2. **"Relatar problema" no GestorCC**, disponível para toda pessoa ativa (inclusive bolsistas durante os eventos): o que aconteceu, onde, tipo, detalhes, evento do dia (opcional), "é urgente" e foto tirada pelo celular (reduzida para no máximo 1024 px e salva numa pasta `Infraestrutura/` do Drive). Quem relatou acompanha em "Meus relatos".
+
+Toda ocorrência nova notifica quem tem `editar` em Infraestrutura.
+
+**Fluxo:** `Nova` → `Em análise` → `Chamado aberto` → `Em atendimento` → `Resolvida`; de `Nova` ou `Em análise` também `Não procede`; de `Em análise` pode ir direto a `Em atendimento` ou `Resolvida` quando o próprio setor resolve.
+
+- **Chamado aberto** exige o **número do chamado da UFSM** (link opcional). O chamado é aberto manualmente no sistema da universidade; o GestorCC só registra.
+- **Não procede** exige observação.
+- Cada mudança fica no histórico (quem, quando, de → para, observação) e notifica quem relatou, se for usuário do sistema.
+- Prioridade, tipo e local podem ser corrigidos por quem gerencia.
+
+**Material do almoxarifado:** quando o setor resolve com material próprio (lâmpada, reparo de torneira), registra o uso na ocorrência, o que gera a saída no almoxarifado já vinculada (`ocorrenciaId`) e baixa o estoque.
+
+**Acompanhamento:** lista com filtros por situação e tipo, ordenada por prioridade; dias em aberto; selo "atrasado" para chamado aberto há mais de 7 dias. No Início de quem gerencia: ocorrências novas para analisar e chamados atrasados. Na planilha de Relatórios, aba **INFRAESTRUTURA** com as ocorrências e a situação de cada chamado.
 
 ## 11. Relatórios na planilha (visualização da equipe)
 
@@ -510,6 +561,7 @@ A planilha **GestorCC-Relatórios** é regenerada por um gatilho a cada 5 minuto
 | PAGAMENTOS – `<LOTE>` | Bolsista, quantidade, valor unitário, total, total do lote (sem CPF e banco) |
 | CONTRATOS | As mesmas colunas da planilha de controle atual |
 | ESTOQUE | Itens ativos com saldo, mínimo e situação |
+| INFRAESTRUTURA | Nº, ocorrência, local, tipo, prioridade, situação, nº do chamado UFSM, dias em aberto |
 | AGENDA `<MÊS>` | Mesma estrutura da impressão mensal |
 
 ---
@@ -553,10 +605,10 @@ Os scripts antigos podem continuar funcionando em paralelo até a equipe validar
 |---|---|
 | **0. Protótipo navegável** | Todas as telas principais com dados fictícios, identidade visual, perfis gestor e bolsista, celular e desktop. Para validação com a equipe antes de ligar a API. |
 | **1. Fundação** | Planilhas, API, login, troca e redefinição de senha, pessoas e permissões, mural, notificações, backup |
-| **2. Eventos e agenda** | Eventos, sessões, feriados, impressão da agenda, estatísticas |
+| **2. Eventos e agenda** | Eventos, sessões, feriados, impressão da agenda, estatísticas, agenda Google do setor e convites aos bolsistas (7.11) |
 | **3. Disponibilidade e escalas** | Rodadas, montador, publicação, convocação extra, trocas, presença, impressões, WhatsApp, avaliações, relatórios |
 | **4. Pagamentos** | Lotes, ficha de indicação, pagamento externo, Meus ganhos |
-| **5. Almoxarifado** | Módulo completo e importação do `BD_Almox` |
+| **5. Almoxarifado e infraestrutura** | Almoxarifado completo e importação do `BD_Almox`; ocorrências de infraestrutura com importação do formulário de problemas |
 | **6. Contratos e documentos** | Contratos, contratantes, aditivos, FUNDEP, modelos (versão inicial) |
 | **7. Busca inteligente** | Busca comum e perguntas via Gemini |
 | **Depois** | Formulários: links e visualização das respostas |

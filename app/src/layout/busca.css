@@ -1,0 +1,88 @@
+.busca {
+  position: relative;
+  max-width: 560px;
+  width: 100%;
+}
+.busca form {
+  position: relative;
+}
+.busca-icone {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--cor-texto-3);
+  pointer-events: none;
+}
+.busca-entrada {
+  padding-left: 38px;
+  background: var(--cor-superficie);
+}
+.busca-painel {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(100% + 6px);
+  background: var(--cor-superficie);
+  border: 1px solid var(--cor-borda);
+  border-radius: var(--raio-2);
+  box-shadow: var(--sombra-2);
+  max-height: 70vh;
+  overflow-y: auto;
+  z-index: 40;
+  padding: var(--esp-2);
+}
+.busca-lista {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.busca-lista a {
+  display: flex;
+  gap: var(--esp-2);
+  align-items: baseline;
+  padding: 8px var(--esp-2);
+  border-radius: var(--raio-1);
+  text-decoration: none;
+}
+.busca-lista a:hover {
+  background: var(--cor-fundo);
+}
+.busca-tipo {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--cor-texto-3);
+  min-width: 58px;
+}
+.busca-vazio {
+  padding: 8px;
+  color: var(--cor-texto-2);
+  font-size: 0.9rem;
+}
+.busca-resposta {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: var(--esp-2);
+  margin-bottom: var(--esp-2);
+  border-left: 3px solid var(--cor-destaque);
+  background: var(--cor-superficie-2);
+  border-radius: var(--raio-1);
+}
+.busca-marca {
+  font-size: 0.72rem;
+  color: var(--cor-texto-3);
+  margin-top: 4px;
+}
+@media (max-width: 899px) {
+  .busca-entrada::placeholder {
+    color: transparent;
+  }
+  .busca-painel {
+    position: fixed;
+    left: 8px;
+    right: 8px;
+    top: calc(var(--altura-topo) + 4px);
+  }
+}

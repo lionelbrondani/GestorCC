@@ -1,0 +1,112 @@
+.calendario {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  border: 1px solid var(--cor-borda);
+  border-radius: var(--raio-2);
+  overflow: hidden;
+  background: var(--cor-borda);
+  gap: 1px;
+}
+.calendario-cabeca {
+  background: var(--cor-nav);
+  color: var(--cor-nav-texto);
+  font-family: var(--fonte-titulo);
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  text-align: center;
+  padding: 6px 0;
+}
+.calendario-dia {
+  background: var(--cor-superficie);
+  min-height: 96px;
+  padding: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+.calendario-dia[data-fora='true'] {
+  background: var(--cor-superficie-2);
+  color: var(--cor-texto-3);
+}
+.calendario-dia[data-hoje='true'] .calendario-numero {
+  background: var(--cor-destaque);
+  border-radius: 999px;
+}
+.calendario-numero {
+  font-weight: 700;
+  font-size: 0.8rem;
+  width: 24px;
+  height: 24px;
+  display: grid;
+  place-items: center;
+}
+.calendario-feriado {
+  font-size: 0.68rem;
+  color: var(--cor-erro);
+  font-weight: 600;
+}
+.calendario-evento {
+  display: block;
+  font-size: 0.72rem;
+  line-height: 1.25;
+  padding: 2px 4px;
+  border-radius: 4px;
+  background: var(--cor-destaque-suave);
+  border-left: 3px solid var(--cor-destaque);
+  text-decoration: none;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.calendario-evento[data-cancelado='true'] {
+  background: #eee;
+  border-left-color: var(--cor-texto-3);
+  text-decoration: line-through;
+}
+.calendario-evento[data-externo='true'] {
+  background: var(--cor-info-suave);
+  border-left-color: var(--cor-info);
+}
+@media (max-width: 699px) {
+  .calendario-dia {
+    min-height: 56px;
+  }
+  .calendario-evento {
+    font-size: 0;
+    height: 6px;
+    padding: 0;
+  }
+}
+.sessao-editor {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: var(--esp-3);
+  padding: var(--esp-3);
+  border: 1px solid var(--cor-borda);
+  border-radius: var(--raio-2);
+  background: var(--cor-superficie-2);
+  align-items: end;
+}
+
+/* ---------- Impressão da agenda ---------- */
+.agenda-impressa {
+  padding: 16px;
+  page: agenda;
+}
+.agenda-impressa td:first-child {
+  text-align: left;
+  white-space: nowrap;
+  font-weight: 600;
+}
+.agenda-impressa td {
+  font-size: 9.5pt;
+}
+.agenda-impressa .feriado td {
+  background: #f1f1f1;
+}
+@page agenda {
+  size: A4 portrait;
+  margin: 12mm;
+}
