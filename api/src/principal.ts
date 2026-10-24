@@ -1,29 +1,31 @@
 /// <reference types="google-apps-script" />
 // Ponto de entrada do Apps Script. As funções exportadas viram globais pelo rodapé do build.
-
+import { handlersAuth } from './acoes/auth';
+import { handlersAvisos } from './acoes/avisos';
+import { handlersPessoas } from './acoes/pessoas';
+import { handlersSistema } from './acoes/sistema';
+import { portasGas } from './adaptadores/gas';
+import { tratarRequisicao, type Handlers } from './nucleo/roteador';
 import { VERSAO_API } from './versao';
+
+export { backupDiario } from './backup';
+export { instalar } from './instalar';
 export { VERSAO_API };
 
-function json(corpo: unknown): GoogleAppsScript.Content.TextOutput {
-  return ContentService.createTextOutput(JSON.stringify(corpo)).setMimeType(ContentService.MimeType.JSON);
+const HANDLERS: Handlers = { ...handlersAuth, ...handlersPessoas, ...handlersAvisos, ...handlersSistema };
+
+function json(corpo: string): GoogleAppsScript.Content.TextOutput {
+  return ContentService.createTextOutput(corpo).setMimeType(ContentService.MimeType.JSON);
 }
 
-export function doPost(_e: GoogleAppsScript.Events.DoPost): GoogleAppsScript.Content.TextOutput {
-  return json({ ok: true, dados: { versao: VERSAO_API } });
+export function doPost(e: GoogleAppsScript.Events.DoPost): GoogleAppsScript.Content.TextOutput {
+  return json(tratarRequisicao(e?.postData?.contents ?? '', portasGas(), HANDLERS));
 }
 
 export function doGet(): GoogleAppsScript.Content.TextOutput {
-  return json({ ok: true, dados: { versao: VERSAO_API } });
-}
-
-export function instalar(): void {
-  throw new Error('instalar() chega na Task 8.');
-}
-
-export function backupDiario(): void {
-  // implementado na Task 8
+  return json(JSON.stringify({ ok: true, dados: { versao: VERSAO_API } }));
 }
 
 export function gatilhoMinutos(): void {
-  // reservado para as próximas fases
+  // Reservado: importação do formulário de problemas, sincronização da agenda e relatórios chegam nas próximas fases.
 }
