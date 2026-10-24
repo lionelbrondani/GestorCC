@@ -2,6 +2,7 @@ import { formatarDataHora } from '@shared';
 import { Link } from 'react-router-dom';
 import { usePeriodo } from '../../api/consultas';
 import { useConsulta } from '../../api/hooks';
+import { recursoAtivo } from '../../recursos';
 import { useEu } from '../../auth/SessaoContexto';
 import { Alerta, Carregando, Cartao, EstadoVazio, Pagina } from '../../componentes';
 import { agora, hoje, janela } from '../../util/hoje';
@@ -12,8 +13,9 @@ export function InicioBolsista() {
   const eu = useEu();
   const { de, ate } = janela(1, 120);
   const periodo = usePeriodo(de, ate);
-  const escalas = useConsulta('escalas.listar', { de, ate });
-  const rodadas = useConsulta('rodadas.listar', null);
+  const comEscalas = recursoAtivo('escalasPessoais');
+  const escalas = useConsulta('escalas.listar', { de, ate }, { habilitada: comEscalas });
+  const rodadas = useConsulta('rodadas.listar', null, { habilitada: comEscalas });
   const avisos = useConsulta('avisos.listar', null);
 
   if (periodo.isLoading || escalas.isLoading) return <Carregando />;

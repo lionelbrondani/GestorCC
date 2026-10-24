@@ -5,7 +5,8 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import { usePeriodo, usePessoas } from '../../api/consultas';
 import { useConsulta, useMutacao } from '../../api/hooks';
 import { useEu } from '../../auth/SessaoContexto';
-import { Alerta, Botao, Campo, Carregando, Cartao, EstadoVazio, Etiqueta, Modal, Pagina, Tabela } from '../../componentes';
+import { Alerta, Botao, Campo, Carregando, Cartao, EstadoVazio, Etiqueta, Modal, Pagina, Tabela, type ColunaTabela } from '../../componentes';
+import { recursoAtivo } from '../../recursos';
 import { janela } from '../../util/hoje';
 import { dataLonga, horarioTexto } from '../../util/sessoes';
 import { EventoForm } from './EventoForm';
@@ -63,7 +64,7 @@ function ModalCancelar({
         <p>
           <strong>{alvo.nome}</strong>
         </p>
-        <Alerta tom="aviso">Os escalados serão avisados e não receberão por esta sessão.</Alerta>
+        {recursoAtivo('escalas') && <Alerta tom="aviso">Os escalados serão avisados e não receberão por esta sessão.</Alerta>}
         <Campo rotulo="Motivo (obrigatório)">
           {(id) => <textarea id={id} className="cc-entrada" value={motivo} onChange={(e) => setMotivo(e.target.value)} />}
         </Campo>
@@ -80,7 +81,8 @@ export function EventoDetalhe() {
   const navegar = useNavigate();
   const { de, ate } = janela(400, 400);
   const periodo = usePeriodo(de, ate);
-  const escalas = useConsulta('escalas.listar', { de, ate });
+  const comEscalas = recursoAtivo('escalas');
+  const escalas = useConsulta('escalas.listar', { de, ate }, { habilitada: comEscalas });
   const pessoas = usePessoas();
   const config = useConsulta('config.obter', null);
   const salvar = useMutacao('eventos.salvar', [...INVALIDAR]);
@@ -168,13 +170,15 @@ export function EventoDetalhe() {
       <Cartao
         titulo={`Sessões (${sessoes.length})`}
         acoes={
-          <Link to="/escalas?aba=montar" className="cc-botao" data-variante="secundario" data-tamanho="pequeno">
-            <ClipboardList size={16} aria-hidden /> Montar escala
-          </Link>
+          comEscalas && (
+            <Link to="/escalas?aba=montar" className="cc-botao" data-variante="secundario" data-tamanho="pequeno">
+              <ClipboardList size={16} aria-hidden /> Montar escala
+            </Link>
+          )
         }
       >
         <Tabela
-          colunas={[
+          colunas={([
             { chave: 'data', titulo: 'Data', render: (s) => dataLonga(s.data) },
             { chave: 'rotulo', titulo: 'Sessão', render: (s) => s.rotulo || '—' },
             { chave: 'horario', titulo: 'Horário', render: (s) => horarioTexto(s) },
@@ -205,7 +209,7 @@ export function EventoDetalhe() {
                   )
                 ),
             },
-          ]}
+          ] satisfies ColunaTabela<Sessao>[]).filter((c) => comEscalas || c.chave !== 'escala')}
           linhas={sessoes}
           chaveLinha={(s) => s.id}
         />
