@@ -9,6 +9,8 @@ dist/
 # Segredos e configuração local
 .env
 .env.*
+!.env.exemplo
+.firebaserc
 .clasprc.json
 
 # Sistema

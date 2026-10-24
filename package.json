@@ -10,6 +10,10 @@
     "test": "npm run test -w shared && npm run test -w api && npm run test -w app",
     "build": "npm run build -w app",
     "dev": "npm run dev -w app",
-    "typecheck": "tsc -p shared --noEmit && tsc -p api --noEmit && tsc -p app --noEmit"
+    "typecheck": "tsc -p shared --noEmit && tsc -p api --noEmit && tsc -p app --noEmit",
+    "deploy:app:teste": "npm run build -w app -- --mode teste && npx --yes firebase-tools@13.29.1 deploy --only hosting:teste",
+    "deploy:app:producao": "npm run build -w app -- --mode producao && npx --yes firebase-tools@13.29.1 deploy --only hosting:producao",
+    "deploy:api:teste": "npm run push:teste -w api",
+    "deploy:api:producao": "npm run push:producao -w api"
   }
 }

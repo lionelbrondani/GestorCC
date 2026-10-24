@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { usePessoas } from '../../api/consultas';
 import { useEu } from '../../auth/SessaoContexto';
 import { Botao, Campo, Carregando, Etiqueta, Pagina, Tabela } from '../../componentes';
+import { ImportarPlanilha } from './ImportarPlanilha';
 import { modeloDe } from './PermissoesEditor';
 
 const sem = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
@@ -31,9 +32,12 @@ export function Pessoas() {
       subtitulo="Cadastro da equipe, perfis de acesso e dados para pagamento."
       acoes={
         pode(eu.permissoes, 'pessoas', 'editar') && (
-          <Botao variante="primario" onClick={() => navegar('/pessoas/nova')}>
-            <Plus size={16} aria-hidden /> Nova pessoa
-          </Botao>
+          <>
+            <ImportarPlanilha />
+            <Botao variante="primario" onClick={() => navegar('/pessoas/nova')}>
+              <Plus size={16} aria-hidden /> Nova pessoa
+            </Botao>
+          </>
         )
       }
     >
