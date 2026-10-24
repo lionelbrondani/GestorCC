@@ -1,0 +1,74 @@
+@media print {
+  body {
+    background: #fff;
+  }
+  .nao-imprimir,
+  .cc-menu-lateral,
+  .cc-barra-superior,
+  .cc-barra-inferior,
+  .cc-faixa-aviso {
+    display: none !important;
+  }
+  .so-impressao {
+    display: block;
+  }
+  .cc-conteudo {
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+  .cc-shell {
+    display: block !important;
+  }
+}
+
+.folha-impressao {
+  background: #fff;
+  color: #000;
+  font-family: var(--fonte-texto);
+  position: relative;
+}
+
+.folha-impressao table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 10pt;
+}
+
+.folha-impressao th,
+.folha-impressao td {
+  border: 1px solid #000;
+  padding: 3px 5px;
+  text-align: center;
+  vertical-align: middle;
+}
+
+.folha-impressao h1 {
+  font-size: 14pt;
+  text-align: center;
+  margin-bottom: 4px;
+}
+
+.folha-impressao .subtitulo {
+  text-align: center;
+  font-size: 10pt;
+  margin-bottom: 8px;
+}
+
+.folha-impressao .pagina-impressao {
+  break-after: page;
+  page-break-after: always;
+  margin-bottom: 24px;
+}
+
+.folha-impressao .pagina-impressao:last-child {
+  break-after: auto;
+  page-break-after: auto;
+}
+
+.losango-canto {
+  position: absolute;
+  width: 28px;
+  height: 28px;
+  transform: rotate(45deg);
+  background: var(--cor-destaque);
+}

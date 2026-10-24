@@ -1,0 +1,46 @@
+:root {
+  --cor-fundo: #f4f4f2;
+  --cor-superficie: #ffffff;
+  --cor-superficie-2: #fafaf8;
+  --cor-nav: #232323;
+  --cor-nav-2: #2e2e2e;
+  --cor-nav-texto: #e9e9e6;
+  --cor-nav-texto-2: #a3a39e;
+  --cor-destaque: #f5c518;
+  --cor-destaque-escuro: #d4ad00;
+  --cor-destaque-suave: #fdf3cc;
+  --cor-texto: #1a1a1a;
+  --cor-texto-2: #5c5c5c;
+  --cor-texto-3: #8a8a85;
+  --cor-borda: #e2e2de;
+  --cor-borda-forte: #cfcfca;
+  --cor-sucesso: #2e7d4f;
+  --cor-sucesso-suave: #e3f2e8;
+  --cor-aviso: #9a6416;
+  --cor-aviso-suave: #fbefd9;
+  --cor-erro: #b3261e;
+  --cor-erro-suave: #f9e3e1;
+  --cor-info: #2d5c8a;
+  --cor-info-suave: #e3edf6;
+
+  --fonte-titulo: 'Montserrat', 'Segoe UI', sans-serif;
+  --fonte-texto: 'Source Sans 3', 'Segoe UI', sans-serif;
+
+  --raio-1: 6px;
+  --raio-2: 10px;
+  --raio-3: 16px;
+
+  --esp-1: 4px;
+  --esp-2: 8px;
+  --esp-3: 12px;
+  --esp-4: 16px;
+  --esp-5: 24px;
+  --esp-6: 32px;
+
+  --sombra-1: 0 1px 2px rgba(26, 26, 26, 0.06), 0 1px 3px rgba(26, 26, 26, 0.04);
+  --sombra-2: 0 8px 24px rgba(26, 26, 26, 0.12);
+
+  --largura-menu: 240px;
+  --altura-topo: 60px;
+  --altura-barra-inferior: 64px;
+}
