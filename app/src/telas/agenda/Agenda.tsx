@@ -8,6 +8,7 @@ import { useEu } from '../../auth/SessaoContexto';
 import { Abas, Botao, Carregando, Etiqueta, Pagina, Tabela } from '../../componentes';
 import { hoje } from '../../util/hoje';
 import { dataLonga, horarioTexto } from '../../util/sessoes';
+import { CartaoAgendaSetor } from '../pessoal/AgendaGoogle';
 import { Estatisticas } from './Estatisticas';
 import './agenda.css';
 
@@ -54,6 +55,7 @@ export function Agenda() {
         </>
       }
     >
+      <CartaoAgendaSetor />
       <Abas
         abas={[
           { id: 'mes', rotulo: 'Mês' },

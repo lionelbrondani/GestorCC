@@ -7,6 +7,7 @@ import { useEu } from '../../auth/SessaoContexto';
 import { Abas, Carregando, Cartao, EstadoVazio, Etiqueta, Pagina } from '../../componentes';
 import { hoje, janela } from '../../util/hoje';
 import { chegadaTexto, dataLonga, linkGoogleAgenda, tituloSessao } from '../../util/sessoes';
+import { AvisoAgendaPessoal } from './AgendaGoogle';
 import './pessoal.css';
 
 const ROTULO_STATUS: Partial<Record<Escala['status'], { texto: string; tom: 'sucesso' | 'erro' | 'neutro' | 'info' }>> = {
@@ -38,6 +39,7 @@ export function MinhasEscalas() {
 
   return (
     <Pagina titulo="Minhas escalas" subtitulo="Seus eventos publicados no Centro de Convenções.">
+      <AvisoAgendaPessoal />
       <Abas
         abas={[
           { id: 'proximas', rotulo: `Próximas (${proximas.length})` },
@@ -77,7 +79,7 @@ export function MinhasEscalas() {
                       {s.inicio && ` · início ${s.inicio}`}
                     </p>
                     {colegas.length > 0 && <p className="pequeno texto-2">Com: {colegas.join(', ')}</p>}
-                    {aba === 'proximas' && e.status === 'publicado' && (
+                    {aba === 'proximas' && e.status === 'publicado' && !eu.convitesAgenda && (
                       <a className="cc-botao" data-variante="fantasma" data-tamanho="pequeno" href={linkGoogleAgenda(ev, s)} target="_blank" rel="noreferrer" style={{ alignSelf: 'flex-start' }}>
                         <CalendarPlus size={16} aria-hidden /> Adicionar ao Google Agenda
                       </a>

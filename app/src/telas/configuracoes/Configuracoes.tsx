@@ -6,6 +6,7 @@ import { useConsulta, useMutacao } from '../../api/hooks';
 import { Alerta, Botao, Campo, Carregando, Cartao, Modal, Pagina } from '../../componentes';
 import { useQueryClient } from '@tanstack/react-query';
 import { hoje } from '../../util/hoje';
+import { CartaoAgendaSetor } from '../pessoal/AgendaGoogle';
 
 function Feriados() {
   const ano = Number(hoje().slice(0, 4));
@@ -132,6 +133,7 @@ export function Configuracoes() {
         </Cartao>
         <Feriados />
       </div>
+      <CartaoAgendaSetor />
       <Cartao titulo="Protótipo">
         <div className="linha-entre">
           <span className="texto-2">Volta todos os dados fictícios ao estado inicial (desfaz o que foi testado).</span>

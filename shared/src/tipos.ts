@@ -22,6 +22,8 @@ export interface Pessoa {
   escalarMenos: boolean;
   ativo: boolean;
   permissoes: Permissoes;
+  /** E-mail que recebe convites das escalas no Google Agenda (null/ausente = desativado). */
+  convitesAgenda?: string | null;
 }
 
 export interface DadosPessoais {
@@ -260,4 +262,6 @@ export interface Config {
   assinaturaEmail: string;
   limitePerguntasDia: number;
   linksFormularios: { nome: string; url: string }[];
+  /** Agenda Google do setor, mantida pela conta do sistema. */
+  agendaSetor: { nome: string; conta: string; link: string; conectada: boolean };
 }

@@ -33,6 +33,7 @@ export interface Acoes {
   'auth.entrar': A<{ email: string; senha: string }, { token: string; pessoa: Pessoa; senhaInicial: boolean }>;
   'auth.trocarSenha': A<{ atual: string; nova: string }, null>;
   'auth.esqueciSenha': A<{ email: string }, null>;
+  'perfil.salvarAgenda': A<{ email: string | null }, Pessoa>;
 
   'pessoas.listar': A<null, Pessoa[]>;
   'pessoas.salvar': A<Pessoa, Pessoa>;

@@ -15,6 +15,8 @@ interface ValorSessao {
   entrar(email: string, senha: string): Promise<void>;
   sair(): void;
   marcarSenhaTrocada(): void;
+  /** Atualiza o retrato da pessoa guardado na sessão (ex.: após mudar preferências no Perfil). */
+  atualizarPessoa(p: Pessoa): void;
 }
 
 const CHAVE = 'gestorcc-sessao';
@@ -82,14 +84,22 @@ export function SessaoProvedor({
     if (atual) trocar({ ...atual, senhaInicial: false });
   }, [atual, trocar]);
 
+  const atualizarPessoa = useCallback(
+    (p: Pessoa) => {
+      if (atual) trocar({ ...atual, pessoa: p });
+    },
+    [atual, trocar],
+  );
+
   const valor = useMemo<ValorSessao>(
     () => ({
       sessao: atual ? { pessoa: atual.pessoa, senhaInicial: atual.senhaInicial } : null,
       entrar,
       sair,
       marcarSenhaTrocada,
+      atualizarPessoa,
     }),
-    [atual, entrar, sair, marcarSenhaTrocada],
+    [atual, entrar, sair, marcarSenhaTrocada, atualizarPessoa],
   );
 
   return <SessaoContexto.Provider value={valor}>{children}</SessaoContexto.Provider>;

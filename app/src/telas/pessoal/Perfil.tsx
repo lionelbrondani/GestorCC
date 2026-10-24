@@ -4,6 +4,7 @@ import { useConsulta, useMutacao } from '../../api/hooks';
 import { FormTrocarSenha } from '../../auth/AvisoSenha';
 import { useEu, useSessao } from '../../auth/SessaoContexto';
 import { Alerta, Botao, Campo, Cartao, Pagina } from '../../componentes';
+import { CartaoAgendaPessoal } from './AgendaGoogle';
 
 function FormDadosPessoais({ pessoaId }: { pessoaId: string }) {
   const q = useConsulta('dadosPessoais.obter', { pessoaId });
@@ -75,6 +76,7 @@ export function Perfil() {
         <Cartao titulo="Meus dados para pagamento">
           <FormDadosPessoais pessoaId={eu.id} />
         </Cartao>
+        <CartaoAgendaPessoal />
       </div>
     </Pagina>
   );

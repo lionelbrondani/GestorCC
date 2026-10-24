@@ -457,6 +457,12 @@ export function criarFixtures(hoje: string): Banco {
     destinatariosFundep: ['faturamento@fundep.exemplo.com'],
     assinaturaEmail: 'Centro de Convenções - UFSM\nNúcleo de Gestão Artística e Cultural\nCoordenadoria de Cultura e Arte\nPró-Reitoria de Extensão - UFSM',
     limitePerguntasDia: 30,
+    agendaSetor: {
+      nome: 'Centro de Convenções UFSM',
+      conta: 'centrodeconvencoes@ufsm.br',
+      link: 'https://calendar.google.com/calendar/u/0/r',
+      conectada: true,
+    },
     linksFormularios: [
       { nome: 'Solicitação de datas', url: 'https://forms.gle/exemplo-solicitacao' },
       { nome: 'Registro de problemas', url: 'https://forms.gle/exemplo-problemas' },

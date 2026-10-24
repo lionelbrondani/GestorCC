@@ -52,7 +52,7 @@ export interface Banco {
 }
 
 const CHAVE = 'gestorcc-prototipo';
-const VERSAO_BANCO = 1;
+const VERSAO_BANCO = 2;
 
 export interface Armazenamento {
   banco: Banco;

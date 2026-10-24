@@ -45,6 +45,7 @@ Uso diário: ~8 pessoas, ~4 simultâneas. Pico: ~30 pessoas na abertura da dispo
 │  Hosting, plano Spark)│    JSON    │  • fila de gravação (LockService)      │
 └───────────────────────┘            │  • geração de documentos (Docs/Drive)  │
                                      │  • rascunhos de e-mail (Gmail)         │
+                                     │  • agenda do setor (Google Agenda)     │
                                      │  • interpretação de perguntas (Gemini) │
                                      └───────┬──────────────┬─────────────┬───┘
                                              ▼              ▼             ▼
@@ -56,7 +57,7 @@ Uso diário: ~8 pessoas, ~4 simultâneas. Pico: ~30 pessoas na abertura da dispo
 | Componente | Tecnologia | Responsabilidade |
 |---|---|---|
 | **App** (`app/`) | React + TypeScript + Vite, React Router, TanStack Query, CSS Modules com variáveis de design, `vite-plugin-pwa` | Interface de gestores e bolsistas; cache de leituras; impressões |
-| **API** (`api/`) | Google Apps Script em TypeScript, empacotado com esbuild, publicado com `clasp` como aplicativo da Web ("executar como: conta do setor", "acesso: qualquer pessoa") | Única porta de entrada para os dados; valida sessão e permissão em toda ação |
+| **API** (`api/`) | Google Apps Script em TypeScript, empacotado com esbuild, publicado com `clasp` como aplicativo da Web ("executar como: conta do setor", "acesso: qualquer pessoa") | Única porta de entrada para os dados; valida sessão e permissão em toda ação; mantém a agenda Google do setor sincronizada (seção 7.11) |
 | **Regras compartilhadas** (`shared/`) | TypeScript puro, sem dependência de Google ou navegador | Regras de escala, alertas, auto-preenchimento, cálculo de pagamento, saldo do almoxarifado, checagem de permissões, tipos |
 | **Planilhas** | Google Sheets numa pasta do Drive do setor | Armazenamento |
 
@@ -124,7 +125,7 @@ Todas as tabelas têm `id` (texto curto único), `criadoEm`, `atualizadoEm` e `a
 
 | Tabela | Colunas principais |
 |---|---|
-| `pessoas` | nome, nomeCurto (exibição na escala, ex.: "ISABELA A."), emailAcademico (login), emailAlternativo, matricula, siape, tipo (`servidor`/`bolsista`), vinculo (`fixo`/`eventual`), experiente (bool), escalarMenos (bool), ativo (bool) |
+| `pessoas` | nome, nomeCurto (exibição na escala, ex.: "ISABELA A."), emailAcademico (login), emailAlternativo, matricula, siape, tipo (`servidor`/`bolsista`), vinculo (`fixo`/`eventual`), experiente (bool), escalarMenos (bool), ativo (bool), convitesAgenda (e-mail que recebe os convites do Google Agenda; vazio = desativado) |
 | `permissoes` | pessoaId, modulo, nivel (`nenhum`/`ver`/`editar`) |
 
 **Eventos e escalas**
@@ -132,7 +133,7 @@ Todas as tabelas têm `id` (texto curto único), `criadoEm`, `atualizadoEm` e `a
 | Tabela | Colunas principais |
 |---|---|
 | `eventos` | nome, tipo (`Congresso`/`Formatura`/`Show/Concerto`/`Corporativo`/`Outro`), organizador, contatoOrganizador, servidorResponsavelId, publicoEstimado, publicoReal, pagamento (`interno`/`externo`), pagadorExterno, instrumento (`contrato`/`termo`/`nenhum`), status (`ativo`/`cancelado`), observacoes |
-| `sessoes` | eventoId, data, rotulo (ex.: "Manhã", "Sessão 2"), chegada, inicio, fim, horarioADefinir (bool), vagasBolsistas (padrão 8), vagasServidores (padrão 1), diaria (vazio = valor padrão), minimoExperientes (padrão 1), status (`ativa`/`cancelada`), publicadaEm, convocacaoAbertaAte, convocacaoVagas |
+| `sessoes` | eventoId, data, rotulo (ex.: "Manhã", "Sessão 2"), chegada, inicio, fim, horarioADefinir (bool), vagasBolsistas (padrão 8), vagasServidores (padrão 1), diaria (vazio = valor padrão), minimoExperientes (padrão 1), status (`ativa`/`cancelada`), publicadaEm, convocacaoAbertaAte, convocacaoVagas, googleEventoId (evento correspondente na agenda do setor) |
 | `rodadas` | nome (ex.: "Dezembro/2026"), prazo (data e hora), status (`aberta`/`fechada`) |
 | `rodadaSessoes` | rodadaId, sessaoId |
 | `disponibilidades` | pessoaId, sessaoId, disponivel (bool), origem (`proprio`/`gestor`/`convocacao`), respondidoEm |
@@ -176,7 +177,7 @@ Todas as tabelas têm `id` (texto curto único), `criadoEm`, `atualizadoEm` e `a
 | `historico` | quando, quemId, entidade, entidadeId, acao, antes, depois, justificativa (sem `atualizadoEm`) |
 | `config` | chave, valor |
 
-`config` guarda: valor padrão da diária (R$ 80,00), vagas padrão, edital e iniciativa da ficha de pagamento, número do projeto FUNDEP (30055), destinatários da FUNDEP, dados fixos dos modelos de contrato (signatária, processo da tabela de valores), limite diário de perguntas à busca, modelos de permissão, links dos formulários externos.
+`config` guarda: agenda Google do setor (id, nome e conta), valor padrão da diária (R$ 80,00), vagas padrão, edital e iniciativa da ficha de pagamento, número do projeto FUNDEP (30055), destinatários da FUNDEP, dados fixos dos modelos de contrato (signatária, processo da tabela de valores), limite diário de perguntas à busca, modelos de permissão, links dos formulários externos.
 
 ### 4.2 GestorCC-Sigiloso
 
@@ -359,6 +360,26 @@ Nota mensal de 1 a 5 e observação por bolsista, visíveis só para quem tem ac
 ### 7.10 Estatísticas de eventos
 
 Total de eventos, público total e média, filtráveis por período e por tipo de evento.
+
+### 7.11 Integração com o Google Agenda
+
+**A) Agenda do setor, sempre sincronizada.** A conta do sistema (a do CC) mantém uma agenda Google "Centro de Convenções UFSM". A API, com o serviço de agenda do Apps Script, mantém um evento por sessão:
+
+- criar ou alterar sessão (data, horários, "a definir" → definido) cria ou atualiza o evento;
+- cancelar sessão ou evento marca o evento como cancelado (título prefixado com "CANCELADO –") e notifica os convidados;
+- descrição do evento: organizador, servidor responsável, horário de chegada e link para o evento no GestorCC (sem dados pessoais);
+- a equipe só assina essa agenda (leitura), sem login no GestorCC.
+
+A sincronização acontece na mesma gravação; se o Google falhar, a gravação no GestorCC vale mesmo assim e o evento é marcado para nova tentativa pelo gatilho de 5 minutos.
+
+**B) Convites para o bolsista (opcional).** No Perfil, a pessoa ativa "Receber minhas escalas no Google Agenda" e escolhe o e-mail (acadêmico ou alternativo). Com isso:
+
+- ao **publicar** a escala, ela é adicionada como convidada no evento da sessão na agenda do setor e o evento aparece no Google Agenda dela;
+- **trocas**, **horário definido** e **cancelamentos** se refletem na hora (convidado incluído ou removido, evento atualizado);
+- os convidados **não veem os e-mails uns dos outros** (opção de privacidade do evento, via serviço avançado de Agenda);
+- quem não ativa continua com o botão "Adicionar ao Google Agenda" (cópia única) em Minhas escalas.
+
+Sincronização nos dois sentidos (eventos criados no Google entrando no GestorCC) **não** faz parte do escopo: o GestorCC é a fonte única da agenda.
 
 ---
 
@@ -553,7 +574,7 @@ Os scripts antigos podem continuar funcionando em paralelo até a equipe validar
 |---|---|
 | **0. Protótipo navegável** | Todas as telas principais com dados fictícios, identidade visual, perfis gestor e bolsista, celular e desktop. Para validação com a equipe antes de ligar a API. |
 | **1. Fundação** | Planilhas, API, login, troca e redefinição de senha, pessoas e permissões, mural, notificações, backup |
-| **2. Eventos e agenda** | Eventos, sessões, feriados, impressão da agenda, estatísticas |
+| **2. Eventos e agenda** | Eventos, sessões, feriados, impressão da agenda, estatísticas, agenda Google do setor e convites aos bolsistas (7.11) |
 | **3. Disponibilidade e escalas** | Rodadas, montador, publicação, convocação extra, trocas, presença, impressões, WhatsApp, avaliações, relatórios |
 | **4. Pagamentos** | Lotes, ficha de indicação, pagamento externo, Meus ganhos |
 | **5. Almoxarifado** | Módulo completo e importação do `BD_Almox` |

@@ -69,6 +69,7 @@ const REGRAS: Record<Acao, Regra> = {
   'auth.entrar': 'publica',
   'auth.esqueciSenha': 'publica',
   'auth.trocarSenha': 'logado',
+  'perfil.salvarAgenda': 'logado',
   'pessoas.listar': 'logado',
   'pessoas.salvar': ['pessoas', 'editar'],
   'pessoas.redefinirSenha': ['pessoas', 'editar'],
@@ -138,6 +139,16 @@ const handlers: Handlers = {
     ctx.banco.senhas[ctx.eu!.id] = { senha: nova, inicial: false };
     registrar(ctx, 'pessoa', ctx.eu!.id, 'trocou a senha');
     return null;
+  },
+
+  'perfil.salvarAgenda': ({ email }, ctx) => {
+    const p = ctx.banco.pessoas.find((x) => x.id === ctx.eu!.id)!;
+    if (email !== null && ![p.emailAcademico, p.emailAlternativo].includes(email)) {
+      throw erro('EMAIL', 'Escolha um dos e-mails do seu cadastro.');
+    }
+    p.convitesAgenda = email;
+    registrar(ctx, 'pessoa', p.id, email ? 'ativou convites do Google Agenda' : 'desativou convites do Google Agenda');
+    return p;
   },
 
   'pessoas.listar': (_d, ctx) =>
