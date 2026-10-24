@@ -10,3 +10,6 @@ export * from './escala/contagem';
 export * from './escala/autoPreencher';
 export * from './escala/sugestoes';
 export * from './escala/whatsapp';
+export * from './pagamentos/lotes';
+export * from './pagamentos/ganhos';
+export * from './pagamentos/ficha';
