@@ -1,4 +1,5 @@
 import { pode, type Modulo, type Pessoa } from '@shared';
+import { recursoAtivo, type Recurso } from '../recursos';
 import {
   Banknote,
   Bell,
@@ -24,6 +25,8 @@ export interface ItemMenu {
   rotulo: string;
   icone: LucideIcon;
   modulo?: Modulo;
+  /** Área pessoal que só aparece quando o recurso está ligado. */
+  recurso?: Recurso;
 }
 
 export const ITENS_GESTAO: ItemMenu[] = [
@@ -42,21 +45,22 @@ export const ITENS_GESTAO: ItemMenu[] = [
 export const ITEM_INICIO: ItemMenu = { rota: '/', rotulo: 'Início', icone: Home };
 
 export const ITENS_PESSOAIS: ItemMenu[] = [
-  { rota: '/minhas-escalas', rotulo: 'Minhas escalas', icone: CalendarCheck },
-  { rota: '/disponibilidade', rotulo: 'Disponibilidade', icone: ClipboardList },
-  { rota: '/ganhos', rotulo: 'Ganhos', icone: Wallet },
+  { rota: '/minhas-escalas', rotulo: 'Minhas escalas', icone: CalendarCheck, recurso: 'escalasPessoais' },
+  { rota: '/disponibilidade', rotulo: 'Disponibilidade', icone: ClipboardList, recurso: 'escalasPessoais' },
+  { rota: '/ganhos', rotulo: 'Ganhos', icone: Wallet, recurso: 'escalasPessoais' },
   { rota: '/avisos', rotulo: 'Avisos', icone: Bell },
-  { rota: '/relatar', rotulo: 'Relatar problema', icone: TriangleAlert },
+  { rota: '/relatar', rotulo: 'Relatar problema', icone: TriangleAlert, recurso: 'relatar' },
   { rota: '/perfil', rotulo: 'Perfil', icone: UserRound },
 ];
 
 export function itensVisiveis(p: Pessoa): { gestao: ItemMenu[]; pessoais: ItemMenu[] } {
   const gestao = ITENS_GESTAO.filter((i) => {
     if (!i.modulo) return true;
+    if (!recursoAtivo(i.modulo) && !(i.modulo === 'almoxEstoque' && recursoAtivo('almoxSaidas'))) return false;
     if (i.modulo === 'almoxEstoque') return pode(p.permissoes, 'almoxEstoque', 'ver') || pode(p.permissoes, 'almoxSaidas', 'ver');
     if (i.modulo === 'mural') return pode(p.permissoes, 'mural', 'editar');
     return pode(p.permissoes, i.modulo, 'ver');
   });
-  const pessoais = ITENS_PESSOAIS.filter((i) => i.rota !== '/ganhos' || p.tipo === 'bolsista');
+  const pessoais = ITENS_PESSOAIS.filter((i) => (i.rota !== '/ganhos' || p.tipo === 'bolsista') && (!i.recurso || recursoAtivo(i.recurso)));
   return { gestao, pessoais };
 }

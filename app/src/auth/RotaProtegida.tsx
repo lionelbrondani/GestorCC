@@ -2,6 +2,7 @@ import { pode, type Modulo } from '@shared';
 import type { ReactNode } from 'react';
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { EstadoVazio } from '../componentes';
+import { recursoAtivo, type Recurso } from '../recursos';
 import { Shell } from '../layout/Shell';
 import { AvisoSenha } from './AvisoSenha';
 import { useSessao } from './SessaoContexto';
@@ -13,6 +14,15 @@ export function SemAcesso() {
       texto="Se você precisa desta função, peça a um gestor para liberar o acesso no seu cadastro."
     />
   );
+}
+
+export function EmBreve() {
+  return <EstadoVazio titulo="Esta área chega numa próxima etapa." texto="Ela já existe no protótipo e será ligada aos dados reais em breve." />;
+}
+
+/** Área pessoal que depende de um módulo ainda não ligado (ex.: minhas escalas). */
+export function ExigeRecurso({ recurso, children }: { recurso: Recurso; children: ReactNode }) {
+  return recursoAtivo(recurso) ? <>{children}</> : <EmBreve />;
 }
 
 /** Exige que a pessoa tenha ao menos um dos módulos no nível pedido. */
@@ -27,6 +37,7 @@ export function Exige({
 }) {
   const { sessao } = useSessao();
   if (!sessao) return null;
+  if (!modulos.some((m) => recursoAtivo(m))) return <EmBreve />;
   const permitido = modulos.some((m) => pode(sessao.pessoa.permissoes, m, nivel));
   return permitido ? <>{children}</> : <SemAcesso />;
 }
