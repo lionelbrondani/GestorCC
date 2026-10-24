@@ -1,7 +1,8 @@
 /// <reference types="google-apps-script" />
 // Portas reais, com os serviços do Apps Script. Não é testado em Node; a lógica fica nos módulos puros.
-import { ErroApi, somarDias } from '@shared';
-import type { AgendaGoogle, Cache, Cripto, EventoAgenda, NomeTabela, Planilha, Portas, Propriedades, Relogio, Repositorio, Trava } from '../nucleo/portas';
+import { ErroApi } from '@shared';
+import { eventoSumiuNoGoogle, recursoDoEvento } from '../agenda/recursoGoogle';
+import type { AgendaGoogle, Cache, Cripto, NomeTabela, Planilha, Portas, Propriedades, Relogio, Repositorio, Trava } from '../nucleo/portas';
 import { cabecalhos, ESQUEMA } from '../tabelas/esquema';
 import { linhaParaObjeto, objetoParaLinha, paraCelula } from '../tabelas/serializacao';
 
@@ -153,19 +154,6 @@ export function repositorioGas(relogio: Relogio): Repositorio {
 /** Sem e-mail para ninguém: toda mudança na agenda é silenciosa. */
 const SILENCIOSO = { sendUpdates: 'none' };
 
-function recursoDoEvento(e: EventoAgenda): GoogleAppsScript.Calendar.Schema.Event {
-  const q = e.quando;
-  return {
-    summary: e.titulo,
-    description: e.descricao,
-    start: q.diaInteiro ? { date: q.dia } : { dateTime: `${q.inicio}:00`, timeZone: FUSO },
-    end: q.diaInteiro ? { date: somarDias(q.dia, 1) } : { dateTime: `${q.fim}:00`, timeZone: FUSO },
-    attendees: e.convidados.map((email) => ({ email })),
-    guestsCanSeeOtherGuests: false,
-    guestsCanInviteOthers: false,
-  };
-}
-
 /** Agenda Google do setor pelo serviço avançado Calendar v3 (o id vem de AGENDA_ID, criado pelo instalar). */
 export const agendaGas: AgendaGoogle = {
   ligada: () => !!propriedadesGas.obter('AGENDA_ID'),
@@ -176,8 +164,9 @@ export const agendaGas: AgendaGoogle = {
       try {
         Calendar.Events!.patch(recurso, agendaId, id, SILENCIOSO);
         return id;
-      } catch {
-        // apagado à mão no Google: cria de novo e passa a usar o id novo
+      } catch (e) {
+        // só recria se o evento não existe mais; outra falha vira pendência (sem duplicar o evento)
+        if (!eventoSumiuNoGoogle(e)) throw e;
       }
     }
     return Calendar.Events!.insert(recurso, agendaId, SILENCIOSO).id!;
