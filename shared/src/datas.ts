@@ -61,6 +61,12 @@ export function mesDe(d: DataISO): string {
   return d.slice(0, 7);
 }
 
+/** 'AAAA-MM-DDTHH:MM' → 'dd/mm/aaaa às HH:MM'. */
+export function formatarDataHora(dataHora: string): string {
+  const [data, hora] = dataHora.split('T');
+  return hora ? `${formatarData(data)} às ${hora.slice(0, 5)}` : formatarData(data);
+}
+
 /** Dias desde 1970-01-01 (UTC), usado para comparar intervalos de sessões. */
 export function diaAbsoluto(d: DataISO): number {
   return Math.round(emUtc(d) / DIA_MS);
