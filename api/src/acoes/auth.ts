@@ -54,6 +54,9 @@ function gravarSenha(ctx: Contexto, cred: Credencial, nova: string): Credencial 
   return atualizada;
 }
 
+/** Senhas valem sem os espaços das pontas, em todo lugar (o celular às vezes acrescenta um). */
+const limpa = (s: unknown) => String(s ?? '').trim();
+
 const CREDENCIAIS = () => new ErroApi('CREDENCIAIS', 'E-mail ou senha incorretos.');
 
 export const handlersAuth: Handlers = {
@@ -70,7 +73,7 @@ export const handlersAuth: Handlers = {
     if (cred.bloqueadoAte && cred.bloqueadoAte > agora) {
       throw new ErroApi('BLOQUEADO', `Muitas tentativas. Tente de novo às ${cred.bloqueadoAte.slice(11, 16)}.`);
     }
-    if (!conferirSenha(cripto, String(senha ?? '').trim(), cred)) {
+    if (!conferirSenha(cripto, limpa(senha), cred)) {
       const falhas = cred.falhas + 1;
       const bloqueia = falhas >= MAX_FALHAS;
       repo.atualizar('credenciais', { ...cred, falhas: bloqueia ? 0 : falhas, bloqueadoAte: bloqueia ? relogio.formatar(relogio.agoraMs() + BLOQUEIO_MS) : '' });
@@ -85,7 +88,9 @@ export const handlersAuth: Handlers = {
     };
   },
 
-  'auth.trocarSenha': ({ atual, nova }, ctx) => {
+  'auth.trocarSenha': (d, ctx) => {
+    const atual = limpa(d.atual);
+    const nova = limpa(d.nova);
     const cred = credencialDe(ctx.portas, ctx.eu!.id);
     if (!cred || !conferirSenha(ctx.portas.cripto, atual, cred)) throw new ErroApi('SENHA_ATUAL', 'A senha atual não confere.');
     exigirSenhaNova(nova);
@@ -117,7 +122,8 @@ export const handlersAuth: Handlers = {
     return null;
   },
 
-  'auth.redefinirSenha': ({ token, nova }, ctx) => {
+  'auth.redefinirSenha': ({ token, nova: digitada }, ctx) => {
+    const nova = limpa(digitada);
     const invalido = () => new ErroApi('LINK_INVALIDO', 'Este link expirou ou já foi usado. Peça um novo.');
     if (!token) throw invalido();
     const resumo = resumoReset(ctx.portas, token);

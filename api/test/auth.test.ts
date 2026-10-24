@@ -46,6 +46,16 @@ describe('trocar senha', () => {
     expect(login.dados.senhaInicial).toBe(false);
   });
 
+  it('espaços nas pontas da senha nova não impedem de entrar depois (o login ignora as pontas)', () => {
+    const amb = ambiente();
+    const t = amb.token('p02');
+    expect(amb.chamar('auth.trocarSenha', { atual: ` ${BOLSISTA.matricula} `, nova: ' novaSenha123 ' }, { token: t }).ok).toBe(true);
+    expect(amb.chamar('auth.entrar', { email: BOLSISTA.emailAcademico, senha: 'novaSenha123' }).ok).toBe(true);
+    expect(amb.chamar('auth.trocarSenha', { atual: 'novaSenha123', nova: '  curta  ' }, { token: amb.token('p02', 2) })).toMatchObject({
+      erro: { codigo: 'SENHA_CURTA' },
+    });
+  });
+
   it('confere a senha atual e o tamanho da nova', () => {
     const amb = ambiente();
     const t = amb.token('p02');
