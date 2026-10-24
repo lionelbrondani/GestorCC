@@ -5,7 +5,12 @@ import { usePessoas } from '../../api/consultas';
 import { useConsulta, useMutacao } from '../../api/hooks';
 import { useEu } from '../../auth/SessaoContexto';
 import { Alerta, Botao, Campo, Carregando, Cartao, EstadoVazio, Modal, Pagina } from '../../componentes';
+import { copiarTexto } from '../escalas/dadosEscalas';
 import { PermissoesEditor } from './PermissoesEditor';
+
+const mensagemNovaSenha = (nome: string) =>
+  `Olá, ${nome.trim().split(' ')[0]}! Sua senha do GestorCC voltou a ser a sua matrícula. ` +
+  `Entre em ${window.location.origin} com o seu e-mail acadêmico e a matrícula, e crie uma senha nova.`;
 
 function pessoaVazia(): Pessoa {
   return {
@@ -71,6 +76,8 @@ export function PessoaForm() {
   const [p, setP] = useState<Pessoa | null>(null);
   const [msg, setMsg] = useState<{ tom: 'erro' | 'sucesso'; texto: string } | null>(null);
   const [confirmarSenha, setConfirmarSenha] = useState(false);
+  const [mensagemSenha, setMensagemSenha] = useState<string | null>(null);
+  const [copiado, setCopiado] = useState(false);
 
   useEffect(() => {
     if (!pessoas.isLoading && !p) setP(nova ? pessoaVazia() : pessoas.pessoa.get(id) ?? null);
@@ -181,7 +188,8 @@ export function PessoaForm() {
               onClick={async () => {
                 await redefinir.mutateAsync({ pessoaId: p.id });
                 setConfirmarSenha(false);
-                setMsg({ tom: 'sucesso', texto: 'Senha redefinida para a matrícula.' });
+                setCopiado(false);
+                setMensagemSenha(mensagemNovaSenha(p.nome));
               }}
             >
               Redefinir
@@ -192,6 +200,28 @@ export function PessoaForm() {
         <p>
           A senha de <strong>{p.nome}</strong> voltará a ser a matrícula. As sessões abertas serão encerradas.
         </p>
+      </Modal>
+
+      <Modal
+        aberto={mensagemSenha !== null}
+        titulo="Senha redefinida"
+        aoFechar={() => setMensagemSenha(null)}
+        rodape={
+          <>
+            <Botao onClick={async () => setCopiado(await copiarTexto(mensagemSenha ?? ''))}>Copiar</Botao>
+            <Botao variante="primario" onClick={() => setMensagemSenha(null)}>
+              Fechar
+            </Botao>
+          </>
+        }
+      >
+        <div className="pilha">
+          <p>O sistema não envia e-mails. Mande esta mensagem para {p.nome} pelo e-mail ou WhatsApp:</p>
+          <Campo rotulo="Mensagem para enviar">
+            {(id) => <textarea id={id} className="cc-entrada" rows={4} readOnly value={mensagemSenha ?? ''} />}
+          </Campo>
+          {copiado && <Alerta tom="info">Copiado! Agora é só colar na conversa.</Alerta>}
+        </div>
       </Modal>
     </Pagina>
   );

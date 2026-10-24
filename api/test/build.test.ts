@@ -26,4 +26,10 @@ describe('build para o Apps Script', () => {
     expect(manifesto.webapp.access).toBe('ANYONE_ANONYMOUS');
     expect(manifesto.timeZone).toBe('America/Sao_Paulo');
   });
+
+  it('o sistema não envia e-mail: sem permissão de e-mail e sem MailApp/GmailApp no código', () => {
+    const manifesto = JSON.parse(readFileSync(`${raiz}dist/appsscript.json`, 'utf8'));
+    expect(manifesto.oauthScopes.filter((s: string) => /mail/i.test(s))).toEqual([]);
+    expect(readFileSync(`${raiz}dist/Code.js`, 'utf8')).not.toMatch(/MailApp|GmailApp/);
+  });
 });

@@ -1,7 +1,7 @@
 /// <reference types="google-apps-script" />
 // Portas reais, com os serviços do Apps Script. Não é testado em Node; a lógica fica nos módulos puros.
 import { ErroApi } from '@shared';
-import type { Cache, Cripto, Email, NomeTabela, Planilha, Portas, Propriedades, Relogio, Repositorio, Trava } from '../nucleo/portas';
+import type { Cache, Cripto, NomeTabela, Planilha, Portas, Propriedades, Relogio, Repositorio, Trava } from '../nucleo/portas';
 import { cabecalhos, ESQUEMA } from '../tabelas/esquema';
 import { linhaParaObjeto, objetoParaLinha, paraCelula } from '../tabelas/serializacao';
 
@@ -52,10 +52,6 @@ export const cacheGas: Cache = {
       // resposta grande demais para o cache: só perde a proteção contra reenvio desta chamada
     }
   },
-};
-
-export const emailGas: Email = {
-  enviar: (para, assunto, corpoHtml) => MailApp.sendEmail({ to: para, subject: assunto, htmlBody: corpoHtml, name: 'GestorCC' }),
 };
 
 export const propriedadesGas: Propriedades = {
@@ -150,7 +146,6 @@ export function portasGas(): Portas {
     trava: travaGas,
     cache: cacheGas,
     relogio: relogioGas,
-    email: emailGas,
     props: propriedadesGas,
   };
 }

@@ -70,10 +70,8 @@ function publicoDaPessoa(p: Pessoa): Pessoa {
 
 const REGRAS: Record<Acao, Regra> = {
   'sistema.ping': 'publica',
-  'auth.redefinirSenha': 'publica',
   'pessoas.importar': ['pessoas', 'editar'],
   'auth.entrar': 'publica',
-  'auth.esqueciSenha': 'publica',
   'auth.trocarSenha': 'logado',
   'perfil.salvarAgenda': 'logado',
   'pessoas.listar': 'logado',
@@ -142,11 +140,6 @@ const handlers: Handlers = {
     return { token: `tok-${p.id}`, pessoa: p, senhaInicial: cred.inicial };
   },
   'sistema.ping': () => ({ versao: 'prototipo' }),
-  'auth.esqueciSenha': () => null,
-  'auth.redefinirSenha': ({ token }) => {
-    if (token !== 'exemplo') throw erro('LINK_INVALIDO', 'Este link expirou ou já foi usado. Peça um novo.');
-    return null;
-  },
   'pessoas.importar': () => ({ importadas: 0, atualizadas: 0, problemas: [] }),
   'auth.trocarSenha': ({ atual, nova }, ctx) => {
     const cred = ctx.banco.senhas[ctx.eu!.id];

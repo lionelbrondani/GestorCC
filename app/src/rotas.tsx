@@ -2,7 +2,6 @@ import type { Modulo } from '@shared';
 import type { ReactNode } from 'react';
 import type { RouteObject } from 'react-router-dom';
 import { Exige, ExigeRecurso, LayoutAutenticado } from './auth/RotaProtegida';
-import { RedefinirSenha } from './telas/login/RedefinirSenha';
 import { EstadoVazio } from './componentes';
 import { Busca } from './layout/Busca';
 import { Notificacoes } from './layout/Notificacoes';
@@ -42,7 +41,6 @@ const comPermissao = (modulos: Modulo[], el: ReactNode, nivel: 'ver' | 'editar' 
 
 export const ROTAS: RouteObject[] = [
   { path: '/entrar', element: <Login /> },
-  { path: '/redefinir', element: <RedefinirSenha /> },
   {
     element: <LayoutAutenticado busca={<Busca />} notificacoes={<Notificacoes />} />,
     children: [

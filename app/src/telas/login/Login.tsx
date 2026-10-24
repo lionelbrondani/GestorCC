@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { Navigate, useNavigate, useSearchParams } from 'react-router-dom';
-import { useApi } from '../../api/cliente';
 import { useSessao } from '../../auth/SessaoContexto';
 import { MODO_PROTOTIPO } from '../../ambiente';
 import { Alerta, Botao, Campo, Modal } from '../../componentes';
@@ -21,7 +20,6 @@ function Padrao() {
 
 export function Login() {
   const { sessao, entrar } = useSessao();
-  const api = useApi();
   const navegar = useNavigate();
   const [params] = useSearchParams();
   const [email, setEmail] = useState('');
@@ -29,7 +27,6 @@ export function Login() {
   const [erro, setErro] = useState<string | null>(null);
   const [enviando, setEnviando] = useState(false);
   const [esqueci, setEsqueci] = useState(false);
-  const [linkEnviado, setLinkEnviado] = useState(false);
 
   const voltar = params.get('voltar') || '/';
   if (sessao) return <Navigate to={voltar} replace />;
@@ -94,27 +91,9 @@ export function Login() {
         aoFechar={() => setEsqueci(false)}
         rodape={<Botao onClick={() => setEsqueci(false)}>Fechar</Botao>}
       >
-        <div className="pilha">
-          <p>
-            Enviaremos um link para redefinir a senha ao seu e-mail acadêmico. O link vale por 1 hora. Se preferir, peça a um gestor
-            para voltar a senha para a sua matrícula.
-          </p>
-          {linkEnviado ? (
-            <Alerta tom="sucesso">Se este e-mail estiver cadastrado, o link chega em alguns minutos. Confira também a caixa de spam.</Alerta>
-          ) : email ? (
-            <Botao
-              variante="primario"
-              onClick={async () => {
-                await api.chamar('auth.esqueciSenha', { email }).catch(() => undefined);
-                setLinkEnviado(true);
-              }}
-            >
-              Enviar link para {email}
-            </Botao>
-          ) : (
-            <p className="pequeno texto-2">Digite seu e-mail acadêmico na tela de entrada e abra esta opção de novo.</p>
-          )}
-        </div>
+        <p>
+          Peça a um gestor para redefinir sua senha. Ela volta a ser a sua matrícula, e você cria uma nova ao entrar.
+        </p>
       </Modal>
     </div>
   );

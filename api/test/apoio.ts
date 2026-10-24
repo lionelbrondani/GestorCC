@@ -1,6 +1,6 @@
 // Ambiente de teste da API: portas em memória, uma pessoa gestora e uma bolsista fictícias.
 import { MODELOS, MODULOS, type Acao, type Entrada, type Pessoa } from '@shared';
-import { cacheMemoria, criarRepositorioMemoria, emailMemoria, propriedadesMemoria, relogioFixo, travaMemoria } from '../src/adaptadores/memoria';
+import { cacheMemoria, criarRepositorioMemoria, propriedadesMemoria, relogioFixo, travaMemoria } from '../src/adaptadores/memoria';
 import { criptoNode } from '../src/adaptadores/node';
 import { criarHash } from '../src/auth/senhas';
 import { emitirToken } from '../src/auth/tokens';
@@ -25,7 +25,7 @@ function linhasPermissoes(pessoaId: string, modelo: keyof typeof MODELOS) {
 }
 
 function credencial(pessoaId: string, senha: string) {
-  return { id: pessoaId, ...criarHash(criptoNode, senha, 10), senhaInicial: true, versaoToken: 1, falhas: 0, bloqueadoAte: '', resetToken: '', resetExpira: '' };
+  return { id: pessoaId, ...criarHash(criptoNode, senha, 10), senhaInicial: true, versaoToken: 1, falhas: 0, bloqueadoAte: '' };
 }
 
 export function criarAmbiente(opcoes: { trava?: Trava; handlers?: Handlers } = {}) {
@@ -38,10 +38,9 @@ export function criarAmbiente(opcoes: { trava?: Trava; handlers?: Handlers } = {
     },
     relogio,
   );
-  const email = emailMemoria();
   const portas: Portas = {
-    repo, cripto: criptoNode, trava: opcoes.trava ?? travaMemoria(), cache: cacheMemoria(), relogio, email,
-    props: propriedadesMemoria({ SEGREDO_TOKEN: SEGREDO, URL_APP: 'https://gestorcc.exemplo.app' }),
+    repo, cripto: criptoNode, trava: opcoes.trava ?? travaMemoria(), cache: cacheMemoria(), relogio,
+    props: propriedadesMemoria({ SEGREDO_TOKEN: SEGREDO }),
   };
   let handlers: Handlers = opcoes.handlers ?? {};
   let seq = 0;
@@ -56,7 +55,7 @@ export function criarAmbiente(opcoes: { trava?: Trava; handlers?: Handlers } = {
   }
 
   return {
-    portas, repo, relogio, email, token, chamar,
+    portas, repo, relogio, token, chamar,
     usar(h: Handlers) {
       handlers = { ...handlers, ...h };
     },

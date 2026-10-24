@@ -37,8 +37,6 @@ export interface Acoes {
   'auth.entrar': A<{ email: string; senha: string }, { token: string; pessoa: Pessoa; senhaInicial: boolean }>;
   /** Devolve um novo token: a troca invalida as sessões antigas. */
   'auth.trocarSenha': A<{ atual: string; nova: string }, { token: string }>;
-  'auth.esqueciSenha': A<{ email: string }, null>;
-  'auth.redefinirSenha': A<{ token: string; nova: string }, null>;
   'perfil.salvarAgenda': A<{ email: string | null }, Pessoa>;
 
   'pessoas.listar': A<null, Pessoa[]>;
@@ -65,7 +63,8 @@ export interface Acoes {
     { sessaoId: Id; itens: { pessoaId: Id; papel: 'bolsista' | 'servidor'; adicaoDireta: boolean }[] },
     Escala[]
   >;
-  'escalas.publicar': A<{ sessaoIds: Id[]; enviarEmail: boolean }, null>;
+  /** Avisa os escalados só pelo app: o sistema não envia e-mail. */
+  'escalas.publicar': A<{ sessaoIds: Id[] }, null>;
   'escalas.trocar': A<{ sessaoId: Id; sai: Id | null; entra: Id | null; justificativa: string }, Escala[]>;
   'escalas.convocar': A<{ sessaoId: Id; vagas: number; abertaAte: string }, Sessao>;
   'escalas.confirmarPresenca': A<{ sessaoId: Id; faltaram: Id[] }, Escala[]>;

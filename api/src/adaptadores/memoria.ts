@@ -1,6 +1,6 @@
 // Portas em memória, usadas nos testes da API.
 import { ErroApi } from '@shared';
-import type { Cache, Email, NomeTabela, Planilha, Propriedades, Relogio, Repositorio, Trava } from '../nucleo/portas';
+import type { Cache, NomeTabela, Planilha, Propriedades, Relogio, Repositorio, Trava } from '../nucleo/portas';
 
 type Registro = { id: string } & Record<string, unknown>;
 
@@ -77,11 +77,6 @@ export function travaOcupada(): Trava {
       throw new ErroApi('SISTEMA_OCUPADO', 'O sistema está ocupado. Tente de novo em alguns segundos.');
     },
   };
-}
-
-export function emailMemoria(): Email & { enviados: { para: string; assunto: string; corpoHtml: string }[] } {
-  const enviados: { para: string; assunto: string; corpoHtml: string }[] = [];
-  return { enviados, enviar: (para, assunto, corpoHtml) => void enviados.push({ para, assunto, corpoHtml }) };
 }
 
 export function propriedadesMemoria(inicial: Record<string, string> = {}): Propriedades {
