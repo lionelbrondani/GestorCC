@@ -15,3 +15,4 @@ export * from './pagamentos/ganhos';
 export * from './pagamentos/ficha';
 export * from './almox';
 export * from './contratos';
+export * from './api/acoes';
