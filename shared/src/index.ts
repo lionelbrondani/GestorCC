@@ -13,3 +13,5 @@ export * from './escala/whatsapp';
 export * from './pagamentos/lotes';
 export * from './pagamentos/ganhos';
 export * from './pagamentos/ficha';
+export * from './almox';
+export * from './contratos';
