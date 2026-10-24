@@ -11,6 +11,7 @@ export function FormTrocarSenha({ aoConcluir }: { aoConcluir: () => void }) {
   const [confirma, setConfirma] = useState('');
   const [erro, setErro] = useState<string | null>(null);
   const trocar = useMutacao('auth.trocarSenha', []);
+  const { atualizarToken } = useSessao();
 
   async function enviar(e: React.FormEvent) {
     e.preventDefault();
@@ -18,7 +19,8 @@ export function FormTrocarSenha({ aoConcluir }: { aoConcluir: () => void }) {
     if (nova.length < 8) return setErro('A nova senha deve ter pelo menos 8 caracteres.');
     if (nova !== confirma) return setErro('A confirmação não confere com a nova senha.');
     try {
-      await trocar.mutateAsync({ atual, nova });
+      const r = await trocar.mutateAsync({ atual, nova });
+      atualizarToken(r.token);
       aoConcluir();
     } catch (err) {
       setErro((err as Error).message);

@@ -9,8 +9,15 @@ dist/
 # Segredos e configuração local
 .env
 .env.*
+!.env.exemplo
+.firebaserc
 .clasprc.json
 
 # Sistema
 .DS_Store
 Thumbs.db
+
+# API (Apps Script)
+api/dist/
+api/ambientes/*/.clasp.json
+.clasprc.json

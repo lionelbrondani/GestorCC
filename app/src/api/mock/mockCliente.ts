@@ -69,6 +69,9 @@ function publicoDaPessoa(p: Pessoa): Pessoa {
 }
 
 const REGRAS: Record<Acao, Regra> = {
+  'sistema.ping': 'publica',
+  'auth.redefinirSenha': 'publica',
+  'pessoas.importar': ['pessoas', 'editar'],
   'auth.entrar': 'publica',
   'auth.esqueciSenha': 'publica',
   'auth.trocarSenha': 'logado',
@@ -138,14 +141,20 @@ const handlers: Handlers = {
     if (!p || !cred || cred.senha !== senha.trim()) throw erro('CREDENCIAIS', 'E-mail ou senha incorretos.');
     return { token: `tok-${p.id}`, pessoa: p, senhaInicial: cred.inicial };
   },
+  'sistema.ping': () => ({ versao: 'prototipo' }),
   'auth.esqueciSenha': () => null,
+  'auth.redefinirSenha': ({ token }) => {
+    if (token !== 'exemplo') throw erro('LINK_INVALIDO', 'Este link expirou ou já foi usado. Peça um novo.');
+    return null;
+  },
+  'pessoas.importar': () => ({ importadas: 0, atualizadas: 0, problemas: [] }),
   'auth.trocarSenha': ({ atual, nova }, ctx) => {
     const cred = ctx.banco.senhas[ctx.eu!.id];
     if (cred.senha !== atual) throw erro('SENHA_ATUAL', 'A senha atual não confere.');
     if (nova.length < 8) throw erro('SENHA_CURTA', 'A nova senha deve ter pelo menos 8 caracteres.');
     ctx.banco.senhas[ctx.eu!.id] = { senha: nova, inicial: false };
     registrar(ctx, 'pessoa', ctx.eu!.id, 'trocou a senha');
-    return null;
+    return { token: `tok-${ctx.eu!.id}` };
   },
 
   'perfil.salvarAgenda': ({ email }, ctx) => {

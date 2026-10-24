@@ -2,6 +2,7 @@ import type { Pessoa } from '@shared';
 import { CalendarCheck, ClipboardList, Home, Menu, Wallet, Bell } from 'lucide-react';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { Link, NavLink, useLocation } from 'react-router-dom';
+import { recursoAtivo } from '../recursos';
 import { ITEM_INICIO, itensVisiveis, type ItemMenu } from './menu';
 import './layout.css';
 
@@ -97,6 +98,7 @@ export function BarraInferior({ pessoa }: { pessoa: Pessoa }) {
   useEffect(() => setGaveta(false), [local.pathname]);
   const { gestao, pessoais } = itensVisiveis(pessoa);
   const bolsista = pessoa.tipo === 'bolsista';
+  const escalas = recursoAtivo('escalasPessoais');
   return (
     <>
       <nav className="cc-barra-inferior" aria-label="Navegação principal">
@@ -104,15 +106,19 @@ export function BarraInferior({ pessoa }: { pessoa: Pessoa }) {
           <Home size={20} aria-hidden />
           Início
         </NavLink>
-        <NavLink to="/minhas-escalas">
-          <CalendarCheck size={20} aria-hidden />
-          Escalas
-        </NavLink>
-        <NavLink to="/disponibilidade">
-          <ClipboardList size={20} aria-hidden />
-          Disponib.
-        </NavLink>
-        {bolsista ? (
+        {escalas && (
+          <NavLink to="/minhas-escalas">
+            <CalendarCheck size={20} aria-hidden />
+            Escalas
+          </NavLink>
+        )}
+        {escalas && (
+          <NavLink to="/disponibilidade">
+            <ClipboardList size={20} aria-hidden />
+            Disponib.
+          </NavLink>
+        )}
+        {bolsista && escalas ? (
           <NavLink to="/ganhos">
             <Wallet size={20} aria-hidden />
             Ganhos

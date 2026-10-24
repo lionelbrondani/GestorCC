@@ -1,6 +1,6 @@
 import type { Pessoa } from '@shared';
 import { useQueryClient } from '@tanstack/react-query';
-import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { useApi } from '../api/cliente';
 
 export interface SessaoUsuario {
@@ -17,7 +17,12 @@ interface ValorSessao {
   marcarSenhaTrocada(): void;
   /** Atualiza o retrato da pessoa guardado na sessão (ex.: após mudar preferências no Perfil). */
   atualizarPessoa(p: Pessoa): void;
+  /** Troca o token da sessão (ex.: depois de trocar a senha). */
+  atualizarToken(token: string): void;
 }
+
+/** Disparado quando a API responde SESSAO: a sessão é encerrada e o app volta ao login. */
+export const EVENTO_SESSAO_EXPIRADA = 'gestorcc:sessao-expirada';
 
 const CHAVE = 'gestorcc-sessao';
 const SessaoContexto = createContext<ValorSessao | null>(null);
@@ -91,6 +96,21 @@ export function SessaoProvedor({
     [atual, trocar],
   );
 
+  const atualizarToken = useCallback(
+    (token: string) => {
+      if (atual) trocar({ ...atual, token });
+    },
+    [atual, trocar],
+  );
+
+  useEffect(() => {
+    const expirou = () => {
+      if (atual) sair();
+    };
+    window.addEventListener(EVENTO_SESSAO_EXPIRADA, expirou);
+    return () => window.removeEventListener(EVENTO_SESSAO_EXPIRADA, expirou);
+  }, [atual, sair]);
+
   const valor = useMemo<ValorSessao>(
     () => ({
       sessao: atual ? { pessoa: atual.pessoa, senhaInicial: atual.senhaInicial } : null,
@@ -98,8 +118,9 @@ export function SessaoProvedor({
       sair,
       marcarSenhaTrocada,
       atualizarPessoa,
+      atualizarToken,
     }),
-    [atual, entrar, sair, marcarSenhaTrocada, atualizarPessoa],
+    [atual, entrar, sair, marcarSenhaTrocada, atualizarPessoa, atualizarToken],
   );
 
   return <SessaoContexto.Provider value={valor}>{children}</SessaoContexto.Provider>;

@@ -10,10 +10,13 @@ import { chegadaTexto, dataLonga, tituloSessao } from '../../util/sessoes';
 import { CartaoAviso } from '../pessoal/Avisos';
 import { InicioBolsista } from './InicioBolsista';
 import { calcularPendencias } from './pendencias';
+import { InicioSimples } from './InicioSimples';
+import { recursoAtivo } from '../../recursos';
 import './inicio.css';
 
 export function Inicio() {
   const eu = useEu();
+  if (!recursoAtivo('eventos')) return <InicioSimples />;
   return ehGestor(eu.permissoes) ? <InicioGestor /> : <InicioBolsista />;
 }
 

@@ -33,14 +33,18 @@ type A<E, S> = { entrada: E; saida: S };
 
 /** Mapa tipado de todas as ações da API: nome → { entrada; saida }. */
 export interface Acoes {
+  'sistema.ping': A<null, { versao: string }>;
   'auth.entrar': A<{ email: string; senha: string }, { token: string; pessoa: Pessoa; senhaInicial: boolean }>;
-  'auth.trocarSenha': A<{ atual: string; nova: string }, null>;
+  /** Devolve um novo token: a troca invalida as sessões antigas. */
+  'auth.trocarSenha': A<{ atual: string; nova: string }, { token: string }>;
   'auth.esqueciSenha': A<{ email: string }, null>;
+  'auth.redefinirSenha': A<{ token: string; nova: string }, null>;
   'perfil.salvarAgenda': A<{ email: string | null }, Pessoa>;
 
   'pessoas.listar': A<null, Pessoa[]>;
   'pessoas.salvar': A<Pessoa, Pessoa>;
   'pessoas.redefinirSenha': A<{ pessoaId: Id }, null>;
+  'pessoas.importar': A<null, { importadas: number; atualizadas: number; problemas: { linha: number; mensagem: string }[] }>;
   'dadosPessoais.obter': A<{ pessoaId: Id }, DadosPessoais | null>;
   'dadosPessoais.salvar': A<DadosPessoais, DadosPessoais>;
 

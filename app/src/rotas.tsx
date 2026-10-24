@@ -1,7 +1,8 @@
 import type { Modulo } from '@shared';
 import type { ReactNode } from 'react';
 import type { RouteObject } from 'react-router-dom';
-import { Exige, LayoutAutenticado } from './auth/RotaProtegida';
+import { Exige, ExigeRecurso, LayoutAutenticado } from './auth/RotaProtegida';
+import { RedefinirSenha } from './telas/login/RedefinirSenha';
 import { EstadoVazio } from './componentes';
 import { Busca } from './layout/Busca';
 import { Notificacoes } from './layout/Notificacoes';
@@ -41,16 +42,17 @@ const comPermissao = (modulos: Modulo[], el: ReactNode, nivel: 'ver' | 'editar' 
 
 export const ROTAS: RouteObject[] = [
   { path: '/entrar', element: <Login /> },
+  { path: '/redefinir', element: <RedefinirSenha /> },
   {
     element: <LayoutAutenticado busca={<Busca />} notificacoes={<Notificacoes />} />,
     children: [
       { path: '/', element: <Inicio /> },
-      { path: '/minhas-escalas', element: <MinhasEscalas /> },
-      { path: '/disponibilidade', element: <MinhaDisponibilidade /> },
-      { path: '/ganhos', element: <MeusGanhos /> },
+      { path: '/minhas-escalas', element: <ExigeRecurso recurso="escalasPessoais"><MinhasEscalas /></ExigeRecurso> },
+      { path: '/disponibilidade', element: <ExigeRecurso recurso="escalasPessoais"><MinhaDisponibilidade /></ExigeRecurso> },
+      { path: '/ganhos', element: <ExigeRecurso recurso="escalasPessoais"><MeusGanhos /></ExigeRecurso> },
       { path: '/avisos', element: <Avisos /> },
       { path: '/perfil', element: <Perfil /> },
-      { path: '/relatar', element: <Relatar /> },
+      { path: '/relatar', element: <ExigeRecurso recurso="relatar"><Relatar /></ExigeRecurso> },
       { path: '/infra', element: comPermissao(['infraestrutura'], <Infra />) },
       { path: '/infra/:id', element: comPermissao(['infraestrutura'], <OcorrenciaDetalhe />) },
       { path: '/agenda', element: comPermissao(['eventos'], <Agenda />) },

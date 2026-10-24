@@ -24,6 +24,8 @@ export interface Pessoa {
   permissoes: Permissoes;
   /** E-mail que recebe convites das escalas no Google Agenda (null/ausente = desativado). */
   convitesAgenda?: string | null;
+  /** Versão do registro (detecta edição simultânea). */
+  atualizadoEm?: string;
 }
 
 export interface DadosPessoais {
@@ -259,6 +261,7 @@ export interface Aviso {
   autorId: Id;
   criadoEm: string;
   leituras: Id[];
+  atualizadoEm?: string;
 }
 
 export interface Notificacao {
@@ -294,4 +297,5 @@ export interface Config {
   linksFormularios: { nome: string; url: string }[];
   /** Agenda Google do setor, mantida pela conta do sistema. */
   agendaSetor: { nome: string; conta: string; link: string; conectada: boolean };
+  atualizadoEm?: string;
 }

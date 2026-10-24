@@ -9,6 +9,7 @@ import { useSessao } from '../auth/SessaoContexto';
 import { buscaComum } from '../busca/buscaComum';
 import { executarConsulta, type RespostaBusca } from '../busca/executar';
 import { interpretarSimulado } from '../busca/interpretarSimulado';
+import { recursoAtivo } from '../recursos';
 import { hoje, janela } from '../util/hoje';
 import './busca.css';
 
@@ -69,7 +70,7 @@ export function Busca() {
     return () => document.removeEventListener('mousedown', fora);
   }, [aberto]);
 
-  if (!sessao || !pode(sessao.pessoa.permissoes, 'busca', 'ver')) return null;
+  if (!sessao || !recursoAtivo('busca') || !pode(sessao.pessoa.permissoes, 'busca', 'ver')) return null;
 
   async function perguntar(e: React.FormEvent) {
     e.preventDefault();
