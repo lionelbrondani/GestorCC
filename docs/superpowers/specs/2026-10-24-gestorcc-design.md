@@ -13,7 +13,8 @@ Substituir as planilhas e scripts avulsos usados hoje (Gerador de Escala 3.0, Al
 - centraliza eventos, escalas de bolsistas, pagamentos, contratos, almoxarifado, infraestrutura do prédio e avisos;
 - permite que bolsistas e servidores lancem disponibilidade e acompanhem as próprias escalas e ganhos pelo celular;
 - mantém os dados em Google Sheets numa pasta do Drive do setor, de forma que a equipe acostumada com planilhas continue **visualizando** tudo nelas (somente leitura);
-- tem custo zero de operação.
+- tem custo zero de operação;
+- **não envia e-mails**: quando algo precisa chegar a alguém por e-mail, o sistema monta o texto e uma pessoa copia e envia manualmente.
 
 Os scripts existentes servem **apenas como referência do funcionamento do setor**. O GestorCC é escrito do zero, com outra estrutura de dados e outro código.
 
@@ -44,7 +45,7 @@ Uso diário: ~8 pessoas, ~4 simultâneas. Pico: ~30 pessoas na abertura da dispo
 │ (PWA, Firebase        │ ◀───────── │  • autenticação e permissões           │
 │  Hosting, plano Spark)│    JSON    │  • fila de gravação (LockService)      │
 └───────────────────────┘            │  • geração de documentos (Docs/Drive)  │
-                                     │  • rascunhos de e-mail (Gmail)         │
+                                     │  • textos prontos para copiar          │
                                      │  • agenda do setor (Google Agenda)     │
                                      │  • interpretação de perguntas (Gemini) │
                                      └───────┬──────────────┬─────────────┬───┘
@@ -211,7 +212,8 @@ Todas as tabelas têm `id` (texto curto único), `criadoEm`, `atualizadoEm` e `a
 - Senhas guardadas como hash PBKDF2-HMAC-SHA256 com sal individual (`Utilities.computeHmacSha256Signature`).
 - No primeiro acesso aparece um aviso sugerindo trocar a senha, que pode ser dispensado e reaparece a cada login até a troca. **Exceção:** quem tem o nível `editar` em **Dados pessoais** é obrigado a trocar a senha no primeiro acesso, porque a matrícula não é um segredo e essa permissão expõe CPF e dados bancários de todos.
 - 5 tentativas erradas seguidas bloqueiam o login daquela conta por 15 min.
-- **Esqueci a senha:** envia ao e-mail acadêmico um link de redefinição válido por 1 h (MailApp). Gestores com permissão em Pessoas também podem redefinir a senha para a matrícula.
+- **Esqueci a senha:** a tela de login orienta a pedir a um gestor. Quem tem `editar` em Pessoas redefine a senha para a matrícula (as sessões abertas são encerradas) e recebe uma mensagem pronta para copiar e enviar por e-mail ou WhatsApp. O sistema não envia e-mail.
+- **Recuperação do gestor:** a função `recuperarAcessoGestor`, rodada no editor do Apps Script pela conta do setor, volta a senha do primeiro gestor para a matrícula.
 
 ### 5.2 Sessão
 
@@ -330,7 +332,7 @@ Somente tema claro nesta versão.
 ### 7.4 Publicação
 
 - O gestor publica um conjunto de sessões (normalmente o mês). As escalas passam de `rascunho` a `publicado` e ficam visíveis aos escalados, que veem também os colegas da sessão.
-- Notificação no app para cada escalado; e-mail opcional (caixa marcada no momento de publicar).
+- Notificação no app para cada escalado (sem e-mail).
 - Gera os textos de WhatsApp: um por sessão (grupo) e um por pessoa (escala individual), com link `wa.me`.
 - Disponibiliza a impressão no formato tradicional (seção 7.8).
 - Marca as abas de relatório para regeneração.
@@ -344,7 +346,7 @@ Somente tema claro nesta versão.
 
 1. Numa sessão publicada, o gestor informa quantas vagas a mais e até quando ("+3 até hoje 18h").
 2. Os escalados permanecem. A sessão volta a aceitar disponibilidade só de quem ainda não está nela (`origem = convocacao`).
-3. Os bolsistas recebem destaque no app; o sistema gera o texto de WhatsApp para o grupo; e-mail opcional.
+3. Os bolsistas recebem destaque no app; o sistema gera o texto de WhatsApp para o grupo.
 4. O gestor escala os novos (fluxo normal de troca, justificativa "convocação extra" preenchida automaticamente). Os novos escalados são notificados.
 
 ### 7.7 Presença
@@ -382,7 +384,7 @@ A sincronização acontece na mesma gravação; se o Google falhar, a gravação
 
 **B) Convites para o bolsista (opcional).** No Perfil, a pessoa ativa "Receber minhas escalas no Google Agenda" e escolhe o e-mail (acadêmico ou alternativo). Com isso:
 
-- ao **publicar** a escala, ela é adicionada como convidada no evento da sessão na agenda do setor e o evento aparece no Google Agenda dela;
+- ao **publicar** a escala, ela é adicionada como convidada no evento da sessão na agenda do setor e o evento aparece no Google Agenda dela. O convite é criado **sem e-mail** (`sendUpdates: none`);
 - **trocas**, **horário definido** e **cancelamentos** se refletem na hora (convidado incluído ou removido, evento atualizado);
 - os convidados **não veem os e-mails uns dos outros** (opção de privacidade do evento, via serviço avançado de Agenda);
 - quem não ativa continua com o botão "Adicionar ao Google Agenda" (cópia única) em Minhas escalas.
@@ -483,7 +485,7 @@ Cadastro reaproveitável (tabela `contratantes`, planilha sigilosa). Os relatór
    - texto de abertura pedindo a emissão das faturas da taxa de locação e o envio ao interessado com cópia para o CC;
    - um bloco por contrato: **CONTRATO Nº N/AAAA** (ou **ADITIVO Nº X AO CONTRATO Nº N/AAAA**), CNPJ/CPF e razão social, inscrição municipal, inscrição estadual, endereço completo com CEP, pessoa de contato para a fatura, e-mail com cópia para o CC, telefone, **valor** e **vencimento**;
    - assinatura padrão do CC (de Configurações).
-3. Se a conta do sistema for a do CC, cria um **rascunho no Gmail** com os PDFs assinados anexados, para revisão e envio manual. Caso contrário, oferece "copiar formatado" e "baixar anexos".
+3. Oferece **copiar formatado** (para colar no e-mail) e **baixar anexos** (os PDFs assinados). A pessoa envia pelo próprio e-mail; o sistema não envia nem cria rascunhos.
 4. Ao confirmar o envio, a fatura passa a `Enviada p/ emissão`. Quando a FUNDEP responde, o gestor registra o número da fatura e anexa o PDF.
 
 ### 9.6 Geração de documentos

@@ -51,7 +51,6 @@ export function instalar(): void {
   const email = exigir('EMAIL_PRIMEIRO_GESTOR').toLowerCase();
   const nome = exigir('NOME_PRIMEIRO_GESTOR');
   const matricula = exigir('MATRICULA_PRIMEIRO_GESTOR');
-  exigir('URL_APP');
   const pasta = pastaDoSistema();
 
   for (const item of planoInstalacao()) {

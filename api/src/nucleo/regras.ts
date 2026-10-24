@@ -6,8 +6,6 @@ export type Regra = 'publica' | 'logado' | [Modulo, 'ver' | 'editar'];
 export const ACOES_FASE: Partial<Record<Acao, { regra: Regra; escrita: boolean }>> = {
   'sistema.ping': { regra: 'publica', escrita: false },
   'auth.entrar': { regra: 'publica', escrita: true },
-  'auth.esqueciSenha': { regra: 'publica', escrita: true },
-  'auth.redefinirSenha': { regra: 'publica', escrita: true },
   'auth.trocarSenha': { regra: 'logado', escrita: true },
   'perfil.salvarAgenda': { regra: 'logado', escrita: true },
   'pessoas.listar': { regra: 'logado', escrita: false },

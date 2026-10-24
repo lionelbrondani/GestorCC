@@ -54,10 +54,6 @@ export interface Relogio {
   formatar(ms: number): string;
 }
 
-export interface Email {
-  enviar(para: string, assunto: string, corpoHtml: string): void;
-}
-
 export interface Propriedades {
   obter(chave: string): string | null;
   definir(chave: string, valor: string): void;
@@ -69,6 +65,5 @@ export interface Portas {
   trava: Trava;
   cache: Cache;
   relogio: Relogio;
-  email: Email;
   props: Propriedades;
 }

@@ -64,36 +64,12 @@ describe('trocar senha', () => {
   });
 });
 
-describe('esqueci e redefinir senha', () => {
-  const tokenDoEmail = (html: string) => decodeURIComponent(html.match(/redefinir\?token=([^"&<\s]+)/)![1]);
-
-  it('e-mail inexistente responde igual e não envia nada', () => {
+describe('redefinir senha (sem e-mail)', () => {
+  it('não existe link de redefinição por e-mail: quem esqueceu pede ao gestor', () => {
     const amb = ambiente();
-    expect(amb.chamar('auth.esqueciSenha', { email: 'ninguem@ufsm.br' })).toEqual({ ok: true, dados: null });
-    expect(amb.email.enviados).toHaveLength(0);
-  });
-
-  it('o link do e-mail redefine a senha uma única vez', () => {
-    const amb = ambiente();
-    amb.chamar('auth.esqueciSenha', { email: BOLSISTA.emailAcademico });
-    expect(amb.email.enviados).toHaveLength(1);
-    expect(amb.email.enviados[0].para).toBe(BOLSISTA.emailAcademico);
-    expect(amb.email.enviados[0].corpoHtml).toContain('https://gestorcc.exemplo.app/redefinir?token=');
-    const token = tokenDoEmail(amb.email.enviados[0].corpoHtml);
-    expect(amb.chamar('auth.redefinirSenha', { token, nova: 'outraSenha99' })).toEqual({ ok: true, dados: null });
-    expect(amb.chamar('auth.redefinirSenha', { token, nova: 'outraSenha99' })).toEqual({
-      ok: false,
-      erro: { codigo: 'LINK_INVALIDO', mensagem: 'Este link expirou ou já foi usado. Peça um novo.' },
-    });
-    expect(amb.chamar('auth.entrar', { email: BOLSISTA.emailAcademico, senha: 'outraSenha99' }).ok).toBe(true);
-  });
-
-  it('o link vence em 1 hora', () => {
-    const amb = ambiente();
-    amb.chamar('auth.esqueciSenha', { email: BOLSISTA.emailAcademico });
-    const token = tokenDoEmail(amb.email.enviados[0].corpoHtml);
-    amb.relogio.avancarMinutos(61);
-    expect(amb.chamar('auth.redefinirSenha', { token, nova: 'outraSenha99' })).toMatchObject({ erro: { codigo: 'LINK_INVALIDO' } });
+    for (const acao of ['auth.esqueciSenha', 'auth.redefinirSenha']) {
+      expect(amb.chamar(acao as never, { email: BOLSISTA.emailAcademico } as never)).toMatchObject({ erro: { codigo: 'NAO_DISPONIVEL' } });
+    }
   });
 
   it('gestor volta a senha para a matrícula e encerra as sessões', () => {

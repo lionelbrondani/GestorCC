@@ -73,17 +73,16 @@ Ele também cria o primeiro gestor e liga duas rotinas automáticas:
 Antes de rodar, preencha as propriedades:
 
 1. No projeto **GestorCC API - teste**, abra **Configurações do projeto → Propriedades do script → Adicionar propriedade**.
-2. Crie estas quatro:
+2. Crie estas três:
 
    | Propriedade | O que colocar |
    |---|---|
-   | `EMAIL_PRIMEIRO_GESTOR` | e-mail de quem vai administrar o sistema |
+   | `EMAIL_PRIMEIRO_GESTOR` | e-mail de quem vai administrar o sistema. Use o mesmo e-mail que essa pessoa terá na lista de importação da equipe (passo 9), senão ela fica com dois cadastros. |
    | `NOME_PRIMEIRO_GESTOR` | nome completo dessa pessoa |
    | `MATRICULA_PRIMEIRO_GESTOR` | matrícula dessa pessoa (vira a senha inicial) |
-   | `URL_APP` | endereço do site deste ambiente (passo 6), por exemplo `https://gestorcc-teste.web.app` |
 
 3. Abra o editor, escolha a função `instalar` na barra de cima e clique em **Executar**.
-4. O Google pede autorização na primeira vez. Aceite com a conta do setor.
+4. O Google pede autorização na primeira vez. Aceite com a conta do setor. O GestorCC não pede permissão para enviar e-mails: nenhum e-mail sai pelo sistema.
 5. No registro de execução aparece `GestorCC instalado na pasta "GestorCC"`, com o link da pasta.
 
 Pode rodar `instalar` de novo sem medo: ele não duplica nada que já existe.
@@ -206,7 +205,9 @@ O que foi feito no sistema depois do horário do backup se perde. Por isso, avis
 
 ## 12. Se o gestor perder o acesso
 
-Use isto quando o gestor esquecer a senha e o e-mail de "Esqueci minha senha" não resolver.
+Quem esquece a senha pede a um gestor. Ele abre **Pessoas e acessos**, escolhe a pessoa e usa **Redefinir senha para a matrícula**. O sistema mostra uma mensagem pronta para copiar e enviar por e-mail ou WhatsApp.
+
+Use o passo a passo abaixo só quando **o próprio gestor** perder o acesso e não houver outro gestor para redefinir a senha dele.
 
 1. Abra o projeto da API no Apps Script com a conta do setor.
 2. Confira se as propriedades `EMAIL_PRIMEIRO_GESTOR` e `MATRICULA_PRIMEIRO_GESTOR` são de quem precisa entrar. Se não forem, troque pelos dados dessa pessoa: ela precisa já ter cadastro ativo no sistema.

@@ -225,9 +225,9 @@ export function Montador({ mes, aoPublicar }: { mes: string; aoPublicar: () => v
           escaladosEm={(s) => estado.escalas.filter((e) => e.sessaoId === s.id && contaNaEscala(e)).length}
           carregando={publicar.isPending || salvando}
           aoFechar={() => setPublicando(false)}
-          aoConfirmar={async (ids, email) => {
+          aoConfirmar={async (ids) => {
             if (estado.alterado && !(await salvar())) return;
-            await publicar.mutateAsync({ sessaoIds: ids, enviarEmail: email });
+            await publicar.mutateAsync({ sessaoIds: ids });
             setPublicando(false);
             aoPublicar();
           }}
@@ -250,10 +250,9 @@ function ModalPublicar({
   escaladosEm: (s: Sessao) => number;
   carregando: boolean;
   aoFechar: () => void;
-  aoConfirmar: (ids: string[], email: boolean) => Promise<void>;
+  aoConfirmar: (ids: string[]) => Promise<void>;
 }) {
   const [marcadas, setMarcadas] = useState(new Set(sessoes.map((s) => s.id)));
-  const [email, setEmail] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
   return (
     <Modal
@@ -270,7 +269,7 @@ function ModalPublicar({
             onClick={async () => {
               setErro(null);
               try {
-                await aoConfirmar([...marcadas], email);
+                await aoConfirmar([...marcadas]);
               } catch (e) {
                 setErro((e as Error).message);
               }
@@ -300,10 +299,6 @@ function ModalPublicar({
             </label>
           ))}
         </div>
-        <label className="cc-caixa">
-          <input type="checkbox" checked={email} onChange={(e) => setEmail(e.target.checked)} />
-          Enviar também por e-mail
-        </label>
         {erro && <Alerta tom="erro">{erro}</Alerta>}
       </div>
     </Modal>
