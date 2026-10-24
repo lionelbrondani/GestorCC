@@ -50,6 +50,8 @@ export interface Relogio {
   agora(): string;
   /** 'AAAA-MM-DD' em America/Sao_Paulo. */
   hoje(): string;
+  /** Instante qualquer (ms) como 'AAAA-MM-DDTHH:MM' em America/Sao_Paulo. */
+  formatar(ms: number): string;
 }
 
 export interface Email {

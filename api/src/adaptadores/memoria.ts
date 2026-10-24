@@ -9,8 +9,10 @@ const copiar = <T>(v: T): T => JSON.parse(JSON.stringify(v));
 export function relogioFixo(inicio: string): Relogio & { avancarMinutos(m: number): void; definir(agora: string): void } {
   // 'AAAA-MM-DDTHH:MM' tratado como horário local de São Paulo (UTC-3, sem horário de verão).
   let ms = Date.parse(`${inicio}:00-03:00`);
-  const texto = () => new Date(ms - 3 * 3600_000).toISOString().slice(0, 16);
+  const formatar = (x: number) => new Date(x - 3 * 3600_000).toISOString().slice(0, 16);
+  const texto = () => formatar(ms);
   return {
+    formatar,
     agoraMs: () => ms,
     agora: () => texto(),
     hoje: () => texto().slice(0, 10),
