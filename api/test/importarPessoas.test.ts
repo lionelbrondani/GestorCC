@@ -25,6 +25,24 @@ describe('prepararImportacao', () => {
     expect(r.problemas.map((p) => p.mensagem).join(' ')).toMatch(/Matrícula ilegível/);
   });
 
+  it('e-mail de outra pessoa ou matrícula repetida na lista viram problema, sem criar cadastro duplicado', () => {
+    const r = prepararImportacao(
+      [
+        { NOME: 'Bia Fictícia', EMAIL: 'bia@acad.ufsm.br', MATRICULA: '202600021' },
+        { NOME: 'Bia de Novo', EMAIL: 'outra@acad.ufsm.br', MATRICULA: '202600021' },
+        { NOME: 'Caio Fictício', EMAIL: ' BIA@acad.ufsm.br ', MATRICULA: '202600022' },
+        { NOME: 'Dani Fictícia', EMAIL: 'existente@acad.ufsm.br', MATRICULA: '202600023' },
+      ],
+      [existente],
+    );
+    expect(r.novas.map((n) => n.pessoa.nome)).toEqual(['Bia Fictícia']);
+    expect(r.problemas).toEqual([
+      { linha: 3, mensagem: 'Matrícula 202600021 repetida na lista (já usada na linha 2).' },
+      { linha: 4, mensagem: 'E-mail bia@acad.ufsm.br já é de outra pessoa.' },
+      { linha: 5, mensagem: 'E-mail existente@acad.ufsm.br já é de outra pessoa.' },
+    ]);
+  });
+
   it('nome em branco vira problema; cabeçalhos com espaços e minúsculas são aceitos', () => {
     const r = prepararImportacao([{ ' nome ': '', email: 'x@acad.ufsm.br', matricula: '202600012' }], []);
     expect(r.novas).toHaveLength(0);

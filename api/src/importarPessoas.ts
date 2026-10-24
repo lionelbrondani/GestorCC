@@ -21,6 +21,9 @@ const texto = (v: unknown): string => {
 export function prepararImportacao(linhas: LinhaImportacao[], existentes: Pessoa[]): ResultadoImportacao {
   const r: ResultadoImportacao = { novas: [], atualizacoes: [], problemas: [] };
   const porMatricula = new Map(existentes.map((p) => [p.matricula, p]));
+  // o e-mail é o login: não pode repetir entre pessoas ativas, nem entre as linhas novas
+  const emailsUsados = new Set(existentes.filter((p) => p.ativo).map((p) => p.emailAcademico.trim().toLowerCase()));
+  const linhaDaMatricula = new Map<string, number>();
 
   linhas.forEach((bruta, i) => {
     const numero = i + 2; // linha 1 é o cabeçalho
@@ -39,6 +42,9 @@ export function prepararImportacao(linhas: LinhaImportacao[], existentes: Pessoa
       else problema(`CPF inválido (${l.CPF}); a pessoa entra sem CPF.`);
     }
     if (!matricula) return;
+    const anterior = linhaDaMatricula.get(matricula);
+    if (anterior) return problema(`Matrícula ${matricula} repetida na lista (já usada na linha ${anterior}).`);
+    linhaDaMatricula.set(matricula, numero);
 
     const dados: DadosSemPessoa = {
       cpf, banco: l.BANCO ?? '', agencia: l.AGENCIA ?? '', conta: l.CONTA ?? '', camiseta: l.CAMISETA ?? '', nascimento: l.NASCIMENTO ?? '',
@@ -50,6 +56,8 @@ export function prepararImportacao(linhas: LinhaImportacao[], existentes: Pessoa
     }
     const email = (l.EMAIL ?? '').toLowerCase();
     if (!email) return problema('E-mail em branco.');
+    if (emailsUsados.has(email)) return problema(`E-mail ${email} já é de outra pessoa.`);
+    emailsUsados.add(email);
     r.novas.push({
       pessoa: {
         nome: l.NOME,
