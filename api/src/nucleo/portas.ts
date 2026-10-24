@@ -14,6 +14,8 @@ export type NomeTabela =
   | 'historico'
   | 'config'
   | 'feriados'
+  | 'eventos'
+  | 'sessoes'
   | 'dadosPessoais'
   | 'credenciais';
 

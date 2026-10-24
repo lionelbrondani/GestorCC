@@ -3,6 +3,7 @@
 import { handlersAuth } from './acoes/auth';
 import { handlersAvisos } from './acoes/avisos';
 import { handlersPessoas } from './acoes/pessoas';
+import { handlersEventos } from './acoes/eventos';
 import { handlersSistema } from './acoes/sistema';
 import { portasGas } from './adaptadores/gas';
 import { tratarRequisicao, type Handlers } from './nucleo/roteador';
@@ -12,7 +13,7 @@ export { backupDiario } from './backup';
 export { instalar, recuperarAcessoGestor } from './instalar';
 export { VERSAO_API };
 
-const HANDLERS: Handlers = { ...handlersAuth, ...handlersPessoas, ...handlersAvisos, ...handlersSistema };
+const HANDLERS: Handlers = { ...handlersAuth, ...handlersPessoas, ...handlersAvisos, ...handlersSistema, ...handlersEventos };
 
 function json(corpo: string): GoogleAppsScript.Content.TextOutput {
   return ContentService.createTextOutput(corpo).setMimeType(ContentService.MimeType.JSON);
