@@ -203,3 +203,14 @@ Para voltar uma planilha a um dia anterior:
 6. Se a planilha restaurada for a de Dados ou a de Relatórios, compartilhe de novo com a equipe como **leitor**.
 
 O que foi feito no sistema depois do horário do backup se perde. Por isso, avise a equipe antes de restaurar.
+
+## 12. Se o gestor perder o acesso
+
+Use isto quando o gestor esquecer a senha e o e-mail de "Esqueci minha senha" não resolver.
+
+1. Abra o projeto da API no Apps Script com a conta do setor.
+2. Confira se as propriedades `EMAIL_PRIMEIRO_GESTOR` e `MATRICULA_PRIMEIRO_GESTOR` são de quem precisa entrar. Se não forem, troque pelos dados dessa pessoa: ela precisa já ter cadastro ativo no sistema.
+3. Escolha a função `recuperarAcessoGestor` na barra de cima e clique em **Executar**.
+4. Confira a mensagem no registro de execução: *"Acesso recuperado."*
+
+A pessoa entra com o e-mail e a matrícula. O sistema pede uma senha nova na hora, e as sessões abertas em outros aparelhos são encerradas.
