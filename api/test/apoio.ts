@@ -1,10 +1,10 @@
 // Ambiente de teste da API: portas em memória, uma pessoa gestora e uma bolsista fictícias.
 import { MODELOS, MODULOS, type Acao, type Entrada, type Pessoa } from '@shared';
-import { agendaMemoria, arquivosMemoria, cacheMemoria, documentosMemoria, formularioMemoria, criarRepositorioMemoria, propriedadesMemoria, relogioFixo, travaMemoria } from '../src/adaptadores/memoria';
+import { agendaMemoria, arquivosMemoria, cacheMemoria, documentosMemoria, formularioMemoria, iaMemoria, criarRepositorioMemoria, propriedadesMemoria, relogioFixo, travaMemoria } from '../src/adaptadores/memoria';
 import { criptoNode } from '../src/adaptadores/node';
 import { criarHash } from '../src/auth/senhas';
 import { emitirToken } from '../src/auth/tokens';
-import type { AgendaGoogle, Arquivos, Documentos, Formulario, Portas, Trava } from '../src/nucleo/portas';
+import type { AgendaGoogle, Arquivos, Documentos, Formulario, IA, Portas, Trava } from '../src/nucleo/portas';
 import { tratarRequisicao, type Handlers } from '../src/nucleo/roteador';
 
 export const SEGREDO = 'segredo-dos-testes';
@@ -28,7 +28,7 @@ function credencial(pessoaId: string, senha: string) {
   return { id: pessoaId, ...criarHash(criptoNode, senha, 10), senhaInicial: true, versaoToken: 1, falhas: 0, bloqueadoAte: '' };
 }
 
-export function criarAmbiente(opcoes: { trava?: Trava; handlers?: Handlers; agenda?: AgendaGoogle; arquivos?: Arquivos; formulario?: Formulario; documentos?: Documentos } = {}) {
+export function criarAmbiente(opcoes: { trava?: Trava; handlers?: Handlers; agenda?: AgendaGoogle; arquivos?: Arquivos; formulario?: Formulario; documentos?: Documentos; ia?: IA } = {}) {
   const relogio = relogioFixo('2026-10-24T10:00');
   const repo = criarRepositorioMemoria(
     {
@@ -45,6 +45,7 @@ export function criarAmbiente(opcoes: { trava?: Trava; handlers?: Handlers; agen
     arquivos: opcoes.arquivos ?? arquivosMemoria(),
     formulario: opcoes.formulario ?? formularioMemoria(),
     documentos: opcoes.documentos ?? documentosMemoria(),
+    ia: opcoes.ia ?? iaMemoria(),
   };
   let handlers: Handlers = opcoes.handlers ?? {};
   let seq = 0;

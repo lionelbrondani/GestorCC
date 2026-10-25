@@ -70,6 +70,6 @@ describe('histórico e ping', () => {
 
   it('ping responde sem login', () => {
     const amb = ambiente();
-    expect(amb.chamar('sistema.ping', null)).toEqual({ ok: true, dados: { versao: '0.6.0' } });
+    expect(amb.chamar('sistema.ping', null)).toEqual({ ok: true, dados: { versao: '0.7.0' } });
   });
 });

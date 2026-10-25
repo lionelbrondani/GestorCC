@@ -72,14 +72,23 @@ export function Busca() {
 
   if (!sessao || !recursoAtivo('busca') || !pode(sessao.pessoa.permissoes, 'busca', 'ver')) return null;
 
+  /**
+   * A pergunta vai à API, que a interpreta (Gemini) sem enviar dados do sistema. A consulta roda aqui, com as
+   * permissões de quem perguntou. Sem resposta da API, vale a interpretação por palavras-chave.
+   */
   async function perguntar(e: React.FormEvent) {
     e.preventDefault();
     if (!ehPergunta(termo)) return;
-    const consulta = interpretarSimulado(termo, hoje());
-    if (!consulta) return setResposta('nao-entendi');
     setPensando(true);
-    setResposta(await executarConsulta(consulta, api, hoje()));
-    setPensando(false);
+    try {
+      const r = await api.chamar('busca.interpretar', { pergunta: termo }).catch(() => null);
+      if (r?.ajuda) return setResposta({ titulo: r.ajuda, itens: [], vazio: '' });
+      const consulta = r?.consulta ?? interpretarSimulado(termo, hoje());
+      if (!consulta) return setResposta('nao-entendi');
+      setResposta(await executarConsulta(consulta, api, hoje()));
+    } finally {
+      setPensando(false);
+    }
   }
 
   return (

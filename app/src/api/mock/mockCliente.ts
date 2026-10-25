@@ -1,3 +1,4 @@
+import { interpretarSimulado } from '../../busca/interpretarSimulado';
 import {
   ehGestor,
   ErroApi,
@@ -128,6 +129,7 @@ const REGRAS: Record<Acao, Regra> = {
   'infra.atualizar': ['infraestrutura', 'editar'],
   'infra.importarFormulario': ['infraestrutura', 'editar'],
   'infra.foto': 'logado',
+  'busca.interpretar': ['busca', 'ver'],
   'avisos.listar': 'logado',
   'avisos.salvar': ['mural', 'editar'],
   'avisos.confirmarLeitura': 'logado',
@@ -592,6 +594,7 @@ const handlers: Handlers = {
     return o;
   },
   'infra.foto': ({ id }, ctx) => ctx.banco.ocorrencias.find((o) => o.id === id)?.foto ?? null,
+  'busca.interpretar': ({ pergunta }, ctx) => ({ consulta: interpretarSimulado(pergunta, ctx.hoje), ajuda: null, motivo: null }),
   'infra.importarFormulario': (_d, ctx) => {
     const pendentes = ctx.banco.respostasFormularioInfra;
     for (const r of pendentes) novaOcorrencia(ctx, r);

@@ -1,3 +1,4 @@
+import type { Consulta } from '../busca';
 import type { MeusGanhos } from '../pagamentos/ganhos';
 import type {
   Aditivo,
@@ -134,6 +135,8 @@ export interface Acoes {
   'infra.importarFormulario': A<null, { importadas: number }>;
   /** Foto da ocorrência como data URL (fica no Drive, sem link público). */
   'infra.foto': A<{ id: Id }, string | null>;
+  /** Pergunta da barra de busca → consulta (ou ajuda de uso). Só a pergunta vai ao Gemini. */
+  'busca.interpretar': A<{ pergunta: string }, { consulta: Consulta | null; ajuda: string | null; motivo: 'limite' | 'indisponivel' | null }>;
 
   'avisos.listar': A<null, Aviso[]>;
   'avisos.salvar': A<Aviso, Aviso>;
