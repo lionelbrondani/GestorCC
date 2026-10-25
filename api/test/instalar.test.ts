@@ -14,7 +14,7 @@ describe('plano de instalação', () => {
   });
 
   it('toda tabela começa pela coluna id', () => {
-    for (const p of plano) for (const a of p.abas) if (a.nome !== 'IMPORTAR_PESSOAS' && a.nome !== 'LEIA-ME') expect(a.cabecalhos[0]).toBe('id');
+    for (const p of plano) for (const a of p.abas) if (!a.nome.startsWith('IMPORTAR_') && a.nome !== 'LEIA-ME') expect(a.cabecalhos[0]).toBe('id');
   });
 
   it('a aba de importação tem os cabeçalhos combinados', () => {

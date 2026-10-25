@@ -24,6 +24,11 @@ export type NomeTabela =
   | 'lotes'
   | 'loteItens'
   | 'envioExterno'
+  | 'almoxItens'
+  | 'almoxMovimentos'
+  | 'almoxAutorizadosExternos'
+  | 'almoxPedidos'
+  | 'almoxPedidoItens'
   | 'dadosPessoais'
   | 'credenciais';
 

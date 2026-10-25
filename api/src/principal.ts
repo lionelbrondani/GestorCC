@@ -1,6 +1,7 @@
 /// <reference types="google-apps-script" />
 // Ponto de entrada do Apps Script. As funções exportadas viram globais pelo rodapé do build.
 import { ErroApi } from '@shared';
+import { handlersAlmox } from './acoes/almox';
 import { handlersAuth } from './acoes/auth';
 import { handlersAvaliacoes } from './acoes/avaliacoes';
 import { handlersAvisos } from './acoes/avisos';
@@ -20,7 +21,7 @@ export { backupDiario } from './backup';
 export { instalar, recuperarAcessoGestor } from './instalar';
 export { VERSAO_API };
 
-const HANDLERS: Handlers = { ...handlersAuth, ...handlersPessoas, ...handlersAvisos, ...handlersSistema, ...handlersEventos, ...handlersRodadas, ...handlersEscalas, ...handlersAvaliacoes, ...handlersPagamentos };
+const HANDLERS: Handlers = { ...handlersAuth, ...handlersPessoas, ...handlersAvisos, ...handlersSistema, ...handlersEventos, ...handlersRodadas, ...handlersEscalas, ...handlersAvaliacoes, ...handlersPagamentos, ...handlersAlmox };
 
 function json(corpo: string): GoogleAppsScript.Content.TextOutput {
   return ContentService.createTextOutput(corpo).setMimeType(ContentService.MimeType.JSON);
