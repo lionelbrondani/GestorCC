@@ -127,6 +127,8 @@ export interface Acoes {
     Ocorrencia
   >;
   'infra.importarFormulario': A<null, { importadas: number }>;
+  /** Foto da ocorrência como data URL (fica no Drive, sem link público). */
+  'infra.foto': A<{ id: Id }, string | null>;
 
   'avisos.listar': A<null, Aviso[]>;
   'avisos.salvar': A<Aviso, Aviso>;

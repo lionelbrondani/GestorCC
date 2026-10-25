@@ -8,6 +8,7 @@ import { handlersAvisos } from './acoes/avisos';
 import { handlersPessoas } from './acoes/pessoas';
 import { handlersEscalas } from './acoes/escalas';
 import { handlersEventos } from './acoes/eventos';
+import { handlersInfra } from './acoes/infra';
 import { handlersPagamentos } from './acoes/pagamentos';
 import { handlersRodadas } from './acoes/rodadas';
 import { handlersSistema } from './acoes/sistema';
@@ -21,7 +22,7 @@ export { backupDiario } from './backup';
 export { instalar, recuperarAcessoGestor } from './instalar';
 export { VERSAO_API };
 
-const HANDLERS: Handlers = { ...handlersAuth, ...handlersPessoas, ...handlersAvisos, ...handlersSistema, ...handlersEventos, ...handlersRodadas, ...handlersEscalas, ...handlersAvaliacoes, ...handlersPagamentos, ...handlersAlmox };
+const HANDLERS: Handlers = { ...handlersAuth, ...handlersPessoas, ...handlersAvisos, ...handlersSistema, ...handlersEventos, ...handlersRodadas, ...handlersEscalas, ...handlersAvaliacoes, ...handlersPagamentos, ...handlersAlmox, ...handlersInfra };
 
 function json(corpo: string): GoogleAppsScript.Content.TextOutput {
   return ContentService.createTextOutput(corpo).setMimeType(ContentService.MimeType.JSON);

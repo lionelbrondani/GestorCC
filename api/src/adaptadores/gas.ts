@@ -2,7 +2,7 @@
 // Portas reais, com os serviços do Apps Script. Não é testado em Node; a lógica fica nos módulos puros.
 import { ErroApi } from '@shared';
 import { eventoSumiuNoGoogle, recursoDoEvento } from '../agenda/recursoGoogle';
-import type { AgendaGoogle, Cache, Cripto, NomeTabela, Planilha, Portas, Propriedades, Relogio, Repositorio, Trava } from '../nucleo/portas';
+import type { AgendaGoogle, Arquivos, Cache, Cripto, Formulario, NomeTabela, Planilha, Portas, Propriedades, Relogio, Repositorio, Trava } from '../nucleo/portas';
 import { cabecalhos, ESQUEMA } from '../tabelas/esquema';
 import { linhaParaObjeto, objetoParaLinha, paraCelula } from '../tabelas/serializacao';
 
@@ -179,6 +179,42 @@ export const agendaGas: AgendaGoogle = {
   },
 };
 
+/** Pasta Infraestrutura/ dentro da pasta do sistema (PASTA_ID), criada na primeira foto. */
+function pastaInfraestrutura(): GoogleAppsScript.Drive.Folder {
+  const pasta = DriveApp.getFolderById(propriedadesGas.obter('PASTA_ID')!);
+  const existentes = pasta.getFoldersByName('Infraestrutura');
+  return existentes.hasNext() ? existentes.next() : pasta.createFolder('Infraestrutura');
+}
+
+/** Fotos das ocorrências no Drive, sem compartilhamento: só a conta do sistema lê, e o app recebe por infra.foto. */
+export const arquivosGas: Arquivos = {
+  salvarImagem(dataUrl, nome) {
+    const [cabecalho, base64] = dataUrl.split(',');
+    const tipo = /data:([^;]+)/.exec(cabecalho)?.[1] ?? 'image/jpeg';
+    const blob = Utilities.newBlob(Utilities.base64Decode(base64), tipo, `${nome}.${tipo.split('/')[1] ?? 'jpg'}`);
+    return pastaInfraestrutura().createFile(blob).getId();
+  },
+  lerImagem(id) {
+    try {
+      const blob = DriveApp.getFileById(id).getBlob();
+      return `data:${blob.getContentType()};base64,${Utilities.base64Encode(blob.getBytes())}`;
+    } catch {
+      return null;
+    }
+  },
+};
+
+/** Respostas do Google Form de problemas: a primeira aba da planilha FORMULARIO_INFRA_ID. */
+export const formularioGas: Formulario = {
+  respostasInfra() {
+    const id = propriedadesGas.obter('FORMULARIO_INFRA_ID');
+    if (!id) return null;
+    const [cab, ...linhas] = SpreadsheetApp.openById(id).getSheets()[0].getDataRange().getValues();
+    if (!cab) return [];
+    return linhas.filter((l) => l.some((v) => v !== '')).map((l) => Object.fromEntries(cab.map((c, i) => [String(c), l[i]])));
+  },
+};
+
 export function portasGas(): Portas {
   return {
     repo: repositorioGas(relogioGas),
@@ -188,5 +224,7 @@ export function portasGas(): Portas {
     relogio: relogioGas,
     props: propriedadesGas,
     agenda: agendaGas,
+    arquivos: arquivosGas,
+    formulario: formularioGas,
   };
 }

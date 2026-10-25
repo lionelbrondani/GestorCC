@@ -121,6 +121,7 @@ const REGRAS: Record<Acao, Regra> = {
   'infra.relatar': 'logado',
   'infra.atualizar': ['infraestrutura', 'editar'],
   'infra.importarFormulario': ['infraestrutura', 'editar'],
+  'infra.foto': 'logado',
   'avisos.listar': 'logado',
   'avisos.salvar': ['mural', 'editar'],
   'avisos.confirmarLeitura': 'logado',
@@ -570,6 +571,7 @@ const handlers: Handlers = {
     registrar(ctx, 'ocorrencia', o.id, d.para ? `situação: ${ROTULO_STATUS_OCORRENCIA[d.para]}` : 'atualizou a ocorrência', d.observacao);
     return o;
   },
+  'infra.foto': ({ id }, ctx) => ctx.banco.ocorrencias.find((o) => o.id === id)?.foto ?? null,
   'infra.importarFormulario': (_d, ctx) => {
     const pendentes = ctx.banco.respostasFormularioInfra;
     for (const r of pendentes) novaOcorrencia(ctx, r);

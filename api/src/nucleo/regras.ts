@@ -60,4 +60,9 @@ export const ACOES_FASE: Partial<Record<Acao, { regra: Regra; escrita: boolean }
   'almox.criarPedido': { regra: ['almoxEstoque', 'editar'], escrita: true },
   'almox.receber': { regra: ['almoxEstoque', 'editar'], escrita: true },
   'almox.importar': { regra: ['almoxEstoque', 'editar'], escrita: true },
+  'infra.listar': { regra: 'logado', escrita: false },
+  'infra.relatar': { regra: 'logado', escrita: true },
+  'infra.foto': { regra: 'logado', escrita: false },
+  'infra.atualizar': { regra: ['infraestrutura', 'editar'], escrita: true },
+  'infra.importarFormulario': { regra: ['infraestrutura', 'editar'], escrita: true },
 };

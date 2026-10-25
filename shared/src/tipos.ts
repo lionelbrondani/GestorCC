@@ -243,8 +243,9 @@ export interface Ocorrencia {
   relatorContato?: string;
   eventoId?: Id;
   criadaEm: string;
-  /** Foto reduzida (data URL no protótipo; arquivo no Drive na fase 1). */
+  /** Foto reduzida: data URL no protótipo; com a API vem null e o app busca por infra.foto quando temFoto. */
   foto: string | null;
+  temFoto?: boolean;
   /** Chamado aberto no sistema de chamados da UFSM. */
   chamadoNumero: string;
   chamadoLink: string;

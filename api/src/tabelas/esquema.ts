@@ -65,6 +65,13 @@ export const ESQUEMA: Record<NomeTabela, { planilha: Planilha; colunas: Coluna[]
   almoxAutorizadosExternos: { planilha: 'dados', colunas: [t('nome'), b('ativo')] },
   almoxPedidos: { planilha: 'dados', colunas: [t('solicitanteId'), t('status')] },
   almoxPedidoItens: { planilha: 'dados', colunas: [t('pedidoId'), t('cod'), n('qtdPedida'), n('qtdRecebida'), n('valorEstimado')] },
+  ocorrencias: {
+    planilha: 'dados',
+    colunas: [n('numero'), t('titulo'), t('descricao'), t('categoria'), t('local'), t('prioridade'), t('status'), t('origem'), t('relatorNome'),
+      t('relatorPessoaId'), t('relatorContato'), t('eventoId'), t('fotoId'), t('chamadoNumero'), t('chamadoLink'), t('chamadoAbertoEm'),
+      t('resolvidaEm'), t('respostaFormularioId')],
+  },
+  ocorrenciasHistorico: { planilha: 'dados', colunas: [t('ocorrenciaId'), d('quando'), t('quemId'), t('de'), t('para'), t('observacao')] },
   dadosPessoais: { planilha: 'sigiloso', colunas: [t('cpf'), t('banco'), t('agencia'), t('conta'), t('nascimento'), t('camiseta')] },
   credenciais: {
     planilha: 'sigiloso',
