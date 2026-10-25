@@ -10,6 +10,7 @@ import {
   type DadosPessoais,
   type Pessoa,
 } from '@shared';
+import { sincronizarAgenda } from '../agenda/sincronizar';
 import { prepararImportacao } from '../importarPessoas';
 import { comPermissoes, exigirVersao, montarPessoa, notificar, novoId, registrar, type Contexto, type Handlers } from '../nucleo/roteador';
 import { criarCredencialInicial, type Credencial } from './auth';
@@ -146,6 +147,14 @@ export const handlersPessoas: Handlers = {
     }
     ctx.portas.repo.atualizar('pessoas', { ...semCarimbos(linha), convitesAgenda: email ?? '' });
     registrar(ctx, 'pessoa', linha.id, email ? 'ativou convites do Google Agenda' : 'desativou convites do Google Agenda', null, null);
+    // leva a preferência para as próximas sessões em que a pessoa já está publicada
+    const hoje = ctx.portas.relogio.hoje();
+    const futuras = new Set(ctx.portas.repo.listar<{ id: string; data: string }>('sessoes').filter((s) => s.data >= hoje).map((s) => s.id));
+    const minhas = ctx.portas.repo
+      .listar<{ id: string; sessaoId: string; pessoaId: string; status: string }>('escalas')
+      .filter((e) => e.pessoaId === linha.id && e.status === 'publicado' && futuras.has(e.sessaoId))
+      .map((e) => e.sessaoId);
+    sincronizarAgenda(ctx.portas, minhas);
     return montarPessoa(ctx.portas.repo, linha.id)!;
   },
 };

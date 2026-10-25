@@ -23,8 +23,7 @@ export function sincronizarAgenda(portas: Portas, sessaoIds: string[]): void {
     if (!linha || !ev) continue;
     const evento = paraEvento(ev);
     const responsavel = (evento.servidorResponsavelId && pessoas.find((p) => p.id === evento.servidorResponsavelId)?.nome) || '';
-    // fase 3: convidados = escalados publicados que ativaram os convites (convitesAgenda)
-    const dados = eventoDaAgenda(evento, paraSessao(linha), { responsavel, linkApp: link, convidados: [] });
+    const dados = eventoDaAgenda(evento, paraSessao(linha), { responsavel, linkApp: link, convidados: convidadosDaSessao(portas, id) });
     let atualizada: LinhaSessao;
     try {
       atualizada = { ...linha, googleEventoId: portas.agenda.salvar(linha.googleEventoId || null, dados), agendaPendente: false };
@@ -55,4 +54,21 @@ export function sincronizarPendentes(portas: Portas): number {
   sincronizarAgenda(portas, pendentes);
   const ainda = new Set(portas.repo.listar<LinhaSessao>('sessoes').filter((s) => s.agendaPendente).map((s) => s.id));
   return pendentes.filter((id) => !ainda.has(id)).length;
+}
+
+/**
+ * Convidados do evento no Google (spec 7.11 B): quem está publicado na sessão, ativo e com os convites
+ * ligados no Perfil. Escala cancelada sai da lista, e o evento perde o convidado.
+ */
+export function convidadosDaSessao(portas: Portas, sessaoId: string): string[] {
+  const escalados = new Set(
+    portas.repo
+      .listar<{ id: string; sessaoId: string; pessoaId: string; status: string }>('escalas')
+      .filter((e) => e.sessaoId === sessaoId && (e.status === 'publicado' || e.status === 'realizado'))
+      .map((e) => e.pessoaId),
+  );
+  return portas.repo
+    .listar<{ id: string; ativo: boolean; convitesAgenda: string }>('pessoas')
+    .filter((p) => escalados.has(p.id) && p.ativo && p.convitesAgenda)
+    .map((p) => p.convitesAgenda);
 }
