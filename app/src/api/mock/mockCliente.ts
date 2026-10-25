@@ -64,6 +64,9 @@ function sessaoAbertaParaMim(ctx: Contexto, sessaoId: Id): boolean {
   return ctx.banco.rodadas.some((r) => r.status === 'aberta' && r.prazo >= ctx.agora && r.sessaoIds.includes(sessaoId));
 }
 
+/** PDFs anexados no protótipo (só na memória da página). */
+const ANEXOS_PROTOTIPO = new Map<string, string>();
+
 function publicoDaPessoa(p: Pessoa): Pessoa {
   return { ...p, emailAcademico: '', emailAlternativo: undefined, matricula: '', siape: undefined };
 }
@@ -109,6 +112,9 @@ const REGRAS: Record<Acao, Regra> = {
   'contratos.salvar': ['contratos', 'editar'],
   'contratos.salvarAditivo': ['contratos', 'editar'],
   'contratantes.salvar': ['contratos', 'editar'],
+  'contratos.anexar': ['contratos', 'editar'],
+  'contratos.anexo': ['contratos', 'ver'],
+  'documentos.gerar': ['contratos', 'editar'],
   'almox.listar': 'logado',
   'almox.movimentos': ['almoxEstoque', 'ver'],
   'almox.salvarItem': ['almoxEstoque', 'editar'],
@@ -461,6 +467,20 @@ const handlers: Handlers = {
     else ctx.banco.contratantes.push(salvo);
     registrar(ctx, 'contratante', salvo.id, i >= 0 ? 'alterou contratante' : 'cadastrou contratante');
     return salvo;
+  },
+
+  'contratos.anexar': ({ contratoId, tipo, arquivo }, ctx) => {
+    const c = ctx.banco.contratos.find((x) => x.id === contratoId);
+    if (!c) throw erro('NAO_ENCONTRADO', 'Contrato não encontrado.');
+    if (!arquivo.startsWith('data:application/pdf')) throw erro('ARQUIVO', 'Envie o arquivo em PDF.');
+    ANEXOS_PROTOTIPO.set(`${contratoId}:${tipo}`, arquivo);
+    if (tipo === 'assinado') c.pdfAssinado = true;
+    else c.pdfFatura = true;
+    return c;
+  },
+  'contratos.anexo': ({ contratoId, tipo }) => ANEXOS_PROTOTIPO.get(`${contratoId}:${tipo}`) ?? null,
+  'documentos.gerar': () => {
+    throw erro('MODELO', 'No protótipo os documentos não são gerados: eles saem dos modelos do Google Docs quando o sistema está ligado à conta do setor.');
   },
 
   'almox.listar': (_d, ctx) => {

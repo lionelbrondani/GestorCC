@@ -106,10 +106,10 @@ export interface AgendaGoogle {
   remover(id: string): void;
 }
 
-/** Fotos das ocorrências, numa pasta Infraestrutura/ do Drive, sem link público (spec 10.4). */
+/** Arquivos enviados pelo app (fotos das ocorrências, PDFs dos contratos), no Drive, sem link público. */
 export interface Arquivos {
-  /** Grava a imagem (data URL) e devolve o id do arquivo. */
-  salvarImagem(dataUrl: string, nome: string): string;
+  /** Grava o arquivo (data URL) numa subpasta da pasta do sistema e devolve o id do arquivo. */
+  salvarImagem(dataUrl: string, nome: string, pasta?: 'Infraestrutura' | 'Contratos'): string;
   /** Devolve a imagem como data URL, ou null se o arquivo não existe mais. */
   lerImagem(id: string): string | null;
 }
@@ -117,6 +117,12 @@ export interface Arquivos {
 /** Respostas do Google Form de problemas do prédio; null quando FORMULARIO_INFRA_ID não está configurado. */
 export interface Formulario {
   respostasInfra(): Record<string, unknown>[] | null;
+}
+
+/** Documentos gerados a partir dos modelos (Google Docs em GestorCC/Modelos) — spec 9.6. */
+export interface Documentos {
+  /** Copia o modelo, troca os {{CAMPOS}} e devolve o link do Google Doc e o .docx (data URL). Lança MODELO se o modelo não existe. */
+  gerar(modelo: string, campos: Record<string, string>, nomeArquivo: string): { url: string; docx: string };
 }
 
 export interface Portas {
@@ -129,4 +135,5 @@ export interface Portas {
   agenda: AgendaGoogle;
   arquivos: Arquivos;
   formulario: Formulario;
+  documentos: Documentos;
 }

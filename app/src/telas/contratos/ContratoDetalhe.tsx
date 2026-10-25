@@ -9,7 +9,6 @@ import {
   type Contratante,
   type Contrato,
 } from '@shared';
-import { FileText } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useMutacao } from '../../api/hooks';
@@ -18,6 +17,7 @@ import { Alerta, Botao, Campo, Carregando, Cartao, EstadoVazio, Modal, Pagina, T
 import { hoje } from '../../util/hoje';
 import { AVISO_VERSAO_INICIAL } from './Contratos';
 import { INVALIDAR_CONTRATOS, useDadosContratos } from './dadosContratos';
+import { DocumentosContrato } from './DocumentosContrato';
 
 function contratoVazio(numero: string): Contrato {
   return {
@@ -91,7 +91,6 @@ export function ContratoDetalhe() {
   const [c, setC] = useState<Contrato | null>(null);
   const [msg, setMsg] = useState<{ tom: 'sucesso' | 'erro'; texto: string } | null>(null);
   const [novoContratante, setNovoContratante] = useState(false);
-  const [documento, setDocumento] = useState<string | null>(null);
   const [aditivo, setAditivo] = useState<Aditivo | null>(null);
   const novo = id === 'novo';
 
@@ -256,21 +255,8 @@ export function ContratoDetalhe() {
         </Cartao>
       )}
 
-      {!novo && (
-        <Cartao titulo="Documentos">
-          <div className="linha">
-            {['Gerar contrato', 'Gerar termo de autorização', 'Formulário do piano'].map((d) => (
-              <Botao key={d} onClick={() => setDocumento(d)}>
-                <FileText size={16} aria-hidden /> {d}
-              </Botao>
-            ))}
-          </div>
-        </Cartao>
-      )}
+      {!novo && <DocumentosContrato contrato={c} editar={editar} />}
 
-      <Modal aberto={!!documento} titulo={documento ?? ''} aoFechar={() => setDocumento(null)} rodape={<Botao onClick={() => setDocumento(null)}>Entendi</Botao>}>
-        <p>Disponível na fase 6: o documento será gerado a partir do modelo no Google Docs, já preenchido com os dados deste contrato.</p>
-      </Modal>
       {novoContratante && (
         <ModalContratante
           aoFechar={() => setNovoContratante(false)}

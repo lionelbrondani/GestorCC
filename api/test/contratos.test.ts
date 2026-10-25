@@ -1,6 +1,7 @@
 import type { Aditivo, Contratante, Contrato } from '@shared';
 import { describe, expect, it } from 'vitest';
 import { handlersContratos } from '../src/acoes/contratos';
+import { documentosMemoria } from '../src/adaptadores/memoria';
 import { ESQUEMA } from '../src/tabelas/esquema';
 import { gerarRelatoriosPendentes } from '../src/relatorios/pendentes';
 import { criarAmbiente } from './apoio';
@@ -21,7 +22,7 @@ const contrato = (p: Partial<Contrato> = {}): Contrato => ({
 });
 
 function ambiente() {
-  const amb = criarAmbiente({ handlers: handlersContratos });
+  const amb = criarAmbiente({ handlers: handlersContratos, documentos: documentosMemoria(['Modelo - Contrato', 'Modelo - Termo de autorização']) });
   amb.repo.inserir('eventos', linhaEvento('e1', 'Show Teste'));
   amb.repo.inserir('sessoes', linhaSessao({ id: 's1', eventoId: 'e1', data: '2026-12-05' }));
   const gestor = amb.token('p01');
@@ -89,5 +90,47 @@ describe('contratos', () => {
     expect(aba[0]).toEqual(['Nº', 'EVENTO', 'DATA', 'CONTRATANTE', 'VALOR TOTAL', 'VENCIMENTO', 'CONTRATO', 'FATURA', 'Nº FATURA', 'ECAD', 'ISS', 'FUNDEP', 'CORTESIAS', 'FICHA TÉCNICA']);
     expect(aba[1]).toEqual(['1/2026', 'Show Teste', '05/12/2026', 'Produtora Teste Ltda', 'R$ 6.000,00', '30/11/2026', 'Não enviado', 'Não enviada p/ emissão', '', 'Não enviado', 'Não enviado', 'Não enviado', 'Não recebidas', 'Não recebida']);
     expect(JSON.stringify(aba)).not.toMatch(/0001-00|Rua Fictícia|fatura@/);
+  });
+});
+
+describe('anexos e documentos', () => {
+  const PDF = 'data:application/pdf;base64,JVBERi0=';
+
+  it('anexar PDF guarda o arquivo e marca o contrato; o anexo volta para quem vê contratos', () => {
+    const amb = ambiente();
+    const c = (amb.salvar() as Ok<Contrato>).dados;
+    const r = amb.chamar('contratos.anexar', { contratoId: c.id, tipo: 'assinado', arquivo: PDF }, { token: amb.gestor }) as Ok<Contrato>;
+    expect(r.dados).toMatchObject({ pdfAssinado: true, pdfFatura: false });
+    expect(amb.chamar('contratos.anexo', { contratoId: c.id, tipo: 'assinado' }, { token: amb.gestor })).toEqual({ ok: true, dados: PDF });
+    expect(amb.chamar('contratos.anexo', { contratoId: c.id, tipo: 'fatura' }, { token: amb.gestor })).toEqual({ ok: true, dados: null });
+  });
+
+  it('anexo que não é PDF é recusado', () => {
+    const amb = ambiente();
+    const c = (amb.salvar() as Ok<Contrato>).dados;
+    expect(amb.chamar('contratos.anexar', { contratoId: c.id, tipo: 'fatura', arquivo: 'data:image/png;base64,AAA' }, { token: amb.gestor })).toEqual({
+      ok: false, erro: { codigo: 'ARQUIVO', mensagem: 'Envie o arquivo em PDF.' },
+    });
+  });
+
+  it('gerar documento usa o modelo certo com os campos do contrato', () => {
+    const amb = ambiente();
+    const c = (amb.salvar() as Ok<Contrato>).dados;
+    const r = amb.chamar('documentos.gerar', { contratoId: c.id, tipo: 'contrato' }, { token: amb.gestor }) as Ok<{ url: string; docx: string }>;
+    expect(r.dados.url).toContain('docs.google.com');
+    const docs = amb.portas.documentos as unknown as { gerados: { modelo: string; campos: Record<string, string>; nome: string }[] };
+    expect(docs.gerados[0]).toMatchObject({
+      modelo: 'Modelo - Contrato',
+      nome: 'Contrato 1-2026 - Show Teste',
+      campos: { NUMERO: '1/2026', EVENTO: 'Show Teste', CONTRATANTE: 'Produtora Teste Ltda', VALOR: 'R$ 5.000,00', DATAS: '05/12/2026', AREAS: 'Plateia, Palco', HOJE: '24/10/2026' },
+    });
+  });
+
+  it('modelo ausente diz o que colocar e onde', () => {
+    const amb = ambiente();
+    const c = (amb.salvar() as Ok<Contrato>).dados;
+    expect(amb.chamar('documentos.gerar', { contratoId: c.id, tipo: 'piano' }, { token: amb.gestor })).toEqual({
+      ok: false, erro: { codigo: 'MODELO', mensagem: 'Coloque o Google Doc "Modelo - Empréstimo do piano" na pasta GestorCC/Modelos.' },
+    });
   });
 });

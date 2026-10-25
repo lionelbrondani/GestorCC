@@ -86,6 +86,11 @@ export interface Acoes {
   'contratos.salvar': A<Contrato, Contrato>;
   'contratos.salvarAditivo': A<Aditivo, Aditivo>;
   'contratantes.salvar': A<Contratante, Contratante>;
+  /** PDF (data URL) do contrato assinado ou da fatura; fica no Drive. */
+  'contratos.anexar': A<{ contratoId: Id; tipo: 'assinado' | 'fatura'; arquivo: string }, Contrato>;
+  'contratos.anexo': A<{ contratoId: Id; tipo: 'assinado' | 'fatura' }, string | null>;
+  /** Documento a partir do modelo do Google Docs (spec 9.6): link do Doc e .docx para baixar. */
+  'documentos.gerar': A<{ contratoId: Id; tipo: 'contrato' | 'termo' | 'piano' }, { url: string; docx: string }>;
 
   'almox.listar': A<null, { itens: AlmoxItem[]; autorizadosExternos: string[] }>;
   /** Catálogo antigo colado nas abas IMPORTAR_ALMOX e IMPORTAR_AUTORIZADOS da planilha Dados. */

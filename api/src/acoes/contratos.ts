@@ -1,7 +1,7 @@
-import { ErroApi, type Aditivo, type Contratante, type Contrato } from '@shared';
+import { ErroApi, formatarData, formatarReais, horarioSessao, valorTotalContrato, type Aditivo, type Contratante, type Contrato } from '@shared';
 import { exigirVersao, novoId, registrar, type Contexto, type Handlers } from '../nucleo/roteador';
 import { marcarRelatorios } from '../relatorios/pendentes';
-import { linhasEventos, linhasSessoes } from './eventos';
+import { linhasEventos, linhasSessoes, paraSessao } from './eventos';
 
 export type LinhaContrato = Omit<Contrato, 'areas'> & { areas: string[] | null; pdfAssinadoId: string; pdfFaturaId: string; atualizadoEm?: string; atualizadoPor?: string };
 export type LinhaAditivo = Aditivo & { numeroFatura?: string };
@@ -33,6 +33,15 @@ function anoDoEvento(ctx: Contexto, eventoId: string): string {
 function proximoNumero(ctx: Contexto, ano: string): string {
   const usados = linhasContratos(ctx).map((c) => /^(\d+)\/(\d{4})$/.exec(c.numero)).filter((m) => m && m[2] === ano).map((m) => Number(m![1]));
   return `${Math.max(0, ...usados) + 1}/${ano}`;
+}
+
+/** Nome de cada modelo na pasta GestorCC/Modelos (spec 9.6). */
+const MODELOS = { contrato: 'Modelo - Contrato', termo: 'Modelo - Termo de autorização', piano: 'Modelo - Empréstimo do piano' } as const;
+
+function contratoOuErro(ctx: Contexto, id: string): LinhaContrato {
+  const c = linhasContratos(ctx).find((x) => x.id === id);
+  if (!c) throw new ErroApi('NAO_ENCONTRADO', 'Contrato não encontrado.');
+  return c;
 }
 
 const nomeDe = (ctx: Contexto) => (id: string) =>
@@ -86,6 +95,46 @@ export const handlersContratos: Handlers = {
     registrar(ctx, 'contrato', ad.contratoId, anterior ? `alterou o aditivo nº ${numero}` : `registrou o aditivo nº ${numero}`, null, null);
     marcarContratos(ctx);
     return paraAditivo(linha);
+  },
+
+  'contratos.anexar': ({ contratoId, tipo, arquivo }, ctx) => {
+    const c = contratoOuErro(ctx, contratoId);
+    if (!arquivo?.startsWith('data:application/pdf')) throw new ErroApi('ARQUIVO', 'Envie o arquivo em PDF.');
+    const nome = `Contrato ${c.numero.replace('/', '-')} - ${tipo === 'assinado' ? 'assinado' : 'fatura'}`;
+    const id = ctx.portas.arquivos.salvarImagem(arquivo, nome, 'Contratos');
+    const { atualizadoPor: _p, ...linha } = c;
+    ctx.portas.repo.atualizar('contratos', { ...linha, [tipo === 'assinado' ? 'pdfAssinadoId' : 'pdfFaturaId']: id });
+    registrar(ctx, 'contrato', c.id, tipo === 'assinado' ? 'anexou o contrato assinado' : 'anexou a fatura', null, null);
+    return paraContrato(contratoOuErro(ctx, contratoId));
+  },
+
+  'contratos.anexo': ({ contratoId, tipo }, ctx) => {
+    const c = contratoOuErro(ctx, contratoId);
+    const id = tipo === 'assinado' ? c.pdfAssinadoId : c.pdfFaturaId;
+    return id ? ctx.portas.arquivos.lerImagem(id) : null;
+  },
+
+  'documentos.gerar': ({ contratoId, tipo }, ctx) => {
+    const c = paraContrato(contratoOuErro(ctx, contratoId));
+    const evento = linhasEventos(ctx).find((e) => e.id === c.eventoId);
+    const k = linhasContratantes(ctx).find((x) => x.id === c.contratanteId);
+    const sessoes = linhasSessoes(ctx).filter((s) => s.eventoId === c.eventoId && s.status === 'ativa').sort((a, b) => a.data.localeCompare(b.data));
+    const aditivos = linhasAditivos(ctx).map(paraAditivo);
+    const campos: Record<string, string> = {
+      NUMERO: c.numero, PROCESSO: c.processoPen, EVENTO: evento?.nome ?? '',
+      DATAS: sessoes.map((s) => formatarData(s.data)).join(', '),
+      HORARIOS: sessoes.map((s) => `${formatarData(s.data).slice(0, 5)}: ${horarioSessao(paraSessao(s))}`).join('; '),
+      CONTRATANTE: k?.razaoSocial ?? '', DOCUMENTO: k?.documento ?? '', ENDERECO: k?.endereco ?? '', CEP: k?.cep ?? '',
+      REPRESENTANTE: k?.representanteNome ?? '', EMAIL: k?.email ?? '',
+      VALOR: formatarReais(valorTotalContrato(c, aditivos)), VALOR_EXTENSO: '', VENCIMENTO: c.vencimento ? formatarData(c.vencimento) : '',
+      AREAS: c.areas.join(', '), CORTESIAS: String(c.cortesiasQtd), INGRESSO_SOLIDARIO: c.ingressoSolidario, OBSERVACOES: c.observacoes,
+      HOJE: formatarData(ctx.portas.relogio.hoje()),
+    };
+    const modelo = MODELOS[tipo];
+    const nome = `${modelo.replace('Modelo - ', '')} ${c.numero.replace('/', '-')} - ${evento?.nome ?? ''}`.trim();
+    const r = ctx.portas.documentos.gerar(modelo, campos, nome);
+    registrar(ctx, 'contrato', c.id, `gerou o documento: ${modelo.replace('Modelo - ', '')}`, null, null);
+    return r;
   },
 
   'contratantes.salvar': (k, ctx) => {

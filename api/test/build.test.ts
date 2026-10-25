@@ -30,6 +30,7 @@ describe('build para o Apps Script', () => {
   it('a agenda do setor usa o serviço avançado de Agenda', () => {
     const manifesto = JSON.parse(readFileSync(`${raiz}dist/appsscript.json`, 'utf8'));
     expect(manifesto.oauthScopes).toContain('https://www.googleapis.com/auth/calendar');
+    expect(manifesto.oauthScopes).toContain('https://www.googleapis.com/auth/documents');
     expect(manifesto.dependencies.enabledAdvancedServices).toContainEqual({ userSymbol: 'Calendar', serviceId: 'calendar', version: 'v3' });
   });
 
