@@ -1,7 +1,8 @@
 /// <reference types="google-apps-script" />
 // Portas reais, com os serviços do Apps Script. Não é testado em Node; a lógica fica nos módulos puros.
 import { ErroApi } from '@shared';
-import type { Cache, Cripto, NomeTabela, Planilha, Portas, Propriedades, Relogio, Repositorio, Trava } from '../nucleo/portas';
+import { eventoSumiuNoGoogle, recursoDoEvento } from '../agenda/recursoGoogle';
+import type { AgendaGoogle, Cache, Cripto, NomeTabela, Planilha, Portas, Propriedades, Relogio, Repositorio, Trava } from '../nucleo/portas';
 import { cabecalhos, ESQUEMA } from '../tabelas/esquema';
 import { linhaParaObjeto, objetoParaLinha, paraCelula } from '../tabelas/serializacao';
 
@@ -133,11 +134,47 @@ export function repositorioGas(relogio: Relogio): Repositorio {
         .filter((l) => l.some((v) => v !== ''))
         .map((l) => Object.fromEntries(cab.map((c, i) => [String(c), l[i]])));
     },
+    escreverAbaLivre(p, nome, linhas) {
+      const doc = planilha(p);
+      const folha = doc.getSheetByName(nome) ?? doc.insertSheet(nome);
+      folha.clearContents();
+      if (!linhas.length) return;
+      const largura = Math.max(...linhas.map((l) => l.length));
+      const matriz = linhas.map((l) => [...l, ...Array<string>(largura - l.length).fill('')].map(paraCelula));
+      folha.getRange(1, 1, matriz.length, largura).setValues(matriz);
+      folha.getRange(1, 1, 1, largura).setFontWeight('bold').setBackground('#232323').setFontColor('#F5C518');
+      folha.setFrozenRows(1);
+    },
     definirAutor(pessoaId) {
       autor = pessoaId;
     },
   };
 }
+
+/** Sem e-mail para ninguém: toda mudança na agenda é silenciosa. */
+const SILENCIOSO = { sendUpdates: 'none' };
+
+/** Agenda Google do setor pelo serviço avançado Calendar v3 (o id vem de AGENDA_ID, criado pelo instalar). */
+export const agendaGas: AgendaGoogle = {
+  ligada: () => !!propriedadesGas.obter('AGENDA_ID'),
+  salvar(id, evento) {
+    const agendaId = propriedadesGas.obter('AGENDA_ID')!;
+    const recurso = recursoDoEvento(evento);
+    if (id) {
+      try {
+        Calendar.Events!.patch(recurso, agendaId, id, SILENCIOSO);
+        return id;
+      } catch (e) {
+        // só recria se o evento não existe mais; outra falha vira pendência (sem duplicar o evento)
+        if (!eventoSumiuNoGoogle(e)) throw e;
+      }
+    }
+    return Calendar.Events!.insert(recurso, agendaId, SILENCIOSO).id!;
+  },
+  remover(id) {
+    Calendar.Events!.remove(propriedadesGas.obter('AGENDA_ID')!, id, SILENCIOSO);
+  },
+};
 
 export function portasGas(): Portas {
   return {
@@ -147,5 +184,6 @@ export function portasGas(): Portas {
     cache: cacheGas,
     relogio: relogioGas,
     props: propriedadesGas,
+    agenda: agendaGas,
   };
 }

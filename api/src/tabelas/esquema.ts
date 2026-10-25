@@ -1,10 +1,12 @@
 import type { NomeTabela, Planilha } from '../nucleo/portas';
 
-export type TipoColuna = 'texto' | 'numero' | 'booleano' | 'json' | 'dataHora';
+export type TipoColuna = 'texto' | 'numero' | 'numeroOpcional' | 'booleano' | 'json' | 'dataHora';
 type Coluna = { nome: string; tipo: TipoColuna };
 
 const t = (nome: string): Coluna => ({ nome, tipo: 'texto' });
 const n = (nome: string): Coluna => ({ nome, tipo: 'numero' });
+/** Número que pode faltar (público não informado, diária padrão): célula vazia ↔ null. */
+const o = (nome: string): Coluna => ({ nome, tipo: 'numeroOpcional' });
 const b = (nome: string): Coluna => ({ nome, tipo: 'booleano' });
 const j = (nome: string): Coluna => ({ nome, tipo: 'json' });
 const d = (nome: string): Coluna => ({ nome, tipo: 'dataHora' });
@@ -29,6 +31,17 @@ export const ESQUEMA: Record<NomeTabela, { planilha: Planilha; colunas: Coluna[]
   },
   config: { planilha: 'dados', colunas: [j('valor')] },
   feriados: { planilha: 'dados', colunas: [t('data'), t('nome')] },
+  eventos: {
+    planilha: 'dados',
+    colunas: [t('nome'), t('tipo'), t('organizador'), t('contatoOrganizador'), t('servidorResponsavelId'), o('publicoEstimado'), o('publicoReal'),
+      t('pagamento'), t('pagadorExterno'), t('instrumento'), t('status'), t('observacoes')],
+  },
+  sessoes: {
+    planilha: 'dados',
+    colunas: [t('eventoId'), t('data'), t('rotulo'), t('chegada'), t('inicio'), t('fim'), b('horarioADefinir'), n('vagasBolsistas'),
+      n('vagasServidores'), o('diaria'), n('minimoExperientes'), t('status'), t('publicadaEm'), t('convocacaoAbertaAte'), n('convocacaoVagas'),
+      t('googleEventoId'), b('agendaPendente')],
+  },
   dadosPessoais: { planilha: 'sigiloso', colunas: [t('cpf'), t('banco'), t('agencia'), t('conta'), t('nascimento'), t('camiseta')] },
   credenciais: {
     planilha: 'sigiloso',

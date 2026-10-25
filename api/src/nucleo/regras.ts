@@ -2,7 +2,7 @@ import type { Acao, Modulo } from '@shared';
 
 export type Regra = 'publica' | 'logado' | [Modulo, 'ver' | 'editar'];
 
-/** Ações disponíveis na fase 1 e como cada uma é protegida. As demais respondem NAO_DISPONIVEL. */
+/** Ações disponíveis até a fase atual e como cada uma é protegida. As demais respondem NAO_DISPONIVEL. */
 export const ACOES_FASE: Partial<Record<Acao, { regra: Regra; escrita: boolean }>> = {
   'sistema.ping': { regra: 'publica', escrita: false },
   'auth.entrar': { regra: 'publica', escrita: true },
@@ -24,4 +24,9 @@ export const ACOES_FASE: Partial<Record<Acao, { regra: Regra; escrita: boolean }
   'config.salvar': { regra: ['configuracoes', 'editar'], escrita: true },
   'feriados.listar': { regra: 'logado', escrita: false },
   'feriados.salvar': { regra: ['configuracoes', 'editar'], escrita: true },
+  // fase 2: bolsistas também listam (vão precisar das sessões na fase 3)
+  'eventos.listar': { regra: 'logado', escrita: false },
+  'eventos.salvar': { regra: ['eventos', 'editar'], escrita: true },
+  'eventos.cancelar': { regra: ['eventos', 'editar'], escrita: true },
+  'sessoes.cancelar': { regra: ['eventos', 'editar'], escrita: true },
 };

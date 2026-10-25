@@ -27,6 +27,12 @@ describe('build para o Apps Script', () => {
     expect(manifesto.timeZone).toBe('America/Sao_Paulo');
   });
 
+  it('a agenda do setor usa o serviço avançado de Agenda', () => {
+    const manifesto = JSON.parse(readFileSync(`${raiz}dist/appsscript.json`, 'utf8'));
+    expect(manifesto.oauthScopes).toContain('https://www.googleapis.com/auth/calendar');
+    expect(manifesto.dependencies.enabledAdvancedServices).toContainEqual({ userSymbol: 'Calendar', serviceId: 'calendar', version: 'v3' });
+  });
+
   it('o sistema não envia e-mail: sem permissão de e-mail e sem MailApp/GmailApp no código', () => {
     const manifesto = JSON.parse(readFileSync(`${raiz}dist/appsscript.json`, 'utf8'));
     expect(manifesto.oauthScopes.filter((s: string) => /mail/i.test(s))).toEqual([]);

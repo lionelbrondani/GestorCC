@@ -14,7 +14,16 @@ export const CONTAS = {
   bolsista: { email: 'bolsista@acad.ufsm.br', senha: '2026000001' },
 } as const;
 
-export async function renderizar(opcoes: { pessoa?: keyof typeof CONTAS | null; rota?: string; hoje?: string; recursos?: string } = {}) {
+export async function renderizar(
+  opcoes: {
+    pessoa?: keyof typeof CONTAS | null;
+    rota?: string;
+    hoje?: string;
+    recursos?: string;
+    /** Chamado antes de renderizar: permite espionar as consultas iniciais da tela. */
+    aoCriarApi?: (api: ReturnType<typeof criarMockCliente>) => void;
+  } = {},
+) {
   definirHoje(opcoes.hoje ?? '2026-10-24');
   definirRecursos(opcoes.recursos ?? '');
   const api = criarMockCliente({ latenciaMs: 0, persistir: false, hoje: opcoes.hoje });
@@ -25,6 +34,7 @@ export async function renderizar(opcoes: { pessoa?: keyof typeof CONTAS | null; 
     inicial = { token: r.token, pessoa: r.pessoa, senhaInicial: false };
   }
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } });
+  opcoes.aoCriarApi?.(api);
   const router = createMemoryRouter(ROTAS, { initialEntries: [opcoes.rota ?? '/'], future: FUTURO_ROTEADOR });
   const resultado = render(
     <QueryClientProvider client={qc}>

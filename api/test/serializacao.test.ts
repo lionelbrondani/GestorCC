@@ -72,6 +72,23 @@ describe('leitura tolerante', () => {
   });
 });
 
+describe('número opcional', () => {
+  const c = cabecalhos('eventos');
+  const lido = (v: unknown) => linhaParaObjeto('eventos', c, c.map((x) => (x === 'id' ? 'e1' : x === 'publicoReal' ? v : ''))).publicoReal;
+
+  it('vazio ou texto não numérico vira null; número vira número', () => {
+    expect(lido('')).toBeNull();
+    expect(lido('120')).toBe(120);
+    expect(lido(120)).toBe(120);
+    expect(lido('abc')).toBeNull();
+  });
+
+  it('null é gravado como célula vazia', () => {
+    const linha = objetoParaLinha('eventos', c, { id: 'e1', publicoReal: null });
+    expect(linha[c.indexOf('publicoReal')]).toBe('');
+  });
+});
+
 describe('gravação na planilha', () => {
   it('texto vai com apóstrofo, para o Sheets não transformar em fórmula, número ou data', () => {
     expect(paraCelula('+abc/def==')).toBe("'+abc/def==");

@@ -1,4 +1,4 @@
-import { diaDaSemana, diaDaSemanaCurto, diasDoMes, formatarData, mesExtenso, type Evento, type Sessao } from '@shared';
+import { agendaDoMes, diaDaSemanaCurto, diasDoMes, formatarData, horarioSessao, mesExtenso, rotuloDiaAgenda, type Evento, type LinhaAgendaMes, type Sessao } from '@shared';
 import { Printer } from 'lucide-react';
 import { useSearchParams } from 'react-router-dom';
 import { usePeriodo, usePessoas } from '../../api/consultas';
@@ -9,16 +9,6 @@ import { mesCurto } from '../../util/sessoes';
 import { CabecalhoImpresso, SeletorModelo, useModelo } from '../impressao/ModeloImpressao';
 import './agenda.css';
 
-function rotuloDia(d: string): string {
-  const dia = diaDaSemana(d);
-  return `${dia.charAt(0).toUpperCase()}${dia.slice(1)}, ${d.slice(8, 10)}`;
-}
-
-function horario(s: Sessao): string {
-  const h = s.horarioADefinir || !s.inicio ? 'a definir' : s.fim ? `${s.inicio} - ${s.fim}` : s.inicio;
-  return s.rotulo ? `${s.rotulo}: ${h}` : h;
-}
-
 interface Base {
   dias: string[];
   doDia: (d: string) => { sessoes: Sessao[]; eventos: Evento[] };
@@ -28,7 +18,7 @@ interface Base {
   ano: number;
 }
 
-function AgendaLegado({ dias, doDia, feriado, responsavel, mes, ano }: Base) {
+function AgendaLegado({ linhas, mes, ano }: { linhas: LinhaAgendaMes[]; mes: number; ano: number }) {
   return (
     <div className="folha-impressao agenda-impressa">
       <h1>
@@ -45,40 +35,36 @@ function AgendaLegado({ dias, doDia, feriado, responsavel, mes, ano }: Base) {
           </tr>
         </thead>
         <tbody>
-          {dias.map((d) => {
-            const { sessoes, eventos } = doDia(d);
-            if (feriado.has(d) && eventos.length === 0) {
+          {linhas.map(({ dia, feriado, eventos, horarios }) => {
+            if (feriado !== null && eventos.length === 0) {
               return (
-                <tr key={d} className="feriado">
-                  <td>{rotuloDia(d)}</td>
-                  <td colSpan={4}>FERIADO{feriado.get(d) ? ` – ${feriado.get(d)}` : ''}</td>
+                <tr key={dia} className="feriado">
+                  <td>{rotuloDiaAgenda(dia)}</td>
+                  <td colSpan={4}>FERIADO{feriado ? ` – ${feriado}` : ''}</td>
                 </tr>
               );
             }
             return (
-              <tr key={d}>
-                <td>{rotuloDia(d)}</td>
+              <tr key={dia}>
+                <td>{rotuloDiaAgenda(dia)}</td>
                 <td>
-                  {eventos.map((e) => (
-                    <div key={e.id}>{e.nome}</div>
+                  {eventos.map((e, i) => (
+                    <div key={i}>{e.nome}</div>
                   ))}
                 </td>
                 <td>
-                  {eventos.map((e) => (
-                    <div key={e.id}>
-                      {e.organizador}
-                      {e.contatoOrganizador ? ` / ${e.contatoOrganizador}` : ''}
-                    </div>
+                  {eventos.map((e, i) => (
+                    <div key={i}>{e.responsavel}</div>
                   ))}
                 </td>
                 <td>
-                  {eventos.map((e) => (
-                    <div key={e.id}>{responsavel(e)}</div>
+                  {eventos.map((e, i) => (
+                    <div key={i}>{e.respNugac}</div>
                   ))}
                 </td>
                 <td>
-                  {sessoes.map((s) => (
-                    <div key={s.id}>{horario(s)}</div>
+                  {horarios.map((h, i) => (
+                    <div key={i}>{h}</div>
                   ))}
                 </td>
               </tr>
@@ -132,7 +118,7 @@ function AgendaAtualizada({ dias, doDia, feriado, responsavel, mes, ano }: Base)
                         <p className="impresso-meta">
                           {sessoes
                             .filter((s) => s.eventoId === e.id)
-                            .map((s) => horario(s))
+                            .map((s) => horarioSessao(s))
                             .join(' · ')}
                         </p>
                         <p className="impresso-meta">
@@ -190,7 +176,20 @@ export function ImprimirAgenda() {
           escolha "Salvar como PDF" se preferir.
         </span>
       </div>
-      {modelo === 'legado' ? <AgendaLegado {...base} /> : <AgendaAtualizada {...base} />}
+      {modelo === 'legado' ? (
+        <AgendaLegado
+          mes={m}
+          ano={ano}
+          linhas={agendaDoMes(ano, m, {
+            eventos: periodo.eventos,
+            sessoes: periodo.sessoes,
+            feriados: feriados.data ?? [],
+            nomeServidor: (id) => pessoas.pessoa.get(id)?.nome ?? '',
+          })}
+        />
+      ) : (
+        <AgendaAtualizada {...base} />
+      )}
     </div>
   );
 }

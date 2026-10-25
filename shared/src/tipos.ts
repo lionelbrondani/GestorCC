@@ -55,6 +55,8 @@ export interface Evento {
   instrumento: 'contrato' | 'termo' | 'nenhum';
   status: 'ativo' | 'cancelado';
   observacoes?: string;
+  /** Versão do registro, para detectar edição simultânea (spec 3). */
+  atualizadoEm?: string;
 }
 
 export interface Sessao {

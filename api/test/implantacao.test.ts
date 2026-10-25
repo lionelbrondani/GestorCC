@@ -13,6 +13,14 @@ describe('roteiro de publicação', () => {
     }
   });
 
+  it('o passo a passo da fase 2 cobre a agenda do setor e liga a Agenda no app', () => {
+    const doc = ler('docs/implantacao.md');
+    for (const termo of ['Centro de Convenções UFSM', 'URL_APP', 'VITE_RECURSOS=pessoas,dadosPessoais,mural,formularios,configuracoes,eventos']) {
+      expect(doc, termo).toContain(termo);
+    }
+    expect(ler('app/.env.exemplo')).toContain('VITE_RECURSOS=pessoas,dadosPessoais,mural,formularios,configuracoes,eventos');
+  });
+
   it('o site é uma SPA: toda rota cai no index.html, que nunca fica em cache', () => {
     const config = JSON.parse(ler('firebase.json'));
     const sites = config.hosting as Array<{ target: string; public: string; rewrites: unknown[]; headers: Array<{ source: string; headers: Array<{ key: string; value: string }> }> }>;

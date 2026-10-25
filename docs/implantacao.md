@@ -68,7 +68,9 @@ O `instalar` cria a pasta **GestorCC** no Drive com três planilhas:
 Ele também cria o primeiro gestor e liga duas rotinas automáticas:
 
 - backup todo dia às 3h;
-- verificação a cada 5 minutos, reservada para as próximas fases.
+- verificação a cada 5 minutos, que acerta a agenda Google e as abas AGENDA da planilha de Relatórios.
+
+A partir da fase 2, o `instalar` também cria a agenda Google **"Centro de Convenções UFSM"** na conta do setor (seção 13).
 
 Antes de rodar, preencha as propriedades:
 
@@ -121,7 +123,12 @@ Use a conta escolhida para o site no passo 1. Se for uma conta diferente da do s
 1. Copie `app/.env.exemplo` para `app/.env.teste` e para `app/.env.producao`.
 2. Em cada arquivo, preencha:
    - `VITE_API_URL`: o URL `/exec` da API **daquele** ambiente (passo 5);
-   - `VITE_RECURSOS`: as áreas ligadas nesta fase. Na fase 1 o valor é `pessoas,dadosPessoais,mural,formularios,configuracoes`. Áreas fora da lista aparecem como "Esta área chega numa próxima etapa."
+   - `VITE_RECURSOS`: as áreas ligadas nesta fase. Áreas fora da lista aparecem como "Esta área chega numa próxima etapa." O valor de cada fase:
+
+     | Fase | Valor |
+     |---|---|
+     | 1 | `VITE_RECURSOS=pessoas,dadosPessoais,mural,formularios,configuracoes` |
+     | 2 | `VITE_RECURSOS=pessoas,dadosPessoais,mural,formularios,configuracoes,eventos` |
 3. Publique:
 
    ```
@@ -215,3 +222,26 @@ Use o passo a passo abaixo só quando **o próprio gestor** perder o acesso e n�
 4. Confira a mensagem no registro de execução: *"Acesso recuperado."*
 
 A pessoa entra com o e-mail e a matrícula. O sistema pede uma senha nova na hora, e as sessões abertas em outros aparelhos são encerradas.
+
+## 13. Agenda Google do setor (fase 2)
+
+A partir da fase 2, todo evento criado, alterado ou cancelado no GestorCC aparece sozinho na agenda **"Centro de Convenções UFSM"**, na conta do setor. Ninguém recebe e-mail: a agenda é atualizada em silêncio.
+
+Para ligar:
+
+1. No projeto da API, cole o `appsscript.json` e o `Code.js` novos (seção 3) e salve.
+2. Rode `instalar` de novo. Ele:
+   - cria as abas `eventos` e `sessoes` na planilha **GestorCC - Dados**;
+   - cria a agenda **"Centro de Convenções UFSM"**;
+   - pede a permissão de **Agenda**. Aceite com a conta do setor.
+3. Em **Implantar → Gerenciar implantações**, edite a implantação e escolha **Nova versão** (seção 10).
+4. Publique o site com `VITE_RECURSOS=pessoas,dadosPessoais,mural,formularios,configuracoes,eventos` no `.env` (seção 7).
+5. No Google Agenda da conta do setor, abra as configurações da agenda **"Centro de Convenções UFSM"**:
+   1. Vá em **Compartilhar com pessoas específicas**.
+   2. Adicione a equipe com a opção **"Ver todos os detalhes do evento"**.
+   3. Cada pessoa também pode usar o botão **"Adicionar ao meu Google Agenda"**, em Agenda ou Configurações no GestorCC.
+6. Opcional: crie a propriedade `URL_APP` com o endereço do site, por exemplo `https://gestorcc-ae6f8.web.app`. Com ela, a descrição de cada evento na agenda ganha o link "Ver no GestorCC".
+
+Se o Google Agenda estiver fora do ar quando alguém salvar um evento, o evento fica salvo no GestorCC normalmente. A rotina de 5 minutos atualiza a agenda depois.
+
+As abas **AGENDA \<MÊS\> \<ANO\>** da planilha **GestorCC - Relatórios** são refeitas pela mesma rotina, alguns minutos depois de cada mudança.

@@ -1,6 +1,7 @@
 import { CalendarCheck, ExternalLink } from 'lucide-react';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { MODO_PROTOTIPO } from '../../ambiente';
 import { useConsulta, useMutacao } from '../../api/hooks';
 import { useEu, useSessao } from '../../auth/SessaoContexto';
 import { Alerta, Botao, Campo, Cartao, Etiqueta } from '../../componentes';
@@ -88,18 +89,26 @@ export function CartaoAgendaSetor() {
       titulo="Google Agenda do setor"
       acoes={<Etiqueta tom={a.conectada ? 'sucesso' : 'aviso'}>{a.conectada ? 'Sincronizada' : 'Desconectada'}</Etiqueta>}
     >
-      <div className="linha-entre">
-        <span className="pequeno texto-2">
-          Agenda "{a.nome}" da conta {a.conta}. Todo evento criado, alterado ou cancelado aqui é atualizado lá automaticamente; a equipe só
-          precisa assinar a agenda.
-        </span>
-        <a className="cc-botao" data-variante="secundario" data-tamanho="pequeno" href={a.link} target="_blank" rel="noreferrer">
-          <ExternalLink size={14} aria-hidden /> Abrir no Google Agenda
-        </a>
-      </div>
-      <p className="pequeno texto-3" style={{ marginTop: 8 }}>
-        Protótipo: a sincronização real começa quando o sistema for ligado à conta do setor (fase 2).
-      </p>
+      {a.conectada ? (
+        <div className="linha-entre">
+          <span className="pequeno texto-2">
+            Agenda "{a.nome}" da conta {a.conta}. Todo evento criado, alterado ou cancelado aqui é atualizado lá automaticamente, sem
+            enviar e-mails; a equipe só precisa assinar a agenda.
+          </span>
+          <a className="cc-botao" data-variante="secundario" data-tamanho="pequeno" href={a.link} target="_blank" rel="noreferrer">
+            <ExternalLink size={14} aria-hidden /> Adicionar ao meu Google Agenda
+          </a>
+        </div>
+      ) : (
+        <p className="pequeno texto-2">
+          A agenda do setor ainda não foi criada. Rode <code>instalar</code> no projeto do Apps Script.
+        </p>
+      )}
+      {MODO_PROTOTIPO && (
+        <p className="pequeno texto-3" style={{ marginTop: 8 }}>
+          Protótipo: a sincronização real começa quando o sistema for ligado à conta do setor (fase 2).
+        </p>
+      )}
     </Cartao>
   );
 }

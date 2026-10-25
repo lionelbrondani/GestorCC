@@ -25,15 +25,17 @@ export function InicioGestor() {
   const p = eu.permissoes;
   const { de, ate } = janela(60, 90);
   const periodo = usePeriodo(de, ate);
-  const escalas = useConsulta('escalas.listar', { de, ate });
-  const rodadas = useConsulta('rodadas.listar', null);
+  // só consulta áreas ligadas nesta fase (VITE_RECURSOS); as outras ainda respondem NAO_DISPONIVEL
+  const comEscalas = recursoAtivo('escalas');
+  const escalas = useConsulta('escalas.listar', { de, ate }, { habilitada: comEscalas });
+  const rodadas = useConsulta('rodadas.listar', null, { habilitada: comEscalas });
   const pessoas = usePessoas();
   const idsRodadas = (rodadas.data ?? []).filter((r) => r.status === 'aberta').flatMap((r) => r.sessaoIds);
-  const disp = useConsulta('disponibilidades.listar', { sessaoIds: idsRodadas }, { habilitada: !!rodadas.data });
-  const almox = useConsulta('almox.listar', null, { habilitada: pode(p, 'almoxEstoque', 'ver') });
-  const contratos = useConsulta('contratos.listar', null, { habilitada: pode(p, 'contratos', 'ver') });
+  const disp = useConsulta('disponibilidades.listar', { sessaoIds: idsRodadas }, { habilitada: comEscalas && !!rodadas.data });
+  const almox = useConsulta('almox.listar', null, { habilitada: recursoAtivo('almoxEstoque') && pode(p, 'almoxEstoque', 'ver') });
+  const contratos = useConsulta('contratos.listar', null, { habilitada: recursoAtivo('contratos') && pode(p, 'contratos', 'ver') });
   const avisos = useConsulta('avisos.listar', null);
-  const ocorrencias = useConsulta('infra.listar', null, { habilitada: pode(p, 'infraestrutura', 'ver') });
+  const ocorrencias = useConsulta('infra.listar', null, { habilitada: recursoAtivo('infraestrutura') && pode(p, 'infraestrutura', 'ver') });
 
   if (periodo.isLoading || escalas.isLoading) return <Carregando />;
 

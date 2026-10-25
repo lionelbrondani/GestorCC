@@ -20,6 +20,11 @@ function ler(valor: unknown, tipo: TipoColuna): unknown {
       const num = Number(valor);
       return Number.isFinite(num) ? num : 0;
     }
+    case 'numeroOpcional': {
+      if (vazio) return null;
+      const num = Number(valor);
+      return Number.isFinite(num) ? num : null;
+    }
     case 'json':
       if (vazio) return null;
       if (typeof valor !== 'string') return valor;
