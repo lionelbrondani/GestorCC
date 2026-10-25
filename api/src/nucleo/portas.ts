@@ -16,6 +16,11 @@ export type NomeTabela =
   | 'feriados'
   | 'eventos'
   | 'sessoes'
+  | 'rodadas'
+  | 'rodadaSessoes'
+  | 'disponibilidades'
+  | 'escalas'
+  | 'avaliacoes'
   | 'dadosPessoais'
   | 'credenciais';
 

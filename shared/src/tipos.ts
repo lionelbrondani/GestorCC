@@ -83,6 +83,8 @@ export interface Rodada {
   prazo: string;
   status: 'aberta' | 'fechada';
   sessaoIds: Id[];
+  /** Sessões que entraram depois da abertura (selo "nova", spec 7.2). */
+  sessoesNovas?: Id[];
 }
 
 export interface Disponibilidade {
