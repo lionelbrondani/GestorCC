@@ -15,10 +15,10 @@ describe('roteiro de publicação', () => {
 
   it('o passo a passo da fase 2 cobre a agenda do setor e liga a Agenda no app', () => {
     const doc = ler('docs/implantacao.md');
-    for (const termo of ['Centro de Convenções UFSM', 'URL_APP', 'VITE_RECURSOS=pessoas,dadosPessoais,mural,formularios,configuracoes,eventos']) {
+    for (const termo of ['Centro de Convenções UFSM', 'URL_APP', 'VITE_RECURSOS=pessoas,dadosPessoais,mural,formularios,configuracoes,eventos', 'VITE_RECURSOS=pessoas,dadosPessoais,mural,formularios,configuracoes,eventos,escalas,escalasPessoais']) {
       expect(doc, termo).toContain(termo);
     }
-    expect(ler('app/.env.exemplo')).toContain('VITE_RECURSOS=pessoas,dadosPessoais,mural,formularios,configuracoes,eventos');
+    expect(ler('app/.env.exemplo')).toContain('VITE_RECURSOS=pessoas,dadosPessoais,mural,formularios,configuracoes,eventos,escalas,escalasPessoais');
   });
 
   it('o site é uma SPA: toda rota cai no index.html, que nunca fica em cache', () => {
