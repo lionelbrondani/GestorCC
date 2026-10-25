@@ -2,6 +2,7 @@ import type { Evento, Sessao } from '@shared';
 import { describe, expect, it } from 'vitest';
 import { handlersEscalas } from '../src/acoes/escalas';
 import { handlersEventos } from '../src/acoes/eventos';
+import { handlersPagamentos } from '../src/acoes/pagamentos';
 import { handlersSistema } from '../src/acoes/sistema';
 import { gerarRelatoriosPendentes } from '../src/relatorios/pendentes';
 import { criarAmbiente } from './apoio';
@@ -97,5 +98,26 @@ describe('abas da escala na planilha de Relatórios (fase 3)', () => {
     gerarRelatoriosPendentes(amb.portas);
     amb.portas.props.definir('RELATORIOS_PENDENTES', '["2026-12"]');
     expect(gerarRelatoriosPendentes(amb.portas)).toEqual(['AGENDA DEZEMBRO 2026']);
+  });
+});
+
+describe('aba de pagamentos (fase 4)', () => {
+  it('criar lote marca a aba e o gatilho escreve totais sem CPF', () => {
+    const amb = criarAmbiente({ handlers: handlersPagamentos });
+    amb.repo.inserir('eventos', linhaEvento('e1'));
+    amb.repo.inserir('sessoes', linhaSessao({ id: 's1', eventoId: 'e1', data: '2026-10-05' }));
+    amb.repo.inserir('sessoes', linhaSessao({ id: 's2', eventoId: 'e1', data: '2026-10-06', diaria: 12000 }));
+    amb.repo.inserir('escalas', { id: 'x1', sessaoId: 's1', pessoaId: 'p02', papel: 'bolsista', status: 'realizado', adicaoDireta: false, loteId: '' });
+    amb.repo.inserir('escalas', { id: 'x2', sessaoId: 's2', pessoaId: 'p02', papel: 'bolsista', status: 'realizado', adicaoDireta: false, loteId: '' });
+    amb.chamar('lotes.criar', { escalaIds: ['x1', 'x2'], titulo: 'Outubro/2026', periodoReferencia: 'OUTUBRO/2026', edital: '', iniciativa: '', incluirZerados: true }, { token: amb.token('p01') });
+    expect(gerarRelatoriosPendentes(amb.portas)).toEqual(['PAGAMENTOS – Outubro-2026']);
+    const aba = amb.repo.abaLivre('relatorios', 'PAGAMENTOS – Outubro-2026')!;
+    expect(aba).toEqual([
+      ['BOLSISTA', 'QUANTIDADE', 'VALOR UNITÁRIO', 'TOTAL'],
+      ['Bolsista Teste', '2', 'variado', 'R$ 200,00'],
+      ['TOTAL DO LOTE', '2', '', 'R$ 200,00'],
+      ['SITUAÇÃO: Enviado', '', '', ''],
+    ]);
+    expect(JSON.stringify(aba)).not.toMatch(/\d{3}\.\d{3}/);
   });
 });
