@@ -1,7 +1,9 @@
 import type { Evento, Sessao } from '@shared';
 import { describe, expect, it } from 'vitest';
+import { handlersAlmox } from '../src/acoes/almox';
 import { handlersEscalas } from '../src/acoes/escalas';
 import { handlersEventos } from '../src/acoes/eventos';
+import { handlersInfra } from '../src/acoes/infra';
 import { handlersPagamentos } from '../src/acoes/pagamentos';
 import { handlersSistema } from '../src/acoes/sistema';
 import { gerarRelatoriosPendentes } from '../src/relatorios/pendentes';
@@ -119,5 +121,39 @@ describe('aba de pagamentos (fase 4)', () => {
       ['SITUAÇÃO: Enviado', '', '', ''],
     ]);
     expect(JSON.stringify(aba)).not.toMatch(/\d{3}\.\d{3}/);
+  });
+});
+
+describe('abas de estoque e infraestrutura (fase 5)', () => {
+  it('estoque: itens ativos por código, com o crítico destacado', () => {
+    const amb = criarAmbiente({ handlers: handlersAlmox });
+    const token = amb.token('p01');
+    const salvar = (cod: string, nome: string, qtdMinima: number, status = 'Ativo') =>
+      amb.chamar('almox.salvarItem', { cod, nomeAlmox: nome, nomeComum: nome, unidade: 'un', valor: 100, categoria: 'Elétrica', qtdMinima, sala: 'Depósito', status, saldo: 0 } as never, { token });
+    salvar('2', 'Lâmpada', 2);
+    salvar('1', 'Fita', 0);
+    salvar('3', 'Antigo', 0, 'Inativo');
+    amb.chamar('almox.ajustar', { cod: '1', qtd: 5, motivo: 'contagem' }, { token });
+    expect(gerarRelatoriosPendentes(amb.portas)).toEqual(['ESTOQUE']);
+    expect(amb.repo.abaLivre('relatorios', 'ESTOQUE')).toEqual([
+      ['COD', 'ITEM', 'CATEGORIA', 'SALA', 'SALDO', 'MÍNIMO', 'SITUAÇÃO'],
+      ['0001', 'Fita', 'Elétrica', 'Depósito', '5', '0', 'OK'],
+      ['0002', 'Lâmpada', 'Elétrica', 'Depósito', '0', '2', 'Crítico'],
+    ]);
+    expect(amb.repo.abaFormato('relatorios', 'ESTOQUE')).toEqual({ destaque: [2] });
+  });
+
+  it('infraestrutura: abertas primeiro, por prioridade, com dias em aberto', () => {
+    const amb = criarAmbiente({ handlers: handlersInfra });
+    const relatar = (titulo: string, prioridade: string) =>
+      amb.chamar('infra.relatar', { titulo, descricao: '', categoria: 'Elétrica', local: 'Palco', prioridade, foto: null } as never, { token: amb.token('p02') });
+    relatar('Tomada solta', 'baixa');
+    relatar('Curto-circuito', 'urgente');
+    expect(gerarRelatoriosPendentes(amb.portas)).toEqual(['INFRAESTRUTURA']);
+    expect(amb.repo.abaLivre('relatorios', 'INFRAESTRUTURA')).toEqual([
+      ['Nº', 'OCORRÊNCIA', 'LOCAL', 'TIPO', 'PRIORIDADE', 'SITUAÇÃO', 'Nº DO CHAMADO UFSM', 'DIAS EM ABERTO'],
+      ['2', 'Curto-circuito', 'Palco', 'Elétrica', 'Urgente', 'Nova', '', '0'],
+      ['1', 'Tomada solta', 'Palco', 'Elétrica', 'Baixa', 'Nova', '', '0'],
+    ]);
   });
 });

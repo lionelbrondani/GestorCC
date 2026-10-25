@@ -15,10 +15,10 @@ describe('roteiro de publicação', () => {
 
   it('o passo a passo da fase 2 cobre a agenda do setor e liga a Agenda no app', () => {
     const doc = ler('docs/implantacao.md');
-    for (const termo of ['Centro de Convenções UFSM', 'URL_APP', 'VITE_RECURSOS=pessoas,dadosPessoais,mural,formularios,configuracoes,eventos', 'VITE_RECURSOS=pessoas,dadosPessoais,mural,formularios,configuracoes,eventos,escalas,escalasPessoais', 'VITE_RECURSOS=pessoas,dadosPessoais,mural,formularios,configuracoes,eventos,escalas,escalasPessoais,pagamentos']) {
+    for (const termo of ['Centro de Convenções UFSM', 'URL_APP', 'VITE_RECURSOS=pessoas,dadosPessoais,mural,formularios,configuracoes,eventos', 'VITE_RECURSOS=pessoas,dadosPessoais,mural,formularios,configuracoes,eventos,escalas,escalasPessoais', 'VITE_RECURSOS=pessoas,dadosPessoais,mural,formularios,configuracoes,eventos,escalas,escalasPessoais,pagamentos', 'VITE_RECURSOS=pessoas,dadosPessoais,mural,formularios,configuracoes,eventos,escalas,escalasPessoais,pagamentos,almoxEstoque,almoxSaidas,infraestrutura,relatar', 'FORMULARIO_INFRA_ID', 'IMPORTAR_ALMOX']) {
       expect(doc, termo).toContain(termo);
     }
-    expect(ler('app/.env.exemplo')).toContain('VITE_RECURSOS=pessoas,dadosPessoais,mural,formularios,configuracoes,eventos,escalas,escalasPessoais,pagamentos');
+    expect(ler('app/.env.exemplo')).toContain('VITE_RECURSOS=pessoas,dadosPessoais,mural,formularios,configuracoes,eventos,escalas,escalasPessoais,pagamentos,almoxEstoque,almoxSaidas,infraestrutura,relatar');
   });
 
   it('o site é uma SPA: toda rota cai no index.html, que nunca fica em cache', () => {

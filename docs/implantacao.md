@@ -131,6 +131,7 @@ Use a conta escolhida para o site no passo 1. Se for uma conta diferente da do s
      | 2 | `VITE_RECURSOS=pessoas,dadosPessoais,mural,formularios,configuracoes,eventos` |
      | 3 | `VITE_RECURSOS=pessoas,dadosPessoais,mural,formularios,configuracoes,eventos,escalas,escalasPessoais` |
      | 4 | `VITE_RECURSOS=pessoas,dadosPessoais,mural,formularios,configuracoes,eventos,escalas,escalasPessoais,pagamentos` |
+     | 5 | `VITE_RECURSOS=pessoas,dadosPessoais,mural,formularios,configuracoes,eventos,escalas,escalasPessoais,pagamentos,almoxEstoque,almoxSaidas,infraestrutura,relatar` |
 3. Publique:
 
    ```
@@ -281,3 +282,33 @@ Para ligar:
 A ficha de indicação não é enviada pelo sistema. Use **Copiar formatado** e cole no seu e-mail, ou baixe o arquivo.
 
 A planilha de Relatórios ganha uma aba **PAGAMENTOS – \<título do lote\>** por lote, sem CPF nem dados bancários.
+
+## 16. Almoxarifado e infraestrutura (fase 5)
+
+Para ligar:
+
+1. Cole o `Code.js` novo e salve.
+2. Rode `instalar` de novo. Ele cria, na planilha **GestorCC - Dados**:
+   - as abas do almoxarifado e das ocorrências do prédio;
+   - as abas de colagem `IMPORTAR_ALMOX` e `IMPORTAR_AUTORIZADOS`.
+3. Crie uma **Nova versão** da implantação e publique o site com o `VITE_RECURSOS` da fase 5.
+
+**Trazer o almoxarifado antigo (BD_Almox):**
+
+1. Na aba `IMPORTAR_ALMOX`, cole uma linha por item nas colunas `COD`, `NOME_ALMOX`, `NOME_COMUM`, `UNIDADE`, `VALOR`, `CATEGORIA`, `QTD_MINIMA`, `SALA`, `STATUS` e `SALDO`.
+2. Na aba `IMPORTAR_AUTORIZADOS`, cole os nomes dos autorizados externos, na coluna `NOME`.
+3. No GestorCC, vá em **Almoxarifado → Estoque → Importar da planilha**.
+
+Itens já cadastrados não são alterados. O saldo de cada item novo entra como "saldo inicial (importação)".
+
+**Formulário de problemas do prédio:**
+
+1. Abra a planilha de respostas do Google Form e copie o ID dela, o trecho do endereço entre `/d/` e `/edit`.
+2. Nas **Propriedades do script**, crie `FORMULARIO_INFRA_ID` com esse ID.
+3. A conta do setor precisa conseguir abrir essa planilha.
+
+A partir daí, as respostas novas viram ocorrências a cada 5 minutos, ou na hora pelo botão "Importar respostas do formulário".
+
+**Fotos dos relatos:** ficam na pasta **GestorCC/Infraestrutura** do Drive, sem compartilhamento. Só quem gerencia e quem relatou as veem no GestorCC.
+
+A planilha de Relatórios ganha as abas **ESTOQUE** e **INFRAESTRUTURA**.
