@@ -2,7 +2,7 @@ import { ErroApi, validarEvento, type Evento, type Sessao } from '@shared';
 import { removerDaAgenda, sincronizarAgenda } from '../agenda/sincronizar';
 import { linhasEscalas, nomeSessao } from '../escalas/comum';
 import { exigirVersao, notificar, novoId, registrar, type Contexto, type Handlers } from '../nucleo/roteador';
-import { marcarAgendaPendente } from '../relatorios/agenda';
+import { marcarMesesPendentes } from '../relatorios/pendentes';
 import { incluirEmRodadaAberta } from './rodadas';
 
 export interface LinhaEvento {
@@ -158,7 +158,7 @@ function cancelarSessao(ctx: Contexto, sessaoId: string, justificativa: string):
 function aposCancelar(ctx: Contexto, sessaoIds: string[]) {
   sincronizarAgenda(ctx.portas, sessaoIds);
   const meses = linhasSessoes(ctx).filter((s) => sessaoIds.includes(s.id)).map((s) => s.data.slice(0, 7));
-  marcarAgendaPendente(ctx.portas.props, meses);
+  marcarMesesPendentes(ctx.portas.props, meses);
 }
 
 export const handlersEventos: Handlers = {
@@ -216,7 +216,7 @@ export const handlersEventos: Handlers = {
 
     removerDaAgenda(ctx.portas, removidas.map((s) => s.googleEventoId));
     sincronizarAgenda(ctx.portas, linhasSessoes(ctx).filter((s) => s.eventoId === id).map((s) => s.id));
-    marcarAgendaPendente(ctx.portas.props, [...existentes, ...sessoes].map((s) => s.data.slice(0, 7)));
+    marcarMesesPendentes(ctx.portas.props, [...existentes, ...sessoes].map((s) => s.data.slice(0, 7)));
     return doEvento(ctx, id);
   },
 

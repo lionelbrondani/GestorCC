@@ -2,6 +2,7 @@ import { contaNaEscala, ErroApi, pode, type Escala } from '@shared';
 import { sincronizarAgenda } from '../agenda/sincronizar';
 import { exigirSemConflito, linhasDisponibilidades, linhasEscalas, linhasPessoas, nomeSessao, paraEscala, type LinhaEscala } from '../escalas/comum';
 import { notificar, novoId, registrar, type Contexto, type Handlers } from '../nucleo/roteador';
+import { marcarEscalaPendente, marcarRelatorios } from '../relatorios/pendentes';
 import { linhasEventos, linhasSessoes, paraEvento, paraSessao, type LinhaSessao } from './eventos';
 
 export function sessaoOuErro(ctx: Contexto, sessaoId: string): LinhaSessao {
@@ -22,6 +23,7 @@ export function nomeDaSessao(ctx: Contexto, s: LinhaSessao): string {
 export const estaDisponivel = (ctx: Contexto, pessoaId: string, sessaoId: string) =>
   linhasDisponibilidades(ctx).some((d) => d.pessoaId === pessoaId && d.sessaoId === sessaoId && d.disponivel);
 
+const mesesDe = (ctx: Contexto, sessaoIds: string[]) => linhasSessoes(ctx).filter((s) => sessaoIds.includes(s.id)).map((s) => s.data.slice(0, 7));
 const PAPEL_ERRADO = () => new ErroApi('PAPEL', 'Servidor só ocupa vaga de servidor, e bolsista, vaga de bolsista.');
 const escalasDaSessao = (ctx: Contexto, sessaoId: string): Escala[] => linhasEscalas(ctx).filter((e) => e.sessaoId === sessaoId).map(paraEscala);
 
@@ -75,6 +77,7 @@ export const handlersEscalas: Handlers = {
     notificar(ctx, rascunhos.map((e) => e.pessoaId), 'Sua escala foi publicada. Confira os horários.', '/minhas-escalas');
     registrar(ctx, 'escala', sessaoIds.join(','), `publicou ${publicadas.length} sessão(ões)`, null, null);
     sincronizarAgenda(ctx.portas, publicadas);
+    marcarEscalaPendente(ctx.portas.props, mesesDe(ctx, publicadas));
     return null;
   },
 
@@ -113,6 +116,7 @@ export const handlersEscalas: Handlers = {
     const curto = (id: string | null) => (id ? (pessoas.find((p) => p.id === id)?.nomeCurto ?? id) : '—');
     registrar(ctx, 'troca', sessaoId, `troca: sai ${curto(sai)}, entra ${curto(entra)}`, { sai }, { entra }, motivo);
     sincronizarAgenda(ctx.portas, [sessaoId]);
+    marcarRelatorios(ctx.portas.props, [`escala:${sessao.data.slice(0, 7)}`, 'trocas']);
     return escalasDaSessao(ctx, sessaoId);
   },
 
@@ -150,6 +154,7 @@ export const handlersEscalas: Handlers = {
     }
     const faltas = confirmaveis.filter((e) => faltaram.includes(e.pessoaId)).length;
     registrar(ctx, 'sessao', sessaoId, `confirmou presença (${faltas} falta(s))`, null, null);
+    marcarEscalaPendente(ctx.portas.props, [sessao.data.slice(0, 7)]);
     return escalasDaSessao(ctx, sessaoId);
   },
 };

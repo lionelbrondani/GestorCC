@@ -12,7 +12,7 @@ import { handlersSistema } from './acoes/sistema';
 import { portasGas, travaGas } from './adaptadores/gas';
 import { sincronizarPendentes } from './agenda/sincronizar';
 import { tratarRequisicao, type Handlers } from './nucleo/roteador';
-import { gerarRelatoriosPendentes } from './relatorios/agenda';
+import { gerarRelatoriosPendentes } from './relatorios/pendentes';
 import { VERSAO_API } from './versao';
 
 export { backupDiario } from './backup';
