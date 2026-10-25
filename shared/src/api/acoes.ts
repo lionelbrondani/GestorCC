@@ -1,4 +1,5 @@
 import type { Consulta } from '../busca';
+import type { AnexoFicha, FichaPublica, FichaTecnica, FichaTecnicaDados, TravaFicha } from '../fichaTecnica';
 import type { MeusGanhos } from '../pagamentos/ganhos';
 import type {
   Aditivo,
@@ -136,6 +137,20 @@ export interface Acoes {
   /** Foto da ocorrência como data URL (fica no Drive, sem link público). */
   'infra.foto': A<{ id: Id }, string | null>;
   /** Pergunta da barra de busca → consulta (ou ajuda de uso). Só a pergunta vai ao Gemini. */
+  /** Ficha técnica pelo link do produtor: sem login, o token do link é a chave e só abre a ficha daquele evento. */
+  'ficha.abrir': A<{ token: string }, FichaPublica>;
+  /** Salva o rascunho; com enviar, confere tudo e marca como enviada. Recusa depois do prazo. */
+  'ficha.salvar': A<{ token: string; dados: FichaTecnicaDados; enviar: boolean }, FichaPublica>;
+  /** Anexo da sinopse (data URL), guardado no Drive em GestorCC/Fichas técnicas. */
+  'ficha.anexar': A<{ token: string; nome: string; arquivo: string }, AnexoFicha>;
+  /** Ficha do evento para o gestor (com os dados sigilosos do responsável); null se o link ainda não foi gerado. */
+  'fichas.obter': A<{ eventoId: Id }, FichaTecnica | null>;
+  /** Gera o link (ou um novo, invalidando o antigo, com novo = true). */
+  'fichas.link': A<{ eventoId: Id; novo: boolean }, FichaTecnica>;
+  'fichas.salvar': A<{ eventoId: Id; dados: FichaTecnicaDados; versao?: string }, FichaTecnica>;
+  'fichas.travar': A<{ eventoId: Id; trava: TravaFicha }, FichaTecnica>;
+  /** Anexo da ficha como data URL. */
+  'fichas.anexo': A<{ eventoId: Id; anexoId: Id }, string | null>;
   'busca.interpretar': A<{ pergunta: string }, { consulta: Consulta | null; ajuda: string | null; motivo: 'limite' | 'indisponivel' | null }>;
 
   'avisos.listar': A<null, Aviso[]>;

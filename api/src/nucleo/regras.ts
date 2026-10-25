@@ -72,6 +72,15 @@ export const ACOES_FASE: Partial<Record<Acao, { regra: Regra; escrita: boolean }
   'contratantes.salvar': { regra: ['contratos', 'editar'], escrita: true },
   'contratos.anexar': { regra: ['contratos', 'editar'], escrita: true },
   'contratos.anexo': { regra: ['contratos', 'ver'], escrita: false },
+  // ficha técnica: o produtor entra pelo link (token), sem login
+  'ficha.abrir': { regra: 'publica', escrita: false },
+  'ficha.salvar': { regra: 'publica', escrita: true },
+  'ficha.anexar': { regra: 'publica', escrita: true },
+  'fichas.obter': { regra: ['eventos', 'editar'], escrita: false },
+  'fichas.link': { regra: ['eventos', 'editar'], escrita: true },
+  'fichas.salvar': { regra: ['eventos', 'editar'], escrita: true },
+  'fichas.travar': { regra: ['eventos', 'editar'], escrita: true },
+  'fichas.anexo': { regra: ['eventos', 'editar'], escrita: false },
   'documentos.gerar': { regra: ['contratos', 'editar'], escrita: true },
   // fase 7
   'busca.interpretar': { regra: ['busca', 'ver'], escrita: false },
