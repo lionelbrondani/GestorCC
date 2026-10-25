@@ -1,7 +1,7 @@
 import { ErroApi, type Aviso } from '@shared';
 import { describe, expect, it } from 'vitest';
 import { travaOcupada } from '../src/adaptadores/memoria';
-import { exigirVersao, montarPessoa, registrar } from '../src/nucleo/roteador';
+import { exigirVersao, montarPessoa, registrar, tratarRequisicao } from '../src/nucleo/roteador';
 import { criarAmbiente } from './apoio';
 
 const avisoNovo = (): Aviso => ({
@@ -111,5 +111,77 @@ describe('apoios do roteador', () => {
     );
     expect(() => exigirVersao({ atualizadoEm: '2026-10-24T10:30', atualizadoPor: 'p01' }, '2026-10-24T10:30', nomes)).not.toThrow();
     expect(() => exigirVersao({ atualizadoEm: '2026-10-24T10:30', atualizadoPor: 'p01' }, undefined, nomes)).not.toThrow();
+  });
+});
+
+describe('roteador: cache das abas', () => {
+  function registrarChamadas(amb: ReturnType<typeof criarAmbiente>) {
+    const log: string[] = [];
+    amb.repo.descartarLeituras = () => void log.push('descartar');
+    amb.repo.concluirEscrita = () => void log.push('concluir');
+    return log;
+  }
+
+  it('gravação relê tudo ao pegar a trava e conclui a escrita no fim', () => {
+    const amb = criarAmbiente({ handlers: salvarAvisoTeste as never });
+    const log = registrarChamadas(amb);
+    amb.chamar('avisos.salvar', avisoNovo(), { token: amb.token('p01') });
+    expect(log).toEqual(['descartar', 'concluir']);
+  });
+
+  it('conclui a escrita mesmo quando o handler falha', () => {
+    const amb = criarAmbiente({
+      handlers: {
+        'avisos.salvar': () => {
+          throw new Error('boom');
+        },
+      },
+    });
+    const log = registrarChamadas(amb);
+    expect(amb.chamar('avisos.salvar', avisoNovo(), { token: amb.token('p01') })).toMatchObject({ ok: false, erro: { codigo: 'INTERNO' } });
+    expect(log).toEqual(['descartar', 'concluir']);
+  });
+
+  it('consulta não mexe na escrita', () => {
+    const amb = criarAmbiente({ handlers: { 'pessoas.listar': () => [] } });
+    const log = registrarChamadas(amb);
+    amb.chamar('pessoas.listar', null, { token: amb.token('p01') });
+    expect(log).toEqual([]);
+  });
+});
+
+describe('roteador: consultas em lote', () => {
+  const lote = (amb: ReturnType<typeof criarAmbiente>, corpo: unknown) => JSON.parse(tratarRequisicao(JSON.stringify(corpo), amb.portas, amb.handlers()));
+
+  it('responde cada consulta na ordem, com o token do lote', () => {
+    const amb = criarAmbiente({ handlers: { 'pessoas.listar': () => ['p'] as never, 'feriados.listar': () => ['f'] as never } });
+    const r = lote(amb, { token: amb.token('p01'), lote: [{ acao: 'pessoas.listar', dados: null }, { acao: 'feriados.listar', dados: null }, { acao: 'nao.existe', dados: null }] });
+    expect(r).toEqual({
+      ok: true,
+      dados: [
+        { ok: true, dados: ['p'] },
+        { ok: true, dados: ['f'] },
+        { ok: false, erro: { codigo: 'NAO_DISPONIVEL', mensagem: 'Esta função ainda não está disponível.' } },
+      ],
+    });
+  });
+
+  it('sem token, cada consulta pede login', () => {
+    const amb = criarAmbiente({ handlers: { 'pessoas.listar': () => [] } });
+    const r = lote(amb, { lote: [{ acao: 'pessoas.listar', dados: null }] });
+    expect(r.dados[0]).toMatchObject({ ok: false, erro: { codigo: 'SESSAO' } });
+  });
+
+  it('gravação não vai em lote', () => {
+    const amb = criarAmbiente({ handlers: salvarAvisoTeste as never });
+    const r = lote(amb, { token: amb.token('p01'), lote: [{ acao: 'avisos.salvar', dados: avisoNovo() }] });
+    expect(r.dados[0]).toEqual({ ok: false, erro: { codigo: 'REQUISICAO', mensagem: 'Gravações não vão em lote.' } });
+    expect(amb.repo.listar('avisos')).toEqual([]);
+  });
+
+  it('lote vazio ou com mais de 20 consultas é recusado', () => {
+    const amb = criarAmbiente();
+    expect(lote(amb, { lote: [] })).toMatchObject({ ok: false, erro: { codigo: 'REQUISICAO' } });
+    expect(lote(amb, { lote: Array(21).fill({ acao: 'sistema.ping', dados: null }) })).toMatchObject({ ok: false, erro: { codigo: 'REQUISICAO' } });
   });
 });

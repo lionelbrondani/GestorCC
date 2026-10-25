@@ -1,11 +1,12 @@
 /// <reference types="google-apps-script" />
 import { MODELOS, MODULOS } from '@shared';
 import { criarCredencialInicial, handlersAuth, recuperarAcesso } from './acoes/auth';
-import { abrirPlanilha, portasGas, propriedadesGas } from './adaptadores/gas';
+import { abrirPlanilha, portasGas, propriedadesGas, relogioGas } from './adaptadores/gas';
 import { paraBase64Url } from './auth/bytes';
 import { tratarRequisicao } from './nucleo/roteador';
 import type { NomeTabela, Planilha } from './nucleo/portas';
 import { cabecalhos, ESQUEMA } from './tabelas/esquema';
+import { novaEpocaCache } from './tabelas/leitorAbas';
 
 type NomeAba = NomeTabela | 'IMPORTAR_PESSOAS' | 'IMPORTAR_ALMOX' | 'IMPORTAR_AUTORIZADOS' | 'LEIA-ME';
 
@@ -95,6 +96,12 @@ export function instalar(): void {
 
   garantirGatilho('backupDiario', () => ScriptApp.newTrigger('backupDiario').timeBased().everyDays(1).atHour(3).create());
   garantirGatilho('gatilhoMinutos', () => ScriptApp.newTrigger('gatilhoMinutos').timeBased().everyMinutes(5).create());
+  // edição feita direto nas planilhas Dados e Sigiloso invalida o cache das abas
+  for (const p of ['dados', 'sigiloso'] as const) {
+    const id = propriedadesGas.obter(PROPRIEDADE[p])!;
+    const existe = ScriptApp.getProjectTriggers().some((t) => t.getHandlerFunction() === 'aoAlterarPlanilha' && t.getTriggerSourceId() === id);
+    if (!existe) ScriptApp.newTrigger('aoAlterarPlanilha').forSpreadsheet(id).onChange().create();
+  }
 
   if (!portas.repo.listar('pessoas').length) {
     const id = 'p-gestor-inicial';
@@ -106,6 +113,7 @@ export function instalar(): void {
     for (const m of MODULOS) portas.repo.inserir('permissoes', { id: `${id}:${m.id}`, pessoaId: id, modulo: m.id, nivel: MODELOS.gestor[m.id] });
     portas.repo.inserir('credenciais', criarCredencialInicial(portas.cripto, id, matricula));
   }
+  novaEpocaCache(propriedadesGas, relogioGas.agoraMs); // abas e colunas novas: começa o cache do zero
   console.log(`GestorCC instalado na pasta "${pasta.getName()}" (${pasta.getUrl()}).`);
 }
 
@@ -114,6 +122,7 @@ export function recuperarAcessoGestor(): void {
   const email = exigir('EMAIL_PRIMEIRO_GESTOR');
   const matricula = exigir('MATRICULA_PRIMEIRO_GESTOR');
   recuperarAcesso(portasGas(), email, matricula);
+  novaEpocaCache(propriedadesGas, relogioGas.agoraMs); // gravou fora da trava: o cache não pode ficar com a senha antiga
   // confere relendo a planilha, pelo mesmo caminho do site; um erro inesperado aparece no registro de execução
   const pedido = { acao: 'auth.entrar', idRequisicao: `recuperar-${Date.now()}`, dados: { email, senha: matricula } };
   const r = JSON.parse(tratarRequisicao(JSON.stringify(pedido), portasGas(), handlersAuth));

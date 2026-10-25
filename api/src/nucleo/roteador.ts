@@ -12,6 +12,7 @@ export type Handlers = Partial<{ [A in Acao]: Handler<A> }>;
 const ESPERA_TRAVA_MS = 10_000;
 /** O CacheService guarda no máximo 6 horas. */
 const VALIDADE_IDEMPOTENCIA_S = 6 * 60 * 60;
+const LOTE_MAX = 20;
 
 const SESSAO = () => new ErroApi('SESSAO', 'Sua sessão expirou. Entre novamente.');
 
@@ -42,14 +43,31 @@ function resposta(corpo: unknown): string {
   return JSON.stringify(corpo);
 }
 
+/**
+ * Várias consultas numa ida só: dividem a mesma leitura das planilhas e pagam uma vez o tempo de o Apps Script
+ * acordar. Gravações vão sempre sozinhas (trava e proteção contra reenvio).
+ */
+function tratarLote(req: { token?: string; lote: unknown[] }, portas: Portas, handlers: Handlers): string {
+  if (!req.lote.length || req.lote.length > LOTE_MAX) {
+    return resposta({ ok: false, erro: { codigo: 'REQUISICAO', mensagem: `Mande de 1 a ${LOTE_MAX} consultas por lote.` } });
+  }
+  const respostas = req.lote.map((item) => {
+    const { acao, dados } = (item ?? {}) as { acao?: Acao; dados?: unknown };
+    if (acao && ACOES_FASE[acao]?.escrita) return { ok: false, erro: { codigo: 'REQUISICAO', mensagem: 'Gravações não vão em lote.' } };
+    return JSON.parse(tratarRequisicao(JSON.stringify({ acao, dados, token: req.token }), portas, handlers));
+  });
+  return resposta({ ok: true, dados: respostas });
+}
+
 export function tratarRequisicao(corpo: string, portas: Portas, handlers: Handlers): string {
-  let req: { acao?: Acao; token?: string; idRequisicao?: string; dados?: unknown };
+  let req: { acao?: Acao; token?: string; idRequisicao?: string; dados?: unknown; lote?: unknown };
   try {
     req = JSON.parse(corpo);
     if (!req || typeof req !== 'object') throw new Error();
   } catch {
     return resposta({ ok: false, erro: { codigo: 'REQUISICAO', mensagem: 'Requisição inválida.' } });
   }
+  if (Array.isArray(req.lote)) return tratarLote({ token: req.token, lote: req.lote }, portas, handlers);
 
   try {
     const acao = req.acao as Acao;
@@ -72,10 +90,15 @@ export function tratarRequisicao(corpo: string, portas: Portas, handlers: Handle
     return portas.trava.executar(() => {
       const repetida = chave ? portas.cache.obter(chave) : null;
       if (repetida) return repetida;
+      portas.repo.descartarLeituras();
       portas.repo.definirAutor(eu?.id ?? '');
-      const r = executar();
-      if (chave) portas.cache.guardar(chave, r, VALIDADE_IDEMPOTENCIA_S);
-      return r;
+      try {
+        const r = executar();
+        if (chave) portas.cache.guardar(chave, r, VALIDADE_IDEMPOTENCIA_S);
+        return r;
+      } finally {
+        portas.repo.concluirEscrita();
+      }
     }, ESPERA_TRAVA_MS);
   } catch (e) {
     if (e instanceof ErroApi) return resposta({ ok: false, erro: { codigo: e.codigo, mensagem: e.message } });

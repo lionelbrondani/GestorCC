@@ -56,6 +56,9 @@ export function criarRepositorioMemoria(
     definirAutor(pessoaId: string) {
       repo.quem = pessoaId;
     },
+    // a memória já é o estado atual: não há cache para descartar nem avisar
+    descartarLeituras() {},
+    concluirEscrita() {},
     lerAbaLivre(planilha: Planilha, aba: string) {
       return copiar(abasLivres[`${planilha}:${aba}`] ?? []);
     },
@@ -74,7 +77,12 @@ export function criarRepositorioMemoria(
 
 export function cacheMemoria(): Cache {
   const m = new Map<string, string>();
-  return { obter: (k) => m.get(k) ?? null, guardar: (k, v) => void m.set(k, v) };
+  return {
+    obter: (k) => m.get(k) ?? null,
+    guardar: (k, v) => void m.set(k, v),
+    obterVarios: (ks) => Object.fromEntries(ks.filter((k) => m.has(k)).map((k) => [k, m.get(k)!])),
+    guardarVarios: (vs) => Object.entries(vs).forEach(([k, v]) => m.set(k, v)),
+  };
 }
 
 export function travaMemoria(): Trava {

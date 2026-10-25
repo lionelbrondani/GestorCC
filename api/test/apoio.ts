@@ -61,6 +61,7 @@ export function criarAmbiente(opcoes: { trava?: Trava; handlers?: Handlers; agen
 
   return {
     portas, repo, relogio, token, chamar,
+    handlers: () => handlers,
     usar(h: Handlers) {
       handlers = { ...handlers, ...h };
     },

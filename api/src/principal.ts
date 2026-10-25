@@ -14,10 +14,11 @@ import { handlersInfra, importarRespostas } from './acoes/infra';
 import { handlersPagamentos } from './acoes/pagamentos';
 import { handlersRodadas } from './acoes/rodadas';
 import { handlersSistema } from './acoes/sistema';
-import { portasGas, travaGas } from './adaptadores/gas';
+import { portasGas, propriedadesGas, relogioGas, travaGas } from './adaptadores/gas';
 import { sincronizarPendentes } from './agenda/sincronizar';
 import { tratarRequisicao, type Handlers } from './nucleo/roteador';
 import { gerarRelatoriosPendentes } from './relatorios/pendentes';
+import { garantirEpocaCache, novaEpocaCache } from './tabelas/leitorAbas';
 import { VERSAO_API } from './versao';
 
 export { backupDiario } from './backup';
@@ -46,16 +47,31 @@ export function doGet(): GoogleAppsScript.Content.TextOutput {
 export function gatilhoMinutos(): void {
   try {
     travaGas.executar(() => {
+      garantirEpocaCache(propriedadesGas, relogioGas.agoraMs);
       const portas = portasGas();
-      sincronizarPendentes(portas);
       try {
-        importarRespostas({ portas, eu: null, idRequisicao: '' }); // formulário de problemas, se configurado
-      } catch (e) {
-        console.error(e); // planilha do formulário inacessível não pode parar o resto da rotina
+        sincronizarPendentes(portas);
+        try {
+          importarRespostas({ portas, eu: null, idRequisicao: '' }); // formulário de problemas, se configurado
+        } catch (e) {
+          console.error(e); // planilha do formulário inacessível não pode parar o resto da rotina
+        }
+        gerarRelatoriosPendentes(portas);
+      } finally {
+        portas.repo.concluirEscrita();
       }
-      gerarRelatoriosPendentes(portas);
     }, 10_000);
   } catch (e) {
     if (!(e instanceof ErroApi && e.codigo === 'SISTEMA_OCUPADO')) throw e;
+  }
+}
+
+/** Gatilho de alteração das planilhas Dados e Sigiloso (criado pelo instalar): edição feita à mão invalida o cache das abas. */
+export function aoAlterarPlanilha(): void {
+  const invalidar = () => novaEpocaCache(propriedadesGas, relogioGas.agoraMs);
+  try {
+    travaGas.executar(invalidar, 30_000);
+  } catch {
+    invalidar(); // sistema ocupado por muito tempo: invalida mesmo assim
   }
 }
