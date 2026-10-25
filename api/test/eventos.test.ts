@@ -184,3 +184,45 @@ describe('cancelar evento e sessão', () => {
     });
   });
 });
+
+describe('cancelamentos e horário definido com escalas (fase 3)', () => {
+  const escalar = (amb: ReturnType<typeof ambiente>, id: string, sessaoId: string, pessoaId: string, status = 'publicado') =>
+    amb.repo.inserir('escalas', { id, sessaoId, pessoaId, papel: pessoaId === 'p01' ? 'servidor' : 'bolsista', status, adicaoDireta: false, loteId: '' });
+  const statusDe = (amb: ReturnType<typeof ambiente>) => Object.fromEntries(amb.repo.listar<{ id: string; status: string }>('escalas').map((e) => [e.id, e.status]));
+  const avisosDe = (amb: ReturnType<typeof ambiente>, pessoaId: string) =>
+    amb.repo.listar<{ id: string; pessoaId: string; texto: string }>('notificacoes').filter((n) => n.pessoaId === pessoaId).map((n) => n.texto);
+
+  it('cancelar sessão cancela as escalas, avisa e tira os convidados do Google', () => {
+    const amb = ambiente();
+    const r = amb.criar();
+    const p02 = amb.repo.listar<{ id: string }>('pessoas').find((p) => p.id === 'p02')!;
+    amb.repo.atualizar('pessoas', { ...p02, convitesAgenda: 'bolsista.pessoal@exemplo.com' });
+    escalar(amb, 'x1', r.sessoes[0].id, 'p02');
+    amb.chamar('sessoes.cancelar', { sessaoId: r.sessoes[0].id, justificativa: 'Sala interditada' }, { token: amb.gestor });
+    expect(statusDe(amb)).toEqual({ x1: 'cancelado' });
+    expect(avisosDe(amb, 'p02')).toContain('Sessão cancelada: Formatura Teste (05/12). Você não precisa comparecer.');
+    const gid = amb.repo.listar<{ id: string; googleEventoId: string }>('sessoes')[0].googleEventoId;
+    const g = amb.portas.agenda as unknown as { eventos: Map<string, { titulo: string; convidados: string[] }> };
+    expect(g.eventos.get(gid)).toMatchObject({ titulo: 'CANCELADO – Formatura Teste – Manhã', convidados: [] });
+  });
+
+  it('cancelar evento cancela as escalas de todas as sessões', () => {
+    const amb = ambiente();
+    const r = amb.criar(evNovo(), [sesNova(), sesNova({ data: '2026-12-06' })]);
+    escalar(amb, 'x1', r.sessoes[0].id, 'p02');
+    escalar(amb, 'x2', r.sessoes[1].id, 'p01');
+    amb.chamar('eventos.cancelar', { eventoId: r.evento.id, justificativa: 'Chuva' }, { token: amb.gestor });
+    expect(statusDe(amb)).toEqual({ x1: 'cancelado', x2: 'cancelado' });
+  });
+
+  it('horário definido avisa só quem está publicado na sessão', () => {
+    const amb = ambiente();
+    const r = amb.criar(evNovo(), [sesNova({ horarioADefinir: true, chegada: null, inicio: null, fim: null })]);
+    escalar(amb, 'x1', r.sessoes[0].id, 'p02');
+    escalar(amb, 'x2', r.sessoes[0].id, 'p01', 'rascunho');
+    const atual = amb.listar().eventos[0];
+    amb.salvar(atual, [{ ...r.sessoes[0], horarioADefinir: false, chegada: '07:30', inicio: '08:00', fim: '12:00' }]);
+    expect(avisosDe(amb, 'p02')).toContain('Horário definido: Formatura Teste, chegada às 07:30.');
+    expect(avisosDe(amb, 'p01')).toEqual([]);
+  });
+});
