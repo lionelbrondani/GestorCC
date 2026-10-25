@@ -132,6 +132,7 @@ Use a conta escolhida para o site no passo 1. Se for uma conta diferente da do s
      | 3 | `VITE_RECURSOS=pessoas,dadosPessoais,mural,formularios,configuracoes,eventos,escalas,escalasPessoais` |
      | 4 | `VITE_RECURSOS=pessoas,dadosPessoais,mural,formularios,configuracoes,eventos,escalas,escalasPessoais,pagamentos` |
      | 5 | `VITE_RECURSOS=pessoas,dadosPessoais,mural,formularios,configuracoes,eventos,escalas,escalasPessoais,pagamentos,almoxEstoque,almoxSaidas,infraestrutura,relatar` |
+     | 6 | `VITE_RECURSOS=pessoas,dadosPessoais,mural,formularios,configuracoes,eventos,escalas,escalasPessoais,pagamentos,almoxEstoque,almoxSaidas,infraestrutura,relatar,contratos` |
 3. Publique:
 
    ```
@@ -312,3 +313,40 @@ A partir daí, as respostas novas viram ocorrências a cada 5 minutos, ou na hor
 **Fotos dos relatos:** ficam na pasta **GestorCC/Infraestrutura** do Drive, sem compartilhamento. Só quem gerencia e quem relatou as veem no GestorCC.
 
 A planilha de Relatórios ganha as abas **ESTOQUE** e **INFRAESTRUTURA**.
+
+## 17. Contratos e documentos (fase 6)
+
+Para ligar:
+
+1. Cole o `appsscript.json` e o `Code.js` novos. O manifesto agora pede a permissão de **Documentos**.
+2. Rode `instalar` de novo e aceite a permissão. Ele cria as abas `contratos` e `aditivos` (planilha Dados) e `contratantes` (planilha Sigiloso).
+3. Crie uma **Nova versão** da implantação e publique o site com o `VITE_RECURSOS` da fase 6.
+
+**Modelos dos documentos.** Na pasta **GestorCC** do Drive:
+
+1. Crie a pasta **Modelos**.
+2. Coloque nela três Google Docs com estes nomes exatos:
+   - `Modelo - Contrato`
+   - `Modelo - Termo de autorização`
+   - `Modelo - Empréstimo do piano`
+
+   Para usar os arquivos .docx atuais, abra cada um no Google Drive e use **Arquivo → Salvar como Documentos Google**.
+3. No texto de cada modelo, troque as informações de cada contrato pelos campos abaixo, com as chaves duplas.
+
+| Campo | O que entra |
+|---|---|
+| `{{NUMERO}}` | número do contrato (N/AAAA) |
+| `{{PROCESSO}}` | processo PEN-SIE |
+| `{{EVENTO}}`, `{{DATAS}}`, `{{HORARIOS}}` | evento, datas e horários das sessões |
+| `{{CONTRATANTE}}`, `{{DOCUMENTO}}`, `{{ENDERECO}}`, `{{CEP}}`, `{{REPRESENTANTE}}`, `{{EMAIL}}` | dados do contratante |
+| `{{VALOR}}`, `{{VENCIMENTO}}` | valor total (base + aditivos) e vencimento da fatura |
+| `{{AREAS}}`, `{{CORTESIAS}}`, `{{INGRESSO_SOLIDARIO}}`, `{{OBSERVACOES}}` | demais campos do contrato |
+| `{{HOJE}}` | data em que o documento foi gerado |
+
+Cada documento gerado vai para **GestorCC/Documentos gerados/\<ano\>**. Para mudar uma cláusula, edite o modelo, sem mexer no sistema.
+
+**PDFs anexados** (contrato assinado e fatura): ficam em **GestorCC/Contratos**, sem compartilhamento. Baixe-os pelo GestorCC.
+
+**Solicitação à FUNDEP:** o GestorCC monta o texto. Copie, cole no seu e-mail e anexe os PDFs assinados. O sistema não envia nada.
+
+A planilha de Relatórios ganha a aba **CONTRATOS**, sem dados pessoais dos contratantes.

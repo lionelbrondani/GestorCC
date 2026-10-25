@@ -1,6 +1,6 @@
 // Portas em memória, usadas nos testes da API.
 import { ErroApi } from '@shared';
-import type { AgendaGoogle, Arquivos, Cache, EventoAgenda, FormatoAba, Formulario, NomeTabela, Planilha, Propriedades, Relogio, Repositorio, Trava } from '../nucleo/portas';
+import type { AgendaGoogle, Arquivos, Cache, Documentos, EventoAgenda, FormatoAba, Formulario, NomeTabela, Planilha, Propriedades, Relogio, Repositorio, Trava } from '../nucleo/portas';
 
 type Registro = { id: string } & Record<string, unknown>;
 
@@ -134,4 +134,17 @@ export function arquivosMemoria(): Arquivos & { arquivos: Map<string, string> } 
 /** Planilha de respostas do formulário de mentira; `null` simula a propriedade não configurada. */
 export function formularioMemoria(respostas: Record<string, unknown>[] | null = null): Formulario {
   return { respostasInfra: () => (respostas ? JSON.parse(JSON.stringify(respostas)) : null) };
+}
+
+/** Modelos de documento de mentira: só os nomes listados existem; guarda cada geração para os testes conferirem. */
+export function documentosMemoria(modelos: string[] = []): Documentos & { gerados: { modelo: string; campos: Record<string, string>; nome: string }[] } {
+  const gerados: { modelo: string; campos: Record<string, string>; nome: string }[] = [];
+  return {
+    gerados,
+    gerar(modelo, campos, nome) {
+      if (!modelos.includes(modelo)) throw new ErroApi('MODELO', `Coloque o Google Doc "${modelo}" na pasta GestorCC/Modelos.`);
+      gerados.push({ modelo, campos, nome });
+      return { url: `https://docs.google.com/document/d/doc${gerados.length}/edit`, docx: 'data:application/vnd.openxmlformats-officedocument.wordprocessingml.document;base64,UEs=' };
+    },
+  };
 }

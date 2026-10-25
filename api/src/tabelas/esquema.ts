@@ -72,6 +72,21 @@ export const ESQUEMA: Record<NomeTabela, { planilha: Planilha; colunas: Coluna[]
       t('resolvidaEm'), t('respostaFormularioId')],
   },
   ocorrenciasHistorico: { planilha: 'dados', colunas: [t('ocorrenciaId'), d('quando'), t('quemId'), t('de'), t('para'), t('observacao')] },
+  contratos: {
+    planilha: 'dados',
+    colunas: [t('numero'), t('eventoId'), t('contratanteId'), t('processoPen'), n('valorBase'), t('itemTabela'), t('vencimento'), j('areas'), n('cortesiasQtd'),
+      t('ingressoSolidario'), t('statusContrato'), t('statusFatura'), t('numeroFatura'), t('statusEcad'), t('statusIss'), t('statusFundep'), t('statusCortesias'),
+      b('fichaTecnicaRecebida'), t('canceladoMotivo'), t('observacoes'), t('pdfAssinadoId'), t('pdfFaturaId')],
+  },
+  aditivos: {
+    planilha: 'dados',
+    colunas: [t('contratoId'), n('numero'), t('data'), t('descricao'), n('valorDelta'), t('novaData'), t('statusFatura'), t('numeroFatura')],
+  },
+  contratantes: {
+    planilha: 'sigiloso',
+    colunas: [t('razaoSocial'), t('documento'), t('inscricaoMunicipal'), t('inscricaoEstadual'), t('endereco'), t('cep'), t('representanteNome'), t('email'),
+      t('contatoFaturaNome'), t('contatoFaturaEmail'), t('contatoFaturaTelefone')],
+  },
   dadosPessoais: { planilha: 'sigiloso', colunas: [t('cpf'), t('banco'), t('agencia'), t('conta'), t('nascimento'), t('camiseta')] },
   credenciais: {
     planilha: 'sigiloso',

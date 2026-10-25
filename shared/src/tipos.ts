@@ -174,6 +174,11 @@ export interface Contrato {
   fichaTecnicaRecebida: boolean;
   canceladoMotivo: string;
   observacoes: string;
+  /** PDF do contrato assinado e da fatura já anexados (os arquivos ficam no Drive). */
+  pdfAssinado?: boolean;
+  pdfFatura?: boolean;
+  /** Versão do registro, para detectar edição simultânea. */
+  atualizadoEm?: string;
 }
 
 export interface Aditivo {

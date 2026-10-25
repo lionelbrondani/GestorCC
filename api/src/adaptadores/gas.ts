@@ -2,7 +2,7 @@
 // Portas reais, com os serviços do Apps Script. Não é testado em Node; a lógica fica nos módulos puros.
 import { ErroApi } from '@shared';
 import { eventoSumiuNoGoogle, recursoDoEvento } from '../agenda/recursoGoogle';
-import type { AgendaGoogle, Arquivos, Cache, Cripto, Formulario, NomeTabela, Planilha, Portas, Propriedades, Relogio, Repositorio, Trava } from '../nucleo/portas';
+import type { AgendaGoogle, Arquivos, Cache, Cripto, Documentos, Formulario, NomeTabela, Planilha, Portas, Propriedades, Relogio, Repositorio, Trava } from '../nucleo/portas';
 import { cabecalhos, ESQUEMA } from '../tabelas/esquema';
 import { linhaParaObjeto, objetoParaLinha, paraCelula } from '../tabelas/serializacao';
 
@@ -179,20 +179,38 @@ export const agendaGas: AgendaGoogle = {
   },
 };
 
-/** Pasta Infraestrutura/ dentro da pasta do sistema (PASTA_ID), criada na primeira foto. */
-function pastaInfraestrutura(): GoogleAppsScript.Drive.Folder {
-  const pasta = DriveApp.getFolderById(propriedadesGas.obter('PASTA_ID')!);
-  const existentes = pasta.getFoldersByName('Infraestrutura');
-  return existentes.hasNext() ? existentes.next() : pasta.createFolder('Infraestrutura');
+/** Subpasta (criada na primeira vez) dentro de `mae`, ou da pasta do sistema (PASTA_ID). */
+function subpasta(nome: string, mae = DriveApp.getFolderById(propriedadesGas.obter('PASTA_ID')!)): GoogleAppsScript.Drive.Folder {
+  const existentes = mae.getFoldersByName(nome);
+  return existentes.hasNext() ? existentes.next() : mae.createFolder(nome);
 }
 
-/** Fotos das ocorrências no Drive, sem compartilhamento: só a conta do sistema lê, e o app recebe por infra.foto. */
+/** Documentos dos modelos em GestorCC/Modelos, copiados para GestorCC/Documentos gerados/AAAA (spec 9.6). */
+export const documentosGas: Documentos = {
+  gerar(modelo, campos, nomeArquivo) {
+    const arquivos = subpasta('Modelos').getFilesByName(modelo);
+    if (!arquivos.hasNext()) throw new ErroApi('MODELO', `Coloque o Google Doc "${modelo}" na pasta GestorCC/Modelos.`);
+    const destino = subpasta(String(new Date().getFullYear()), subpasta('Documentos gerados'));
+    const copia = arquivos.next().makeCopy(nomeArquivo, destino);
+    const doc = DocumentApp.openById(copia.getId());
+    const corpo = doc.getBody();
+    for (const [campo, valor] of Object.entries(campos)) corpo.replaceText(`\\{\\{${campo}\\}\\}`, valor);
+    doc.saveAndClose();
+    const resposta = UrlFetchApp.fetch(`https://docs.google.com/document/d/${copia.getId()}/export?format=docx`, {
+      headers: { Authorization: `Bearer ${ScriptApp.getOAuthToken()}` },
+    });
+    const tipo = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+    return { url: copia.getUrl(), docx: `data:${tipo};base64,${Utilities.base64Encode(resposta.getBlob().getBytes())}` };
+  },
+};
+
+/** Fotos e PDFs no Drive, sem compartilhamento: só a conta do sistema lê, e o app recebe pela API. */
 export const arquivosGas: Arquivos = {
-  salvarImagem(dataUrl, nome) {
+  salvarImagem(dataUrl, nome, pasta = 'Infraestrutura') {
     const [cabecalho, base64] = dataUrl.split(',');
     const tipo = /data:([^;]+)/.exec(cabecalho)?.[1] ?? 'image/jpeg';
     const blob = Utilities.newBlob(Utilities.base64Decode(base64), tipo, `${nome}.${tipo.split('/')[1] ?? 'jpg'}`);
-    return pastaInfraestrutura().createFile(blob).getId();
+    return subpasta(pasta).createFile(blob).getId();
   },
   lerImagem(id) {
     try {
@@ -226,5 +244,6 @@ export function portasGas(): Portas {
     agenda: agendaGas,
     arquivos: arquivosGas,
     formulario: formularioGas,
+    documentos: documentosGas,
   };
 }
