@@ -55,6 +55,10 @@ export interface Repositorio {
   escreverAbaLivre(planilha: Planilha, aba: string, linhas: string[][], formato?: FormatoAba): void;
   /** Quem está gravando (vai para atualizadoPor). */
   definirAutor(pessoaId: string): void;
+  /** Ao pegar a trava: esquece o que já leu, para gravar sobre o estado mais recente. */
+  descartarLeituras(): void;
+  /** Ao terminar de gravar (ainda com a trava): avisa o cache das abas que mudaram. */
+  concluirEscrita(): void;
 }
 
 export interface Cripto {
@@ -70,6 +74,10 @@ export interface Trava {
 export interface Cache {
   obter(chave: string): string | null;
   guardar(chave: string, valor: string, segundos: number): void;
+  /** Várias chaves numa ida só; as que não estão no cache ficam de fora. */
+  obterVarios(chaves: string[]): Record<string, string>;
+  /** Grava várias chaves numa ida só; se o cache recusar (cheio, valor grande), segue sem elas. */
+  guardarVarios(valores: Record<string, string>, segundos: number): void;
 }
 
 export interface Relogio {

@@ -17,6 +17,7 @@ describe('build para o Apps Script', () => {
     expect(codigo).toContain('function doPost(');
     expect(codigo).toContain('function instalar(');
     expect(codigo).toContain('function recuperarAcessoGestor(');
+    expect(codigo).toContain('function aoAlterarPlanilha(');
     expect(codigo).not.toMatch(/^import /m);
     expect(codigo).not.toContain('require(');
   });
@@ -32,6 +33,11 @@ describe('build para o Apps Script', () => {
     expect(manifesto.oauthScopes).toContain('https://www.googleapis.com/auth/calendar');
     expect(manifesto.oauthScopes).toContain('https://www.googleapis.com/auth/documents');
     expect(manifesto.dependencies.enabledAdvancedServices).toContainEqual({ userSymbol: 'Calendar', serviceId: 'calendar', version: 'v3' });
+  });
+
+  it('lê as abas em lote pelo serviço avançado do Sheets', () => {
+    const manifesto = JSON.parse(readFileSync(`${raiz}dist/appsscript.json`, 'utf8'));
+    expect(manifesto.dependencies.enabledAdvancedServices).toContainEqual({ userSymbol: 'Sheets', serviceId: 'sheets', version: 'v4' });
   });
 
   it('o sistema não envia e-mail: sem permissão de e-mail e sem MailApp/GmailApp no código', () => {

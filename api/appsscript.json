@@ -7,7 +7,10 @@
     "access": "ANYONE_ANONYMOUS"
   },
   "dependencies": {
-    "enabledAdvancedServices": [{ "userSymbol": "Calendar", "serviceId": "calendar", "version": "v3" }]
+    "enabledAdvancedServices": [
+      { "userSymbol": "Calendar", "serviceId": "calendar", "version": "v3" },
+      { "userSymbol": "Sheets", "serviceId": "sheets", "version": "v4" }
+    ]
   },
   "oauthScopes": [
     "https://www.googleapis.com/auth/spreadsheets",

@@ -3,8 +3,10 @@
 import { ErroApi } from '@shared';
 import { eventoSumiuNoGoogle, recursoDoEvento } from '../agenda/recursoGoogle';
 import type { AgendaGoogle, Arquivos, Cache, Cripto, Documentos, Formulario, IA, NomeTabela, Planilha, Portas, Propriedades, Relogio, Repositorio, Trava } from '../nucleo/portas';
-import { cabecalhos, ESQUEMA } from '../tabelas/esquema';
-import { linhaParaObjeto, objetoParaLinha, paraCelula } from '../tabelas/serializacao';
+import { ESQUEMA } from '../tabelas/esquema';
+import { criarLeitorAbas } from '../tabelas/leitorAbas';
+import { objetoParaLinha, paraCelula } from '../tabelas/serializacao';
+import { VERSAO_API } from '../versao';
 
 const FUSO = 'America/Sao_Paulo';
 
@@ -53,6 +55,14 @@ export const cacheGas: Cache = {
       // resposta grande demais para o cache: só perde a proteção contra reenvio desta chamada
     }
   },
+  obterVarios: (ks) => (ks.length ? CacheService.getScriptCache().getAll(ks) : {}),
+  guardarVarios(vs, s) {
+    try {
+      CacheService.getScriptCache().putAll(vs, s);
+    } catch {
+      // cache recusou: a próxima leitura vai à planilha
+    }
+  },
 };
 
 export const propriedadesGas: Propriedades = {
@@ -62,40 +72,77 @@ export const propriedadesGas: Propriedades = {
 
 const ID_PLANILHA: Record<Planilha, string> = { dados: 'DADOS_ID', sigiloso: 'SIGILOSO_ID', relatorios: 'RELATORIOS_ID' };
 
-export function abrirPlanilha(p: Planilha): GoogleAppsScript.Spreadsheet.Spreadsheet {
+function idPlanilha(p: Planilha): string {
   const id = propriedadesGas.obter(ID_PLANILHA[p]);
   if (!id) throw new Error(`${ID_PLANILHA[p]} não configurado (rode instalar()).`);
-  return SpreadsheetApp.openById(id);
+  return id;
 }
 
-/** Repositório sobre as planilhas: lê cada aba uma vez por requisição e escreve linha a linha. */
+export function abrirPlanilha(p: Planilha): GoogleAppsScript.Spreadsheet.Spreadsheet {
+  return SpreadsheetApp.openById(idPlanilha(p));
+}
+
+/**
+ * Lê várias abas numa chamada só pelo serviço avançado do Sheets. Se ele não estiver ligado, ou se alguma aba
+ * ainda não existe (falta rodar o instalar), lê aba por aba pela planilha aberta.
+ */
+function lerPlanilhaGas(id: string, abas: NomeTabela[], doc: () => GoogleAppsScript.Spreadsheet.Spreadsheet): Partial<Record<NomeTabela, unknown[][]>> {
+  const r: Partial<Record<NomeTabela, unknown[][]>> = {};
+  if (typeof Sheets !== 'undefined') {
+    try {
+      const resp = Sheets.Spreadsheets!.Values!.batchGet(id, {
+        ranges: abas.map((t) => `'${t}'`),
+        valueRenderOption: 'UNFORMATTED_VALUE',
+        dateTimeRenderOption: 'FORMATTED_STRING',
+      });
+      (resp.valueRanges ?? []).forEach((v, i) => (r[abas[i]] = (v.values ?? []) as unknown[][]));
+      return r;
+    } catch (e) {
+      console.warn('Leitura em lote falhou; lendo aba por aba.', e);
+    }
+  }
+  for (const t of abas) {
+    const folha = doc().getSheetByName(t);
+    if (folha) r[t] = folha.getDataRange().getValues();
+  }
+  return r;
+}
+
+/** Repositório sobre as planilhas: lê pelo cache das abas (leitorAbas) e escreve linha a linha. */
 export function repositorioGas(relogio: Relogio): Repositorio {
-  type Aba = { folha: GoogleAppsScript.Spreadsheet.Sheet; cab: string[]; linhas: Record<string, unknown>[] };
   const abertas = new Map<Planilha, GoogleAppsScript.Spreadsheet.Spreadsheet>();
-  const abas = new Map<NomeTabela, Aba>();
+  const folhas = new Map<NomeTabela, GoogleAppsScript.Spreadsheet.Sheet>();
   let autor = '';
 
   const planilha = (p: Planilha) => {
     if (!abertas.has(p)) abertas.set(p, abrirPlanilha(p));
     return abertas.get(p)!;
   };
+  // o id da planilha já está nas propriedades; abrir com SpreadsheetApp só quando precisar escrever ou ler aba por aba
+  const leitor = criarLeitorAbas({
+    cache: cacheGas,
+    props: propriedadesGas,
+    agoraMs: relogio.agoraMs,
+    versaoApi: VERSAO_API,
+    ler: (p, abas) => lerPlanilhaGas(idPlanilha(p), abas, () => planilha(p)),
+  });
+  const aba = (t: NomeTabela) => leitor.aba(t);
 
-  function aba(t: NomeTabela): Aba {
-    const pronta = abas.get(t);
-    if (pronta) return pronta;
-    const folha = planilha(ESQUEMA[t].planilha).getSheetByName(t);
-    if (!folha) throw new Error(`Aba "${t}" não encontrada (rode instalar()).`);
-    const valores = folha.getDataRange().getValues();
-    const cab = (valores[0] ?? cabecalhos(t)).map((c) => String(c).trim());
-    const linhas = valores.slice(1).filter((l) => l.some((v) => v !== '')).map((l) => linhaParaObjeto(t, cab, l));
-    const nova = { folha, cab, linhas };
-    abas.set(t, nova);
-    return nova;
+  /** Aba pronta para gravar: avisa o cache antes da primeira escrita. */
+  function paraGravar(t: NomeTabela) {
+    const a = aba(t);
+    leitor.antesDeEscrever(t);
+    if (!folhas.has(t)) {
+      const folha = planilha(ESQUEMA[t].planilha).getSheetByName(t);
+      if (!folha) throw new Error(`Aba "${t}" não encontrada (rode instalar()).`);
+      folhas.set(t, folha);
+    }
+    return { a, folha: folhas.get(t)! };
   }
 
-  const linhaNaFolha = (a: Aba, id: string) => {
-    // procura direto na coluna id da folha (as linhas em cache podem ter pulado linhas vazias)
-    const ids = a.folha.getRange(2, a.cab.indexOf('id') + 1, Math.max(1, a.folha.getLastRow() - 1), 1).getValues();
+  const linhaNaFolha = (folha: GoogleAppsScript.Spreadsheet.Sheet, cab: string[], id: string) => {
+    // procura direto na coluna id da folha (as linhas lidas pulam linhas vazias)
+    const ids = folha.getRange(2, cab.indexOf('id') + 1, Math.max(1, folha.getLastRow() - 1), 1).getValues();
     const i = ids.findIndex((r) => String(r[0]) === id);
     return i < 0 ? -1 : i + 2;
   };
@@ -103,28 +150,30 @@ export function repositorioGas(relogio: Relogio): Repositorio {
   return {
     listar: <T extends { id: string }>(t: NomeTabela) => JSON.parse(JSON.stringify(aba(t).linhas)) as T[],
     inserir(t, r) {
-      const a = aba(t);
+      const { a, folha } = paraGravar(t);
       if (a.linhas.some((x) => x.id === r.id)) throw new Error(`Registro repetido em ${t}: ${r.id}`);
       const agora = relogio.agora();
       const obj = { ...r, criadoEm: agora, atualizadoEm: agora, atualizadoPor: autor } as Record<string, unknown>;
-      a.folha.appendRow(objetoParaLinha(t, a.cab, obj).map(paraCelula));
+      folha.appendRow(objetoParaLinha(t, a.cab, obj).map(paraCelula));
       a.linhas.push(obj);
     },
     atualizar(t, r) {
-      const a = aba(t);
+      const { a, folha } = paraGravar(t);
       const i = a.linhas.findIndex((x) => x.id === r.id);
-      const linha = linhaNaFolha(a, r.id);
+      const linha = linhaNaFolha(folha, a.cab, r.id);
       if (i < 0 || linha < 0) throw new Error(`Registro inexistente em ${t}: ${r.id}`);
       const obj = { ...r, criadoEm: a.linhas[i].criadoEm, atualizadoEm: relogio.agora(), atualizadoPor: autor } as Record<string, unknown>;
-      a.folha.getRange(linha, 1, 1, a.cab.length).setValues([objetoParaLinha(t, a.cab, obj).map(paraCelula)]);
+      folha.getRange(linha, 1, 1, a.cab.length).setValues([objetoParaLinha(t, a.cab, obj).map(paraCelula)]);
       a.linhas[i] = obj;
     },
     remover(t, id) {
-      const a = aba(t);
-      const linha = linhaNaFolha(a, id);
-      if (linha > 0) a.folha.deleteRow(linha);
+      const { a, folha } = paraGravar(t);
+      const linha = linhaNaFolha(folha, a.cab, id);
+      if (linha > 0) folha.deleteRow(linha);
       a.linhas = a.linhas.filter((x) => x.id !== id);
     },
+    descartarLeituras: () => leitor.descartar(),
+    concluirEscrita: () => leitor.concluirEscrita(),
     lerAbaLivre(p, nome) {
       const folha = planilha(p).getSheetByName(nome);
       if (!folha) return [];

@@ -366,3 +366,23 @@ Para ligar:
 4. Cole o `Code.js` novo, crie uma **Nova versão** e publique o site com o `VITE_RECURSOS` da fase 7.
 
 O limite de perguntas por pessoa por dia fica em **Configurações**. Sem a chave, com o limite atingido ou com o Gemini fora do ar, a barra continua funcionando: ela interpreta perguntas simples por palavras-chave e sempre mostra os resultados da busca comum.
+
+## 19. Desempenho (versão 0.8.0)
+
+A API guarda no cache do Apps Script as abas que já leu e lê as que faltam numa chamada só, pelo serviço avançado do Sheets. O site manda juntas, num pedido só, as consultas que uma tela faz ao mesmo tempo. Tudo continua gratuito e dentro da conta do setor.
+
+Para publicar:
+
+1. Cole o `appsscript.json` novo (liga o serviço **Sheets**) e o `Code.js` novo. Salve.
+2. Rode o **`instalar`**. Ele cria o gatilho **aoAlterarPlanilha** nas planilhas Dados e Sigiloso e começa o cache do zero. Aceite as permissões, se pedir.
+3. Crie uma **Nova versão** e confira se o `/exec` mostra `"versao":"0.8.0"`.
+4. Depois disso, publique o site.
+
+**Como o cache se mantém certo:**
+- Cada gravação feita pelo sistema muda a versão das abas gravadas.
+- Uma edição feita direto nas planilhas Dados ou Sigiloso dispara o gatilho, que descarta o cache inteiro.
+- O cache dura no máximo 6 horas.
+
+**O que nunca vai para o cache:** `dadosPessoais` (CPF, banco, conta) e `contratantes`.
+
+**Se algum dia aparecer um dado velho no site,** rode `instalar` de novo, que começa o cache do zero.
