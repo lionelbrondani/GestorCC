@@ -65,4 +65,9 @@ export const ACOES_FASE: Partial<Record<Acao, { regra: Regra; escrita: boolean }
   'infra.foto': { regra: 'logado', escrita: false },
   'infra.atualizar': { regra: ['infraestrutura', 'editar'], escrita: true },
   'infra.importarFormulario': { regra: ['infraestrutura', 'editar'], escrita: true },
+  // fase 6
+  'contratos.listar': { regra: ['contratos', 'ver'], escrita: false },
+  'contratos.salvar': { regra: ['contratos', 'editar'], escrita: true },
+  'contratos.salvarAditivo': { regra: ['contratos', 'editar'], escrita: true },
+  'contratantes.salvar': { regra: ['contratos', 'editar'], escrita: true },
 };

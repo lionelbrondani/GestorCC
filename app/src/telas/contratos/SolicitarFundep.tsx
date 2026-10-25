@@ -102,7 +102,7 @@ export function SolicitarFundep() {
                     Marcar como enviado
                   </Botao>
                 </div>
-                <p className="pequeno texto-3">Na fase 6, se a conta do sistema for a do CC, o GestorCC cria o rascunho no Gmail já com os PDFs anexados.</p>
+                <p className="pequeno texto-3">O GestorCC não envia e-mails: cole o texto no seu e-mail e anexe os PDFs assinados (baixe-os em cada contrato, no cartão Anexos).</p>
               </div>
             ) : (
               <p className="texto-3">Selecione ao lado o que vai no e-mail.</p>

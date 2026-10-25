@@ -31,6 +31,9 @@ export type NomeTabela =
   | 'almoxPedidoItens'
   | 'ocorrencias'
   | 'ocorrenciasHistorico'
+  | 'contratos'
+  | 'aditivos'
+  | 'contratantes'
   | 'dadosPessoais'
   | 'credenciais';
 
