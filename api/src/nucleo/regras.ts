@@ -29,4 +29,9 @@ export const ACOES_FASE: Partial<Record<Acao, { regra: Regra; escrita: boolean }
   'eventos.salvar': { regra: ['eventos', 'editar'], escrita: true },
   'eventos.cancelar': { regra: ['eventos', 'editar'], escrita: true },
   'sessoes.cancelar': { regra: ['eventos', 'editar'], escrita: true },
+  // fase 3
+  'rodadas.listar': { regra: 'logado', escrita: false },
+  'rodadas.salvar': { regra: ['escalas', 'editar'], escrita: true },
+  'disponibilidades.listar': { regra: 'logado', escrita: false },
+  'disponibilidades.marcar': { regra: 'logado', escrita: true },
 };

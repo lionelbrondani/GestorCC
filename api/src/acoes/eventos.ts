@@ -2,6 +2,7 @@ import { ErroApi, validarEvento, type Evento, type Sessao } from '@shared';
 import { removerDaAgenda, sincronizarAgenda } from '../agenda/sincronizar';
 import { exigirVersao, novoId, registrar, type Contexto, type Handlers } from '../nucleo/roteador';
 import { marcarAgendaPendente } from '../relatorios/agenda';
+import { incluirEmRodadaAberta } from './rodadas';
 
 export interface LinhaEvento {
   id: string;
@@ -176,12 +177,18 @@ export const handlersEventos: Handlers = {
     if (anterior) repo.atualizar('eventos', linha);
     else repo.inserir('eventos', linha);
 
+    const novas: string[] = [];
     for (const s of sessoes) {
       const antes = existentes.find((x) => x.id === s.id);
       // fase 3: avisar os escalados quando o horário "a definir" for preenchido
       if (antes) repo.atualizar('sessoes', linhaSessao(s, antes.id, id, antes));
-      else repo.inserir('sessoes', linhaSessao(s, novoId(ctx.portas, 's'), id));
+      else {
+        const novaId = novoId(ctx.portas, 's');
+        repo.inserir('sessoes', linhaSessao(s, novaId, id));
+        novas.push(novaId);
+      }
     }
+    incluirEmRodadaAberta(ctx, novas);
 
     const { atualizadoEm: _a, atualizadoPor: _p, ...antes } = anterior ?? ({} as LinhaEvento);
     registrar(ctx, 'evento', id, anterior ? 'alterou evento' : 'criou evento', anterior ? antes : null, linha);
