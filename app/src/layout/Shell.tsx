@@ -118,7 +118,7 @@ export function BarraInferior({ pessoa }: { pessoa: Pessoa }) {
             Disponib.
           </NavLink>
         )}
-        {bolsista && escalas ? (
+        {bolsista && recursoAtivo('pagamentos') ? (
           <NavLink to="/ganhos">
             <Wallet size={20} aria-hidden />
             Ganhos

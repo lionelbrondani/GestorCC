@@ -47,7 +47,7 @@ export const ITEM_INICIO: ItemMenu = { rota: '/', rotulo: 'Início', icone: Home
 export const ITENS_PESSOAIS: ItemMenu[] = [
   { rota: '/minhas-escalas', rotulo: 'Minhas escalas', icone: CalendarCheck, recurso: 'escalasPessoais' },
   { rota: '/disponibilidade', rotulo: 'Disponibilidade', icone: ClipboardList, recurso: 'escalasPessoais' },
-  { rota: '/ganhos', rotulo: 'Ganhos', icone: Wallet, recurso: 'escalasPessoais' },
+  { rota: '/ganhos', rotulo: 'Ganhos', icone: Wallet, recurso: 'pagamentos' },
   { rota: '/avisos', rotulo: 'Avisos', icone: Bell },
   { rota: '/relatar', rotulo: 'Relatar problema', icone: TriangleAlert, recurso: 'relatar' },
   { rota: '/perfil', rotulo: 'Perfil', icone: UserRound },

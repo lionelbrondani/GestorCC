@@ -227,6 +227,16 @@ const handlers: Handlers = {
       }
     }
     ctx.banco.sessoes = ctx.banco.sessoes.filter((s) => s.eventoId !== ev.id).concat(novas);
+    // sessão nova entra na rodada aberta do mesmo mês com o selo "nova" (spec 7.2.3), como na API
+    for (const s of novas.filter((n) => !antigas.some((a) => a.id === n.id))) {
+      for (const r of ctx.banco.rodadas.filter((x) => x.status === 'aberta' && x.prazo >= ctx.agora)) {
+        const meses = new Set(ctx.banco.sessoes.filter((x) => r.sessaoIds.includes(x.id)).map((x) => x.data.slice(0, 7)));
+        if (meses.has(s.data.slice(0, 7)) && !r.sessaoIds.includes(s.id)) {
+          r.sessaoIds.push(s.id);
+          r.sessoesNovas = [...(r.sessoesNovas ?? []), s.id];
+        }
+      }
+    }
     registrar(ctx, 'evento', ev.id, i >= 0 ? 'alterou evento' : 'criou evento');
     return { evento: ev, sessoes: novas };
   },
