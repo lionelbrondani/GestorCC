@@ -3,6 +3,7 @@ import { Plus } from 'lucide-react';
 import { useState } from 'react';
 import { useConsulta, useMutacao } from '../../api/hooks';
 import { useEu } from '../../auth/SessaoContexto';
+import { ImportarAlmox } from './ImportarAlmox';
 import { Alerta, Botao, Campo, Carregando, Etiqueta, Modal, Tabela } from '../../componentes';
 
 const sem = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
@@ -178,6 +179,7 @@ export function Estoque() {
             <Plus size={16} aria-hidden /> Novo item
           </Botao>
         )}
+        {editar && <ImportarAlmox />}
       </div>
       <p className="pequeno texto-2">
         {lista.length} itens · valor em estoque {formatarReais(valorTotal)}

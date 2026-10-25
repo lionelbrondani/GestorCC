@@ -104,6 +104,9 @@ export function OcorrenciaDetalhe() {
   const [chamadoNumero, setChamadoNumero] = useState('');
   const [chamadoLink, setChamadoLink] = useState('');
   const [erro, setErro] = useState<string | null>(null);
+  // com a API real a foto não vem na lista: é buscada à parte, só quando existe
+  const atual = (q.data ?? []).find((x) => x.id === id);
+  const foto = useConsulta('infra.foto', { id }, { habilitada: !!atual?.temFoto && !atual?.foto });
   if (q.isLoading) return <Carregando />;
   const o = (q.data ?? []).find((x) => x.id === id);
   if (!o) return <EstadoVazio titulo="Ocorrência não encontrada" acao={<Link to="/infra">Voltar</Link>} />;
@@ -160,7 +163,7 @@ export function OcorrenciaDetalhe() {
               Por {o.relatorNome}
               {o.relatorContato ? ` (${o.relatorContato})` : ''} · via {o.origem === 'formulario' ? 'formulário' : 'GestorCC'} · {formatarDataHora(o.criadaEm)}
             </p>
-            {o.foto && <img src={o.foto} alt="Foto enviada no relato" style={{ maxWidth: '100%', borderRadius: 8 }} />}
+            {(o.foto ?? foto.data) && <img src={(o.foto ?? foto.data)!} alt="Foto enviada no relato" style={{ maxWidth: '100%', borderRadius: 8 }} />}
             {editar && (
               <div className="grade-2">
                 <Campo rotulo="Prioridade">

@@ -1,6 +1,6 @@
 // Portas em memória, usadas nos testes da API.
 import { ErroApi } from '@shared';
-import type { AgendaGoogle, Cache, EventoAgenda, FormatoAba, NomeTabela, Planilha, Propriedades, Relogio, Repositorio, Trava } from '../nucleo/portas';
+import type { AgendaGoogle, Arquivos, Cache, EventoAgenda, FormatoAba, Formulario, NomeTabela, Planilha, Propriedades, Relogio, Repositorio, Trava } from '../nucleo/portas';
 
 type Registro = { id: string } & Record<string, unknown>;
 
@@ -114,4 +114,24 @@ export function agendaMemoria(ligada = true): AgendaGoogle & { eventos: Map<stri
     },
   };
   return agenda;
+}
+
+/** Drive de mentira para as fotos: guarda as data URLs num Map. */
+export function arquivosMemoria(): Arquivos & { arquivos: Map<string, string> } {
+  const arquivos = new Map<string, string>();
+  let seq = 0;
+  return {
+    arquivos,
+    salvarImagem(dataUrl) {
+      const id = `f${++seq}`;
+      arquivos.set(id, dataUrl);
+      return id;
+    },
+    lerImagem: (id) => arquivos.get(id) ?? null,
+  };
+}
+
+/** Planilha de respostas do formulário de mentira; `null` simula a propriedade não configurada. */
+export function formularioMemoria(respostas: Record<string, unknown>[] | null = null): Formulario {
+  return { respostasInfra: () => (respostas ? JSON.parse(JSON.stringify(respostas)) : null) };
 }

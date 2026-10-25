@@ -7,8 +7,9 @@ import { tratarRequisicao } from './nucleo/roteador';
 import type { NomeTabela, Planilha } from './nucleo/portas';
 import { cabecalhos, ESQUEMA } from './tabelas/esquema';
 
-type NomeAba = NomeTabela | 'IMPORTAR_PESSOAS' | 'LEIA-ME';
+type NomeAba = NomeTabela | 'IMPORTAR_PESSOAS' | 'IMPORTAR_ALMOX' | 'IMPORTAR_AUTORIZADOS' | 'LEIA-ME';
 
+export const CABECALHOS_IMPORTACAO_ALMOX = ['COD', 'NOME_ALMOX', 'NOME_COMUM', 'UNIDADE', 'VALOR', 'CATEGORIA', 'QTD_MINIMA', 'SALA', 'STATUS', 'SALDO'];
 export const CABECALHOS_IMPORTACAO = ['NOME', 'EMAIL', 'MATRICULA', 'TIPO', 'VINCULO', 'CPF', 'BANCO', 'AGENCIA', 'CONTA', 'CAMISETA', 'NASCIMENTO'];
 
 const ARQUIVOS: Record<Planilha, string> = { dados: 'GestorCC - Dados', sigiloso: 'GestorCC - Sigiloso', relatorios: 'GestorCC - Relatórios' };
@@ -18,7 +19,15 @@ export function planoInstalacao(): { planilha: Planilha; nomeArquivo: string; ab
   const tabelasDe = (p: Planilha) =>
     (Object.keys(ESQUEMA) as NomeTabela[]).filter((t) => ESQUEMA[t].planilha === p).map((t) => ({ nome: t as NomeAba, cabecalhos: cabecalhos(t) }));
   return [
-    { planilha: 'dados', nomeArquivo: ARQUIVOS.dados, abas: tabelasDe('dados') },
+    {
+      planilha: 'dados',
+      nomeArquivo: ARQUIVOS.dados,
+      abas: [
+        ...tabelasDe('dados'),
+        { nome: 'IMPORTAR_ALMOX', cabecalhos: CABECALHOS_IMPORTACAO_ALMOX },
+        { nome: 'IMPORTAR_AUTORIZADOS', cabecalhos: ['NOME'] },
+      ],
+    },
     { planilha: 'sigiloso', nomeArquivo: ARQUIVOS.sigiloso, abas: [...tabelasDe('sigiloso'), { nome: 'IMPORTAR_PESSOAS', cabecalhos: CABECALHOS_IMPORTACAO }] },
     {
       planilha: 'relatorios',

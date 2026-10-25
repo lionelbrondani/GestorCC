@@ -1,1 +1,1 @@
-export const VERSAO_API = '0.4.0';
+export const VERSAO_API = '0.5.0';

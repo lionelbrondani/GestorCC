@@ -1,14 +1,15 @@
 import type { Portas, Propriedades } from '../nucleo/portas';
 import { escreverAgenda } from './agenda';
 import { escreverConsulta, escreverEscala, escreverTrocas } from './escala';
+import { escreverEstoque, escreverInfra } from './estoque';
 import { escreverLote } from './pagamentos';
 
 /**
  * Abas da planilha de Relatórios a refazer pelo gatilho de 5 minutos (spec 11):
- * 'agenda:AAAA-MM', 'escala:AAAA-MM' (ESCALA e CONSULTA do mês), 'trocas' e 'lote:<id>'.
+ * 'agenda:AAAA-MM', 'escala:AAAA-MM' (ESCALA e CONSULTA do mês), 'trocas', 'lote:<id>', 'estoque' e 'infra'.
  */
 const CHAVE = 'RELATORIOS_PENDENTES';
-const VALIDA = /^(agenda|escala):\d{4}-\d{2}$|^trocas$|^lote:[\w-]+$/;
+const VALIDA = /^(agenda|escala):\d{4}-\d{2}$|^(trocas|estoque|infra)$|^lote:[\w-]+$/;
 
 function pendentes(props: Propriedades): string[] {
   try {
@@ -45,6 +46,8 @@ export function gerarRelatoriosPendentes(portas: Portas): string[] {
     if (tipo === 'agenda') escritas.push(escreverAgenda(portas, ano, mes));
     else if (tipo === 'escala') escritas.push(escreverEscala(portas, ano, mes), escreverConsulta(portas, ano, mes));
     else if (tipo === 'trocas') escritas.push(escreverTrocas(portas));
+    else if (tipo === 'estoque') escritas.push(escreverEstoque(portas));
+    else if (tipo === 'infra') escritas.push(escreverInfra(portas));
     else if (tipo === 'lote') {
       const aba = escreverLote(portas, mesAno);
       if (aba) escritas.push(aba);

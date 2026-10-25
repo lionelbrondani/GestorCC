@@ -46,7 +46,7 @@ export function ImportarPlanilha() {
       >
         <div className="pilha-3">
           <p className="texto-2">
-            Lê as linhas da aba IMPORTAR_PESSOAS, na planilha Sigiloso. Quem já tem cadastro (mesmo e-mail) é atualizado; quem é novo entra com o modelo
+            Lê as linhas da aba IMPORTAR_PESSOAS, na planilha Sigiloso. Quem já tem cadastro (mesma matrícula) só tem os dados pessoais completados; quem é novo entra com o modelo
             Eventual e a matrícula como senha inicial.
           </p>
           {importar.error && <Alerta tom="erro">{importar.error.message}</Alerta>}

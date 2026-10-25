@@ -53,6 +53,25 @@ export const ESQUEMA: Record<NomeTabela, { planilha: Planilha; colunas: Coluna[]
   },
   loteItens: { planilha: 'dados', colunas: [t('loteId'), t('escalaId'), t('pessoaId'), n('valor')] },
   envioExterno: { planilha: 'dados', colunas: [t('eventoId'), d('enviadoEm'), t('enviadoPor'), j('campos')] },
+  almoxItens: {
+    planilha: 'dados',
+    colunas: [t('cod'), t('nomeAlmox'), t('nomeComum'), t('unidade'), n('valor'), t('categoria'), n('qtdMinima'), t('sala'), t('status'), n('saldo')],
+  },
+  almoxMovimentos: {
+    planilha: 'dados',
+    colunas: [d('quando'), t('tipo'), t('cod'), n('qtd'), n('valorUnitario'), t('retiradoPorPessoaId'), t('retiradoPorExterno'), t('eventoId'),
+      t('ocorrenciaId'), t('finalidade'), t('pedidoId'), t('motivo')],
+  },
+  almoxAutorizadosExternos: { planilha: 'dados', colunas: [t('nome'), b('ativo')] },
+  almoxPedidos: { planilha: 'dados', colunas: [t('solicitanteId'), t('status')] },
+  almoxPedidoItens: { planilha: 'dados', colunas: [t('pedidoId'), t('cod'), n('qtdPedida'), n('qtdRecebida'), n('valorEstimado')] },
+  ocorrencias: {
+    planilha: 'dados',
+    colunas: [n('numero'), t('titulo'), t('descricao'), t('categoria'), t('local'), t('prioridade'), t('status'), t('origem'), t('relatorNome'),
+      t('relatorPessoaId'), t('relatorContato'), t('eventoId'), t('fotoId'), t('chamadoNumero'), t('chamadoLink'), t('chamadoAbertoEm'),
+      t('resolvidaEm'), t('respostaFormularioId')],
+  },
+  ocorrenciasHistorico: { planilha: 'dados', colunas: [t('ocorrenciaId'), d('quando'), t('quemId'), t('de'), t('para'), t('observacao')] },
   dadosPessoais: { planilha: 'sigiloso', colunas: [t('cpf'), t('banco'), t('agencia'), t('conta'), t('nascimento'), t('camiseta')] },
   credenciais: {
     planilha: 'sigiloso',

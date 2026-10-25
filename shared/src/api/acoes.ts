@@ -88,6 +88,8 @@ export interface Acoes {
   'contratantes.salvar': A<Contratante, Contratante>;
 
   'almox.listar': A<null, { itens: AlmoxItem[]; autorizadosExternos: string[] }>;
+  /** Catálogo antigo colado nas abas IMPORTAR_ALMOX e IMPORTAR_AUTORIZADOS da planilha Dados. */
+  'almox.importar': A<null, { itens: number; autorizados: number; problemas: { linha: number; mensagem: string }[] }>;
   'almox.movimentos': A<{ cod?: string; ocorrenciaId?: Id }, AlmoxMovimento[]>;
   'almox.salvarItem': A<AlmoxItem, AlmoxItem>;
   'almox.ajustar': A<{ cod: string; qtd: number; motivo: string }, AlmoxItem>;
@@ -125,6 +127,8 @@ export interface Acoes {
     Ocorrencia
   >;
   'infra.importarFormulario': A<null, { importadas: number }>;
+  /** Foto da ocorrência como data URL (fica no Drive, sem link público). */
+  'infra.foto': A<{ id: Id }, string | null>;
 
   'avisos.listar': A<null, Aviso[]>;
   'avisos.salvar': A<Aviso, Aviso>;

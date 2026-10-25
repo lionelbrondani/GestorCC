@@ -24,6 +24,13 @@ export type NomeTabela =
   | 'lotes'
   | 'loteItens'
   | 'envioExterno'
+  | 'almoxItens'
+  | 'almoxMovimentos'
+  | 'almoxAutorizadosExternos'
+  | 'almoxPedidos'
+  | 'almoxPedidoItens'
+  | 'ocorrencias'
+  | 'ocorrenciasHistorico'
   | 'dadosPessoais'
   | 'credenciais';
 
@@ -96,6 +103,19 @@ export interface AgendaGoogle {
   remover(id: string): void;
 }
 
+/** Fotos das ocorrências, numa pasta Infraestrutura/ do Drive, sem link público (spec 10.4). */
+export interface Arquivos {
+  /** Grava a imagem (data URL) e devolve o id do arquivo. */
+  salvarImagem(dataUrl: string, nome: string): string;
+  /** Devolve a imagem como data URL, ou null se o arquivo não existe mais. */
+  lerImagem(id: string): string | null;
+}
+
+/** Respostas do Google Form de problemas do prédio; null quando FORMULARIO_INFRA_ID não está configurado. */
+export interface Formulario {
+  respostasInfra(): Record<string, unknown>[] | null;
+}
+
 export interface Portas {
   repo: Repositorio;
   cripto: Cripto;
@@ -104,4 +124,6 @@ export interface Portas {
   relogio: Relogio;
   props: Propriedades;
   agenda: AgendaGoogle;
+  arquivos: Arquivos;
+  formulario: Formulario;
 }

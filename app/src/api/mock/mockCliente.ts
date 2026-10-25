@@ -104,6 +104,7 @@ const REGRAS: Record<Acao, Regra> = {
   'lotes.cancelar': ['pagamentos', 'editar'],
   'ganhos.meus': 'logado',
   'externos.registrarEnvio': ['pagamentos', 'editar'],
+  'almox.importar': ['almoxEstoque', 'editar'],
   'contratos.listar': ['contratos', 'ver'],
   'contratos.salvar': ['contratos', 'editar'],
   'contratos.salvarAditivo': ['contratos', 'editar'],
@@ -120,6 +121,7 @@ const REGRAS: Record<Acao, Regra> = {
   'infra.relatar': 'logado',
   'infra.atualizar': ['infraestrutura', 'editar'],
   'infra.importarFormulario': ['infraestrutura', 'editar'],
+  'infra.foto': 'logado',
   'avisos.listar': 'logado',
   'avisos.salvar': ['mural', 'editar'],
   'avisos.confirmarLeitura': 'logado',
@@ -426,6 +428,7 @@ const handlers: Handlers = {
       { eventos: ctx.banco.eventos, sessoes: ctx.banco.sessoes, escalas: ctx.banco.escalas, lotes: ctx.banco.lotes, itens: ctx.banco.loteItens },
       ctx.banco.config.diariaPadrao,
     ),
+  'almox.importar': () => ({ itens: 0, autorizados: 0, problemas: [] }),
   'externos.registrarEnvio': ({ eventoId, campos }, ctx) => {
     ctx.banco.envioExterno.push({ eventoId, enviadoEm: ctx.agora, campos });
     registrar(ctx, 'evento', eventoId, 'registrou envio de dados ao pagador externo');
@@ -568,6 +571,7 @@ const handlers: Handlers = {
     registrar(ctx, 'ocorrencia', o.id, d.para ? `situação: ${ROTULO_STATUS_OCORRENCIA[d.para]}` : 'atualizou a ocorrência', d.observacao);
     return o;
   },
+  'infra.foto': ({ id }, ctx) => ctx.banco.ocorrencias.find((o) => o.id === id)?.foto ?? null,
   'infra.importarFormulario': (_d, ctx) => {
     const pendentes = ctx.banco.respostasFormularioInfra;
     for (const r of pendentes) novaOcorrencia(ctx, r);
