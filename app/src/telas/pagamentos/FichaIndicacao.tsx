@@ -2,7 +2,7 @@ import { formatarReais, montarFicha, pode, type DadosPessoais, type Ficha, type 
 import { useQuery } from '@tanstack/react-query';
 import { Copy, Download, Printer } from 'lucide-react';
 import { useState } from 'react';
-import { useApi } from '../../api/cliente';
+import { consultar, useApi } from '../../api/cliente';
 import { useEu } from '../../auth/SessaoContexto';
 import { Alerta, Botao, Carregando } from '../../componentes';
 import { copiarTexto } from '../escalas/dadosEscalas';
@@ -90,7 +90,7 @@ export function FichaIndicacao({ lote, dados }: { lote: Lote; dados: ReturnType<
   const dadosPessoais = useQuery({
     queryKey: ['fichaDados', lote.id, podeVer],
     enabled: podeVer,
-    queryFn: async () => (await Promise.all(pessoasLote.map((p) => api.chamar('dadosPessoais.obter', { pessoaId: p.id })))).filter((d): d is DadosPessoais => !!d),
+    queryFn: async () => (await Promise.all(pessoasLote.map((p) => consultar(api, 'dadosPessoais.obter', { pessoaId: p.id })))).filter((d): d is DadosPessoais => !!d),
   });
   if (podeVer && dadosPessoais.isLoading) return <Carregando texto="Montando a ficha…" />;
 

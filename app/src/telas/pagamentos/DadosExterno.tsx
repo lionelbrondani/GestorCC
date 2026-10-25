@@ -2,7 +2,7 @@ import { formatarData, mascararCpf, pode, type DadosPessoais, type Evento } from
 import { useQuery } from '@tanstack/react-query';
 import { Copy, Printer } from 'lucide-react';
 import { useState } from 'react';
-import { useApi } from '../../api/cliente';
+import { consultar, useApi } from '../../api/cliente';
 import { useMutacao } from '../../api/hooks';
 import { useEu } from '../../auth/SessaoContexto';
 import { Alerta, Botao, Cartao, EstadoVazio } from '../../componentes';
@@ -28,7 +28,7 @@ function TabelaExterno({ evento, dados }: { evento: Evento; dados: ReturnType<ty
   const sigilosos = useQuery({
     queryKey: ['externoDados', evento.id, precisaSigilo],
     enabled: precisaSigilo,
-    queryFn: async () => (await Promise.all(pessoaIds.map((pessoaId) => api.chamar('dadosPessoais.obter', { pessoaId })))).filter((d): d is DadosPessoais => !!d),
+    queryFn: async () => (await Promise.all(pessoaIds.map((pessoaId) => consultar(api, 'dadosPessoais.obter', { pessoaId })))).filter((d): d is DadosPessoais => !!d),
   });
 
   const colunas = CAMPOS.filter((c) => campos.has(c));

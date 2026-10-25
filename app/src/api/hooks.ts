@@ -1,6 +1,6 @@
 import type { Acao, Entrada, ErroApi, Saida } from '@shared';
 import { useMutation, useQuery, useQueryClient, type UseMutationResult, type UseQueryResult } from '@tanstack/react-query';
-import { useApi } from './cliente';
+import { consultar, useApi } from './cliente';
 
 export function useConsulta<A extends Acao>(
   acao: A,
@@ -10,7 +10,7 @@ export function useConsulta<A extends Acao>(
   const api = useApi();
   return useQuery<Saida<A>, ErroApi>({
     queryKey: [acao, dados],
-    queryFn: () => api.chamar(acao, dados),
+    queryFn: () => consultar(api, acao, dados),
     enabled: opcoes.habilitada ?? true,
   });
 }
