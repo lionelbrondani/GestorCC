@@ -37,4 +37,7 @@ export const ACOES_FASE: Partial<Record<Acao, { regra: Regra; escrita: boolean }
   'escalas.listar': { regra: 'logado', escrita: false },
   'escalas.salvarRascunho': { regra: ['escalas', 'editar'], escrita: true },
   'escalas.publicar': { regra: ['escalas', 'editar'], escrita: true },
+  'escalas.trocar': { regra: ['escalas', 'editar'], escrita: true },
+  'escalas.convocar': { regra: ['escalas', 'editar'], escrita: true },
+  'escalas.confirmarPresenca': { regra: ['escalas', 'editar'], escrita: true },
 };

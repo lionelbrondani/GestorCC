@@ -77,4 +77,79 @@ export const handlersEscalas: Handlers = {
     sincronizarAgenda(ctx.portas, publicadas);
     return null;
   },
+
+  /** Toda mudança depois de publicada é uma troca com justificativa (spec 7.5). */
+  'escalas.trocar': ({ sessaoId, sai, entra, justificativa }, ctx) => {
+    const motivo = (justificativa ?? '').trim();
+    if (!motivo) throw new ErroApi('JUSTIFICATIVA', 'Informe a justificativa da troca.');
+    if (!sai && !entra) throw new ErroApi('TROCA_VAZIA', 'Escolha quem sai e/ou quem entra.');
+    const sessao = sessaoOuErro(ctx, sessaoId);
+    exigirSessaoAtiva(sessao);
+    const pessoas = linhasPessoas(ctx);
+    const daSessao = linhasEscalas(ctx).filter((e) => e.sessaoId === sessaoId && (e.status === 'publicado' || e.status === 'rascunho'));
+    const saindo = sai ? daSessao.find((e) => e.pessoaId === sai) : undefined;
+    if (sai && !saindo) throw new ErroApi('NAO_ENCONTRADO', 'Esta pessoa não está escalada nesta sessão.');
+
+    const quemEntra = entra ? pessoas.find((p) => p.id === entra && p.ativo) : undefined;
+    if (entra && !quemEntra) throw new ErroApi('NAO_ENCONTRADO', 'Pessoa não encontrada ou inativa.');
+    const papel = saindo?.papel ?? quemEntra!.tipo;
+    if (quemEntra) {
+      if (quemEntra.tipo !== papel) throw new ErroApi('PAPEL', 'Servidor só pode ser trocado por servidor, e bolsista por bolsista.');
+      if (daSessao.some((e) => e.pessoaId === entra)) throw new ErroApi('DUPLICADO', 'Esta pessoa já está escalada nesta sessão.');
+      exigirSemConflito(ctx, quemEntra.id, paraSessao(sessao));
+    }
+
+    if (saindo) ctx.portas.repo.remover('escalas', saindo.id);
+    if (quemEntra) {
+      ctx.portas.repo.inserir('escalas', {
+        id: novoId(ctx.portas, 'x'), sessaoId, pessoaId: quemEntra.id, papel, status: saindo?.status ?? 'publicado',
+        adicaoDireta: !estaDisponivel(ctx, quemEntra.id, sessaoId), loteId: '',
+      } satisfies LinhaEscala);
+    }
+
+    const nome = nomeDaSessao(ctx, sessao);
+    if (sai) notificar(ctx, [sai], `Você foi retirado(a) da escala: ${nome}.`, '/minhas-escalas');
+    if (entra) notificar(ctx, [entra], `Você foi escalado(a): ${nome}.`, '/minhas-escalas');
+    const curto = (id: string | null) => (id ? (pessoas.find((p) => p.id === id)?.nomeCurto ?? id) : '—');
+    registrar(ctx, 'troca', sessaoId, `troca: sai ${curto(sai)}, entra ${curto(entra)}`, { sai }, { entra }, motivo);
+    sincronizarAgenda(ctx.portas, [sessaoId]);
+    return escalasDaSessao(ctx, sessaoId);
+  },
+
+  /** Mais vagas numa sessão publicada; reabre a disponibilidade só para quem está fora (spec 7.6). */
+  'escalas.convocar': ({ sessaoId, vagas, abertaAte }, ctx) => {
+    const sessao = sessaoOuErro(ctx, sessaoId);
+    exigirSessaoAtiva(sessao);
+    if (!sessao.publicadaEm) throw new ErroApi('NAO_PUBLICADA', 'Publique a escala desta sessão antes de abrir convocação extra.');
+    if (!Number.isInteger(vagas) || vagas < 1) throw new ErroApi('VAGAS', 'Informe ao menos 1 vaga extra.');
+    if (!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(abertaAte ?? '') || abertaAte <= ctx.portas.relogio.agora()) {
+      throw new ErroApi('PRAZO', 'O prazo da convocação precisa ser no futuro.');
+    }
+    const atualizada: LinhaSessao = { ...sessao, vagasBolsistas: Number(sessao.vagasBolsistas) + vagas, convocacaoAbertaAte: abertaAte, convocacaoVagas: vagas };
+    ctx.portas.repo.atualizar('sessoes', atualizada);
+
+    const naSessao = new Set(linhasEscalas(ctx).filter((e) => e.sessaoId === sessaoId && e.status !== 'cancelado').map((e) => e.pessoaId));
+    const alvos = linhasPessoas(ctx).filter((p) => p.ativo && p.tipo === 'bolsista' && !naSessao.has(p.id)).map((p) => p.id);
+    notificar(ctx, alvos, `Precisamos de mais ${vagas} bolsista(s): ${nomeDaSessao(ctx, sessao)}. Marque se puder.`, '/disponibilidade');
+    registrar(ctx, 'sessao', sessaoId, `abriu convocação extra (+${vagas})`, null, { vagas, abertaAte }, 'convocação extra');
+    return paraSessao(atualizada);
+  },
+
+  /** Presente → realizado; ausente → faltou (spec 7.7). Pode ser refeita para corrigir, enquanto não houver lote. */
+  'escalas.confirmarPresenca': ({ sessaoId, faltaram }, ctx) => {
+    const sessao = sessaoOuErro(ctx, sessaoId);
+    if (sessao.data > ctx.portas.relogio.hoje()) throw new ErroApi('FUTURA', 'Esta sessão ainda não aconteceu.');
+    const confirmaveis = linhasEscalas(ctx).filter(
+      (e) => e.sessaoId === sessaoId && !e.loteId && (e.status === 'publicado' || e.status === 'realizado' || e.status === 'faltou'),
+    );
+    for (const e of confirmaveis) {
+      const status = faltaram.includes(e.pessoaId) ? 'faltou' : 'realizado';
+      if (status === e.status) continue;
+      ctx.portas.repo.atualizar('escalas', { ...e, status });
+      if (status === 'faltou') registrar(ctx, 'pessoa', e.pessoaId, 'faltou', null, { sessaoId });
+    }
+    const faltas = confirmaveis.filter((e) => faltaram.includes(e.pessoaId)).length;
+    registrar(ctx, 'sessao', sessaoId, `confirmou presença (${faltas} falta(s))`, null, null);
+    return escalasDaSessao(ctx, sessaoId);
+  },
 };
