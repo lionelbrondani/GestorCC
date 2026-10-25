@@ -133,6 +133,7 @@ Use a conta escolhida para o site no passo 1. Se for uma conta diferente da do s
      | 4 | `VITE_RECURSOS=pessoas,dadosPessoais,mural,formularios,configuracoes,eventos,escalas,escalasPessoais,pagamentos` |
      | 5 | `VITE_RECURSOS=pessoas,dadosPessoais,mural,formularios,configuracoes,eventos,escalas,escalasPessoais,pagamentos,almoxEstoque,almoxSaidas,infraestrutura,relatar` |
      | 6 | `VITE_RECURSOS=pessoas,dadosPessoais,mural,formularios,configuracoes,eventos,escalas,escalasPessoais,pagamentos,almoxEstoque,almoxSaidas,infraestrutura,relatar,contratos` |
+     | 7 | `VITE_RECURSOS=pessoas,dadosPessoais,mural,formularios,configuracoes,eventos,escalas,escalasPessoais,pagamentos,almoxEstoque,almoxSaidas,infraestrutura,relatar,contratos,busca` |
 3. Publique:
 
    ```
@@ -350,3 +351,18 @@ Cada documento gerado vai para **GestorCC/Documentos gerados/\<ano\>**. Para mud
 **Solicitação à FUNDEP:** o GestorCC monta o texto. Copie, cole no seu e-mail e anexe os PDFs assinados. O sistema não envia nada.
 
 A planilha de Relatórios ganha a aba **CONTRATOS**, sem dados pessoais dos contratantes.
+
+## 18. Busca inteligente (fase 7)
+
+A barra de busca entende perguntas como "quem trabalha sábado?" ou "o que precisamos comprar?". Para isso ela usa o Gemini, no nível gratuito, sem custo.
+
+**O que vai para o Gemini:** só a pergunta digitada e o manual de uso (`docs/manual/uso.md`, sem dados reais). O Gemini devolve qual consulta fazer, e a consulta roda no GestorCC com as permissões de quem perguntou. Nenhum dado das planilhas sai do Google da conta do setor.
+
+Para ligar:
+
+1. Com a conta do setor, abra <https://aistudio.google.com/apikey> e crie uma chave de API, no plano gratuito.
+2. Nas **Propriedades do script**, crie `GEMINI_API_KEY` com a chave.
+3. Opcional: crie `GEMINI_MODELO` para trocar o modelo. O padrão é `gemini-2.5-flash`.
+4. Cole o `Code.js` novo, crie uma **Nova versão** e publique o site com o `VITE_RECURSOS` da fase 7.
+
+O limite de perguntas por pessoa por dia fica em **Configurações**. Sem a chave, com o limite atingido ou com o Gemini fora do ar, a barra continua funcionando: ela interpreta perguntas simples por palavras-chave e sempre mostra os resultados da busca comum.

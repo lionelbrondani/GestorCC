@@ -1,17 +1,7 @@
-import { diaDaSemanaCurto, somarDias, type DataISO } from '@shared';
+import { diaDaSemanaCurto, somarDias, type Consulta, type DataISO } from '@shared';
 import { semAcento } from './buscaComum';
 
-export type Consulta =
-  | { nome: 'escalaDoDia'; data: DataISO }
-  | { nome: 'escalasDaPessoa'; termo: string }
-  | { nome: 'proximosEventos' }
-  | { nome: 'vagasFaltando' }
-  | { nome: 'naoResponderam' }
-  | { nome: 'saldoItem'; termo: string }
-  | { nome: 'estoqueCritico' }
-  | { nome: 'contratosPendentes' }
-  | { nome: 'lotesEmAberto' }
-  | { nome: 'ocorrenciasAbertas'; termo: string };
+export type { Consulta };
 
 const DIAS: Record<string, string> = { domingo: 'DOM', segunda: 'SEG', terca: 'TER', quarta: 'QUA', quinta: 'QUI', sexta: 'SEX', sabado: 'SÁB' };
 

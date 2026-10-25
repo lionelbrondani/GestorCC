@@ -19,3 +19,4 @@ export * from './api/acoes';
 export * from './infraestrutura';
 export * from './eventos';
 export * from './agendaMes';
+export * from './busca';

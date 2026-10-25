@@ -125,6 +125,12 @@ export interface Documentos {
   gerar(modelo: string, campos: Record<string, string>, nomeArquivo: string): { url: string; docx: string };
 }
 
+/** Gemini, nível gratuito (spec 10.3). Recebe só o corpo montado por busca/gemini.ts, sem dados do sistema. */
+export interface IA {
+  /** Resposta crua do Gemini; null quando a chave (GEMINI_API_KEY) não está configurada. Lança erro se o Gemini falhar. */
+  gerar(corpo: object): unknown | null;
+}
+
 export interface Portas {
   repo: Repositorio;
   cripto: Cripto;
@@ -136,4 +142,5 @@ export interface Portas {
   arquivos: Arquivos;
   formulario: Formulario;
   documentos: Documentos;
+  ia: IA;
 }

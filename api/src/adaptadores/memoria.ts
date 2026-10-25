@@ -1,6 +1,6 @@
 // Portas em memória, usadas nos testes da API.
 import { ErroApi } from '@shared';
-import type { AgendaGoogle, Arquivos, Cache, Documentos, EventoAgenda, FormatoAba, Formulario, NomeTabela, Planilha, Propriedades, Relogio, Repositorio, Trava } from '../nucleo/portas';
+import type { AgendaGoogle, Arquivos, Cache, Documentos, EventoAgenda, FormatoAba, Formulario, IA, NomeTabela, Planilha, Propriedades, Relogio, Repositorio, Trava } from '../nucleo/portas';
 
 type Registro = { id: string } & Record<string, unknown>;
 
@@ -145,6 +145,20 @@ export function documentosMemoria(modelos: string[] = []): Documentos & { gerado
       if (!modelos.includes(modelo)) throw new ErroApi('MODELO', `Coloque o Google Doc "${modelo}" na pasta GestorCC/Modelos.`);
       gerados.push({ modelo, campos, nome });
       return { url: `https://docs.google.com/document/d/doc${gerados.length}/edit`, docx: 'data:application/vnd.openxmlformats-officedocument.wordprocessingml.document;base64,UEs=' };
+    },
+  };
+}
+
+/** Gemini de mentira: devolve sempre a mesma resposta (null = sem chave; Error = falha) e guarda os pedidos. */
+export function iaMemoria(resposta: unknown = null): IA & { pedidos: object[] } {
+  const pedidos: object[] = [];
+  return {
+    pedidos,
+    gerar(corpo) {
+      if (resposta === null) return null;
+      pedidos.push(corpo);
+      if (resposta instanceof Error) throw resposta;
+      return resposta;
     },
   };
 }

@@ -2,7 +2,7 @@
 // Portas reais, com os serviços do Apps Script. Não é testado em Node; a lógica fica nos módulos puros.
 import { ErroApi } from '@shared';
 import { eventoSumiuNoGoogle, recursoDoEvento } from '../agenda/recursoGoogle';
-import type { AgendaGoogle, Arquivos, Cache, Cripto, Documentos, Formulario, NomeTabela, Planilha, Portas, Propriedades, Relogio, Repositorio, Trava } from '../nucleo/portas';
+import type { AgendaGoogle, Arquivos, Cache, Cripto, Documentos, Formulario, IA, NomeTabela, Planilha, Portas, Propriedades, Relogio, Repositorio, Trava } from '../nucleo/portas';
 import { cabecalhos, ESQUEMA } from '../tabelas/esquema';
 import { linhaParaObjeto, objetoParaLinha, paraCelula } from '../tabelas/serializacao';
 
@@ -233,6 +233,24 @@ export const formularioGas: Formulario = {
   },
 };
 
+/** Gemini pelo nível gratuito do Google AI Studio: chave em GEMINI_API_KEY, modelo em GEMINI_MODELO. */
+export const iaGas: IA = {
+  gerar(corpo) {
+    const chave = propriedadesGas.obter('GEMINI_API_KEY');
+    if (!chave) return null;
+    const modelo = propriedadesGas.obter('GEMINI_MODELO') || 'gemini-2.5-flash';
+    const r = UrlFetchApp.fetch(`https://generativelanguage.googleapis.com/v1beta/models/${modelo}:generateContent`, {
+      method: 'post',
+      contentType: 'application/json',
+      headers: { 'x-goog-api-key': chave },
+      payload: JSON.stringify(corpo),
+      muteHttpExceptions: true,
+    });
+    if (r.getResponseCode() !== 200) throw new Error(`Gemini respondeu ${r.getResponseCode()}`);
+    return JSON.parse(r.getContentText());
+  },
+};
+
 export function portasGas(): Portas {
   return {
     repo: repositorioGas(relogioGas),
@@ -245,5 +263,6 @@ export function portasGas(): Portas {
     arquivos: arquivosGas,
     formulario: formularioGas,
     documentos: documentosGas,
+    ia: iaGas,
   };
 }

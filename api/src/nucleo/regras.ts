@@ -73,4 +73,6 @@ export const ACOES_FASE: Partial<Record<Acao, { regra: Regra; escrita: boolean }
   'contratos.anexar': { regra: ['contratos', 'editar'], escrita: true },
   'contratos.anexo': { regra: ['contratos', 'ver'], escrita: false },
   'documentos.gerar': { regra: ['contratos', 'editar'], escrita: true },
+  // fase 7
+  'busca.interpretar': { regra: ['busca', 'ver'], escrita: false },
 };
