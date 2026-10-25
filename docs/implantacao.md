@@ -130,6 +130,7 @@ Use a conta escolhida para o site no passo 1. Se for uma conta diferente da do s
      | 1 | `VITE_RECURSOS=pessoas,dadosPessoais,mural,formularios,configuracoes` |
      | 2 | `VITE_RECURSOS=pessoas,dadosPessoais,mural,formularios,configuracoes,eventos` |
      | 3 | `VITE_RECURSOS=pessoas,dadosPessoais,mural,formularios,configuracoes,eventos,escalas,escalasPessoais` |
+     | 4 | `VITE_RECURSOS=pessoas,dadosPessoais,mural,formularios,configuracoes,eventos,escalas,escalasPessoais,pagamentos` |
 3. Publique:
 
    ```
@@ -265,3 +266,18 @@ A planilha **GestorCC - Relatórios** ganha, alguns minutos depois de cada mudan
 - **ESCALA \<MÊS\> \<ANO\>**: a grade do mês, com experientes em negrito e "escalar menos" destacado;
 - **CONSULTA \<MÊS\> \<ANO\>**: quantas escalas cada pessoa teve no mês;
 - **HISTÓRICO DE TROCAS**.
+
+## 15. Pagamentos (fase 4)
+
+A fase 4 liga os lotes de pagamento, a ficha de indicação, os dados para pagador externo e o "Meus ganhos" dos bolsistas.
+
+Para ligar:
+
+1. Cole o `Code.js` novo e salve.
+2. Rode `instalar` de novo. Ele cria as abas `lotes`, `loteItens` e `envioExterno` na planilha **GestorCC - Dados**.
+3. Crie uma **Nova versão** da implantação.
+4. Publique o site com o `VITE_RECURSOS` da fase 4.
+
+A ficha de indicação não é enviada pelo sistema. Use **Copiar formatado** e cole no seu e-mail, ou baixe o arquivo.
+
+A planilha de Relatórios ganha uma aba **PAGAMENTOS – \<título do lote\>** por lote, sem CPF nem dados bancários.
