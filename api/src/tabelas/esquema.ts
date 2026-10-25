@@ -47,6 +47,12 @@ export const ESQUEMA: Record<NomeTabela, { planilha: Planilha; colunas: Coluna[]
   disponibilidades: { planilha: 'dados', colunas: [t('pessoaId'), t('sessaoId'), b('disponivel'), t('origem'), d('respondidoEm')] },
   escalas: { planilha: 'dados', colunas: [t('sessaoId'), t('pessoaId'), t('papel'), t('status'), b('adicaoDireta'), t('loteId')] },
   avaliacoes: { planilha: 'dados', colunas: [t('pessoaId'), t('mes'), n('nota'), t('observacao'), t('autorId')] },
+  lotes: {
+    planilha: 'dados',
+    colunas: [t('titulo'), t('periodoReferencia'), t('edital'), t('iniciativa'), b('incluirZerados'), t('status'), t('pagoEm')],
+  },
+  loteItens: { planilha: 'dados', colunas: [t('loteId'), t('escalaId'), t('pessoaId'), n('valor')] },
+  envioExterno: { planilha: 'dados', colunas: [t('eventoId'), d('enviadoEm'), t('enviadoPor'), j('campos')] },
   dadosPessoais: { planilha: 'sigiloso', colunas: [t('cpf'), t('banco'), t('agencia'), t('conta'), t('nascimento'), t('camiseta')] },
   credenciais: {
     planilha: 'sigiloso',

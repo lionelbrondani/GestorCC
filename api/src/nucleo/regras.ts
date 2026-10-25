@@ -42,4 +42,12 @@ export const ACOES_FASE: Partial<Record<Acao, { regra: Regra; escrita: boolean }
   'escalas.confirmarPresenca': { regra: ['escalas', 'editar'], escrita: true },
   'avaliacoes.listar': { regra: ['escalas', 'ver'], escrita: false },
   'avaliacoes.salvar': { regra: ['escalas', 'editar'], escrita: true },
+  // fase 4
+  'lotes.listar': { regra: ['pagamentos', 'ver'], escrita: false },
+  'lotes.criar': { regra: ['pagamentos', 'editar'], escrita: true },
+  'lotes.retirarItem': { regra: ['pagamentos', 'editar'], escrita: true },
+  'lotes.marcarPago': { regra: ['pagamentos', 'editar'], escrita: true },
+  'lotes.cancelar': { regra: ['pagamentos', 'editar'], escrita: true },
+  'ganhos.meus': { regra: 'logado', escrita: false },
+  'externos.registrarEnvio': { regra: ['pagamentos', 'editar'], escrita: true },
 };

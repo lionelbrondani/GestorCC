@@ -21,6 +21,9 @@ export type NomeTabela =
   | 'disponibilidades'
   | 'escalas'
   | 'avaliacoes'
+  | 'lotes'
+  | 'loteItens'
+  | 'envioExterno'
   | 'dadosPessoais'
   | 'credenciais';
 

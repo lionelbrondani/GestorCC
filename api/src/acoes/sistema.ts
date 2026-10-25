@@ -35,6 +35,9 @@ function agendaSetor(ctx: Contexto): Config['agendaSetor'] {
 }
 
 const linhaConfig = (ctx: Contexto) => ctx.portas.repo.listar<LinhaConfig>('config').find((c) => c.id === CHAVE_CONFIG);
+
+/** Configurações em vigor: o salvo por cima do padrão do spec. */
+export const configAtual = (ctx: Contexto): Config => ({ ...CONFIG_PADRAO, ...(linhaConfig(ctx)?.valor ?? {}) });
 const nomeDe = (ctx: Contexto) => (id: string) =>
   ctx.portas.repo.listar<{ id: string; nome: string }>('pessoas').find((p) => p.id === id)?.nome ?? 'Outra pessoa';
 
