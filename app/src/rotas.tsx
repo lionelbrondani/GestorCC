@@ -47,7 +47,7 @@ export const ROTAS: RouteObject[] = [
       { path: '/', element: <Inicio /> },
       { path: '/minhas-escalas', element: <ExigeRecurso recurso="escalasPessoais"><MinhasEscalas /></ExigeRecurso> },
       { path: '/disponibilidade', element: <ExigeRecurso recurso="escalasPessoais"><MinhaDisponibilidade /></ExigeRecurso> },
-      { path: '/ganhos', element: <ExigeRecurso recurso="escalasPessoais"><MeusGanhos /></ExigeRecurso> },
+      { path: '/ganhos', element: <ExigeRecurso recurso="pagamentos"><MeusGanhos /></ExigeRecurso> },
       { path: '/avisos', element: <Avisos /> },
       { path: '/perfil', element: <Perfil /> },
       { path: '/relatar', element: <ExigeRecurso recurso="relatar"><Relatar /></ExigeRecurso> },

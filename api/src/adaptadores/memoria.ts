@@ -1,6 +1,6 @@
 // Portas em memória, usadas nos testes da API.
 import { ErroApi } from '@shared';
-import type { AgendaGoogle, Cache, EventoAgenda, NomeTabela, Planilha, Propriedades, Relogio, Repositorio, Trava } from '../nucleo/portas';
+import type { AgendaGoogle, Cache, EventoAgenda, FormatoAba, NomeTabela, Planilha, Propriedades, Relogio, Repositorio, Trava } from '../nucleo/portas';
 
 type Registro = { id: string } & Record<string, unknown>;
 
@@ -29,10 +29,11 @@ export function criarRepositorioMemoria(
   inicial: Partial<Record<NomeTabela, Registro[]>> = {},
   relogio: Relogio = relogioFixo('2026-10-24T10:00'),
   abasLivres: Partial<Record<string, Record<string, unknown>[]>> = {},
-): Repositorio & { dump(): Partial<Record<NomeTabela, Registro[]>>; abaLivre(planilha: Planilha, aba: string): string[][] | undefined } {
+): Repositorio & { dump(): Partial<Record<NomeTabela, Registro[]>>; abaLivre(planilha: Planilha, aba: string): string[][] | undefined; abaFormato(planilha: Planilha, aba: string): FormatoAba | undefined } {
   const dados: Partial<Record<NomeTabela, Registro[]>> = copiar(inicial);
   const tabela = (t: NomeTabela) => (dados[t] ??= []);
   const escritas = new Map<string, string[][]>();
+  const formatos = new Map<string, FormatoAba | undefined>();
   const repo = {
     quem: '',
     listar<T extends { id: string }>(t: NomeTabela): T[] {
@@ -58,11 +59,14 @@ export function criarRepositorioMemoria(
     lerAbaLivre(planilha: Planilha, aba: string) {
       return copiar(abasLivres[`${planilha}:${aba}`] ?? []);
     },
-    escreverAbaLivre(planilha: Planilha, aba: string, linhas: string[][]) {
+    escreverAbaLivre(planilha: Planilha, aba: string, linhas: string[][], formato?: FormatoAba) {
+      formatos.set(`${planilha}:${aba}`, formato);
       escritas.set(`${planilha}:${aba}`, copiar(linhas));
     },
     /** Só nos testes: o que foi escrito numa aba livre. */
     abaLivre: (planilha: Planilha, aba: string): string[][] | undefined => escritas.get(`${planilha}:${aba}`),
+    /** Só nos testes: o formato pedido para uma aba livre. */
+    abaFormato: (planilha: Planilha, aba: string): FormatoAba | undefined => formatos.get(`${planilha}:${aba}`),
     dump: () => copiar(dados),
   };
   return repo;

@@ -16,8 +16,19 @@ export type NomeTabela =
   | 'feriados'
   | 'eventos'
   | 'sessoes'
+  | 'rodadas'
+  | 'rodadaSessoes'
+  | 'disponibilidades'
+  | 'escalas'
+  | 'avaliacoes'
   | 'dadosPessoais'
   | 'credenciais';
+
+/** Linhas (a partir de 0) em negrito e com fundo de destaque numa aba de relatório. */
+export interface FormatoAba {
+  negrito?: number[];
+  destaque?: number[];
+}
 
 export interface Repositorio {
   listar<T extends { id: string }>(tabela: NomeTabela): T[];
@@ -28,7 +39,7 @@ export interface Repositorio {
   /** Lê uma aba fora do esquema (ex.: IMPORTAR_PESSOAS), usando a primeira linha como cabeçalho. */
   lerAbaLivre(planilha: Planilha, aba: string): Record<string, unknown>[];
   /** Reescreve uma aba fora do esquema (relatórios): cria se faltar, limpa e grava as linhas; a primeira é o cabeçalho. */
-  escreverAbaLivre(planilha: Planilha, aba: string, linhas: string[][]): void;
+  escreverAbaLivre(planilha: Planilha, aba: string, linhas: string[][], formato?: FormatoAba): void;
   /** Quem está gravando (vai para atualizadoPor). */
   definirAutor(pessoaId: string): void;
 }

@@ -42,6 +42,11 @@ export const ESQUEMA: Record<NomeTabela, { planilha: Planilha; colunas: Coluna[]
       n('vagasServidores'), o('diaria'), n('minimoExperientes'), t('status'), t('publicadaEm'), t('convocacaoAbertaAte'), n('convocacaoVagas'),
       t('googleEventoId'), b('agendaPendente')],
   },
+  rodadas: { planilha: 'dados', colunas: [t('nome'), t('prazo'), t('status')] },
+  rodadaSessoes: { planilha: 'dados', colunas: [t('rodadaId'), t('sessaoId'), b('nova')] },
+  disponibilidades: { planilha: 'dados', colunas: [t('pessoaId'), t('sessaoId'), b('disponivel'), t('origem'), d('respondidoEm')] },
+  escalas: { planilha: 'dados', colunas: [t('sessaoId'), t('pessoaId'), t('papel'), t('status'), b('adicaoDireta'), t('loteId')] },
+  avaliacoes: { planilha: 'dados', colunas: [t('pessoaId'), t('mes'), n('nota'), t('observacao'), t('autorId')] },
   dadosPessoais: { planilha: 'sigiloso', colunas: [t('cpf'), t('banco'), t('agencia'), t('conta'), t('nascimento'), t('camiseta')] },
   credenciais: {
     planilha: 'sigiloso',

@@ -1,7 +1,9 @@
 import { ErroApi, validarEvento, type Evento, type Sessao } from '@shared';
 import { removerDaAgenda, sincronizarAgenda } from '../agenda/sincronizar';
-import { exigirVersao, novoId, registrar, type Contexto, type Handlers } from '../nucleo/roteador';
-import { marcarAgendaPendente } from '../relatorios/agenda';
+import { linhasEscalas, nomeSessao } from '../escalas/comum';
+import { exigirVersao, notificar, novoId, registrar, type Contexto, type Handlers } from '../nucleo/roteador';
+import { marcarMesesPendentes } from '../relatorios/pendentes';
+import { incluirEmRodadaAberta } from './rodadas';
 
 export interface LinhaEvento {
   id: string;
@@ -120,9 +122,25 @@ function cancelarEvento(ctx: Contexto, eventoId: string, justificativa: string):
   ctx.portas.repo.atualizar('eventos', { ...evento, status: 'cancelado' });
   const ativas = linhasSessoes(ctx).filter((s) => s.eventoId === eventoId && s.status === 'ativa');
   for (const s of ativas) ctx.portas.repo.atualizar('sessoes', { ...s, status: 'cancelada' });
-  // fase 3: escalas destas sessões viram "cancelado" (não são pagas) e os escalados são avisados
+  cancelarEscalas(ctx, ativas, paraEvento(evento));
   registrar(ctx, 'evento', eventoId, 'cancelou o evento', { status: 'ativo' }, { status: 'cancelado' }, justificativa);
   return ativas.map((s) => s.id);
+}
+
+/** Quando o "horário a definir" ganha horário, quem está publicado na sessão é avisado (spec 7.1). */
+function avisarHorarioDefinido(ctx: Contexto, sessaoId: string, nomeEvento: string, chegada: string): void {
+  const publicados = linhasEscalas(ctx).filter((e) => e.sessaoId === sessaoId && e.status === 'publicado').map((e) => e.pessoaId);
+  notificar(ctx, publicados, `Horário definido: ${nomeEvento}, chegada às ${chegada}.`, '/minhas-escalas');
+}
+
+/** Escalas de sessão cancelada viram "cancelado" (nunca são pagas, spec 8.1) e os escalados são avisados no app. */
+function cancelarEscalas(ctx: Contexto, sessoes: LinhaSessao[], evento: Evento): void {
+  for (const s of sessoes) {
+    const afetadas = linhasEscalas(ctx).filter((e) => e.sessaoId === s.id && e.status !== 'cancelado' && !e.loteId);
+    for (const e of afetadas) ctx.portas.repo.atualizar('escalas', { ...e, status: 'cancelado' });
+    const avisar = afetadas.filter((e) => e.status !== 'rascunho').map((e) => e.pessoaId);
+    notificar(ctx, avisar, `Sessão cancelada: ${nomeSessao(evento, paraSessao(s))}. Você não precisa comparecer.`, '/minhas-escalas');
+  }
 }
 
 function cancelarSessao(ctx: Contexto, sessaoId: string, justificativa: string): string[] {
@@ -130,6 +148,8 @@ function cancelarSessao(ctx: Contexto, sessaoId: string, justificativa: string):
   if (!sessao) throw new ErroApi('NAO_ENCONTRADO', 'Sessão não encontrada.');
   if (sessao.status === 'cancelada') return [];
   ctx.portas.repo.atualizar('sessoes', { ...sessao, status: 'cancelada' });
+  const evento = linhasEventos(ctx).find((e) => e.id === sessao.eventoId);
+  if (evento) cancelarEscalas(ctx, [sessao], paraEvento(evento));
   registrar(ctx, 'sessao', sessaoId, 'cancelou a sessão', { status: 'ativa' }, { status: 'cancelada' }, justificativa);
   return [sessaoId];
 }
@@ -138,7 +158,7 @@ function cancelarSessao(ctx: Contexto, sessaoId: string, justificativa: string):
 function aposCancelar(ctx: Contexto, sessaoIds: string[]) {
   sincronizarAgenda(ctx.portas, sessaoIds);
   const meses = linhasSessoes(ctx).filter((s) => sessaoIds.includes(s.id)).map((s) => s.data.slice(0, 7));
-  marcarAgendaPendente(ctx.portas.props, meses);
+  marcarMesesPendentes(ctx.portas.props, meses);
 }
 
 export const handlersEventos: Handlers = {
@@ -176,19 +196,27 @@ export const handlersEventos: Handlers = {
     if (anterior) repo.atualizar('eventos', linha);
     else repo.inserir('eventos', linha);
 
+    const novas: string[] = [];
     for (const s of sessoes) {
       const antes = existentes.find((x) => x.id === s.id);
-      // fase 3: avisar os escalados quando o horário "a definir" for preenchido
-      if (antes) repo.atualizar('sessoes', linhaSessao(s, antes.id, id, antes));
-      else repo.inserir('sessoes', linhaSessao(s, novoId(ctx.portas, 's'), id));
+      if (antes) {
+        repo.atualizar('sessoes', linhaSessao(s, antes.id, id, antes));
+        if (antes.horarioADefinir && !s.horarioADefinir) avisarHorarioDefinido(ctx, antes.id, linha.nome, s.chegada ?? s.inicio ?? '');
+      }
+      else {
+        const novaId = novoId(ctx.portas, 's');
+        repo.inserir('sessoes', linhaSessao(s, novaId, id));
+        novas.push(novaId);
+      }
     }
+    incluirEmRodadaAberta(ctx, novas);
 
     const { atualizadoEm: _a, atualizadoPor: _p, ...antes } = anterior ?? ({} as LinhaEvento);
     registrar(ctx, 'evento', id, anterior ? 'alterou evento' : 'criou evento', anterior ? antes : null, linha);
 
     removerDaAgenda(ctx.portas, removidas.map((s) => s.googleEventoId));
     sincronizarAgenda(ctx.portas, linhasSessoes(ctx).filter((s) => s.eventoId === id).map((s) => s.id));
-    marcarAgendaPendente(ctx.portas.props, [...existentes, ...sessoes].map((s) => s.data.slice(0, 7)));
+    marcarMesesPendentes(ctx.portas.props, [...existentes, ...sessoes].map((s) => s.data.slice(0, 7)));
     return doEvento(ctx, id);
   },
 

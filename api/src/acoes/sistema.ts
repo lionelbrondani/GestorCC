@@ -1,6 +1,6 @@
 import { ehGestor, ErroApi, type Config, type Feriado, type RegistroHistorico } from '@shared';
 import { exigirVersao, registrar, type Contexto, type Handlers } from '../nucleo/roteador';
-import { marcarAgendaPendente } from '../relatorios/agenda';
+import { marcarAgendaPendente } from '../relatorios/pendentes';
 import { VERSAO_API } from '../versao';
 
 /** Valores iniciais do spec (seção 4.1). */

@@ -2,21 +2,24 @@
 // Ponto de entrada do Apps Script. As funções exportadas viram globais pelo rodapé do build.
 import { ErroApi } from '@shared';
 import { handlersAuth } from './acoes/auth';
+import { handlersAvaliacoes } from './acoes/avaliacoes';
 import { handlersAvisos } from './acoes/avisos';
 import { handlersPessoas } from './acoes/pessoas';
+import { handlersEscalas } from './acoes/escalas';
 import { handlersEventos } from './acoes/eventos';
+import { handlersRodadas } from './acoes/rodadas';
 import { handlersSistema } from './acoes/sistema';
 import { portasGas, travaGas } from './adaptadores/gas';
 import { sincronizarPendentes } from './agenda/sincronizar';
 import { tratarRequisicao, type Handlers } from './nucleo/roteador';
-import { gerarRelatoriosPendentes } from './relatorios/agenda';
+import { gerarRelatoriosPendentes } from './relatorios/pendentes';
 import { VERSAO_API } from './versao';
 
 export { backupDiario } from './backup';
 export { instalar, recuperarAcessoGestor } from './instalar';
 export { VERSAO_API };
 
-const HANDLERS: Handlers = { ...handlersAuth, ...handlersPessoas, ...handlersAvisos, ...handlersSistema, ...handlersEventos };
+const HANDLERS: Handlers = { ...handlersAuth, ...handlersPessoas, ...handlersAvisos, ...handlersSistema, ...handlersEventos, ...handlersRodadas, ...handlersEscalas, ...handlersAvaliacoes };
 
 function json(corpo: string): GoogleAppsScript.Content.TextOutput {
   return ContentService.createTextOutput(corpo).setMimeType(ContentService.MimeType.JSON);

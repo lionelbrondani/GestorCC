@@ -10,7 +10,7 @@ describe('plano de instalação', () => {
     expect(abasDe('sigiloso')).toEqual(['dadosPessoais', 'credenciais', 'IMPORTAR_PESSOAS']);
     expect(abasDe('dados')).not.toContain('credenciais');
     expect(abasDe('dados')).not.toContain('dadosPessoais');
-    expect(abasDe('dados')).toEqual(expect.arrayContaining(['pessoas', 'permissoes', 'avisos', 'historico', 'config', 'feriados', 'eventos', 'sessoes']));
+    expect(abasDe('dados')).toEqual(expect.arrayContaining(['pessoas', 'permissoes', 'avisos', 'historico', 'config', 'feriados', 'eventos', 'sessoes', 'rodadas', 'rodadaSessoes', 'disponibilidades', 'escalas', 'avaliacoes']));
   });
 
   it('toda tabela começa pela coluna id', () => {

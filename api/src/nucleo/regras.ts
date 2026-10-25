@@ -29,4 +29,17 @@ export const ACOES_FASE: Partial<Record<Acao, { regra: Regra; escrita: boolean }
   'eventos.salvar': { regra: ['eventos', 'editar'], escrita: true },
   'eventos.cancelar': { regra: ['eventos', 'editar'], escrita: true },
   'sessoes.cancelar': { regra: ['eventos', 'editar'], escrita: true },
+  // fase 3
+  'rodadas.listar': { regra: 'logado', escrita: false },
+  'rodadas.salvar': { regra: ['escalas', 'editar'], escrita: true },
+  'disponibilidades.listar': { regra: 'logado', escrita: false },
+  'disponibilidades.marcar': { regra: 'logado', escrita: true },
+  'escalas.listar': { regra: 'logado', escrita: false },
+  'escalas.salvarRascunho': { regra: ['escalas', 'editar'], escrita: true },
+  'escalas.publicar': { regra: ['escalas', 'editar'], escrita: true },
+  'escalas.trocar': { regra: ['escalas', 'editar'], escrita: true },
+  'escalas.convocar': { regra: ['escalas', 'editar'], escrita: true },
+  'escalas.confirmarPresenca': { regra: ['escalas', 'editar'], escrita: true },
+  'avaliacoes.listar': { regra: ['escalas', 'ver'], escrita: false },
+  'avaliacoes.salvar': { regra: ['escalas', 'editar'], escrita: true },
 };

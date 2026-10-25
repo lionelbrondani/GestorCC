@@ -66,6 +66,9 @@ export function MinhaDisponibilidade() {
     (s) => s.status === 'ativa' && s.convocacao && s.convocacao.abertaAte >= momento && !jaEscalado.has(s.id),
   );
   const abertas = (rodadas.data ?? []).filter((r) => r.status === 'aberta');
+  const novas = new Set(abertas.flatMap((r) => r.sessoesNovas ?? []));
+  const novasDaRodada = (r: (typeof abertas)[number], sessoes: Sessao[]) =>
+    sessoes.filter((s) => r.sessoesNovas?.includes(s.id) && s.status !== 'cancelada');
 
   async function aoMarcar(s: Sessao, v: boolean) {
     setErro(null);
@@ -90,6 +93,7 @@ export function MinhaDisponibilidade() {
       <div>
         <div className="negrito">
           {titulo(s)} {s.status === 'cancelada' && <Etiqueta tom="neutro">Cancelada</Etiqueta>}
+          {novas.has(s.id) && s.status !== 'cancelada' && <Etiqueta tom="destaque">nova</Etiqueta>}
         </div>
         <div className="pequeno texto-2">{horarioTexto(s)}</div>
       </div>
@@ -146,6 +150,12 @@ export function MinhaDisponibilidade() {
                 <p className="pequeno texto-2">
                   Você respondeu {respondidas} de {sessoes.length} sessões. Sem resposta conta como indisponível.
                 </p>
+              )}
+              {!encerrada && novasDaRodada(r, sessoes).length > 0 && (
+                <Alerta tom="info">
+                  <Etiqueta tom="destaque">nova</Etiqueta> Entraram depois da abertura:{' '}
+                  {novasDaRodada(r, sessoes).map((s) => `${titulo(s)} (${s.data.slice(8, 10)}/${s.data.slice(5, 7)})`).join(', ')}.
+                </Alerta>
               )}
               <Legenda />
               {meses.map((mes) => (

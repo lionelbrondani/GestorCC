@@ -129,6 +129,7 @@ Use a conta escolhida para o site no passo 1. Se for uma conta diferente da do s
      |---|---|
      | 1 | `VITE_RECURSOS=pessoas,dadosPessoais,mural,formularios,configuracoes` |
      | 2 | `VITE_RECURSOS=pessoas,dadosPessoais,mural,formularios,configuracoes,eventos` |
+     | 3 | `VITE_RECURSOS=pessoas,dadosPessoais,mural,formularios,configuracoes,eventos,escalas,escalasPessoais` |
 3. Publique:
 
    ```
@@ -245,3 +246,22 @@ Para ligar:
 Se o Google Agenda estiver fora do ar quando alguém salvar um evento, o evento fica salvo no GestorCC normalmente. A rotina de 5 minutos atualiza a agenda depois.
 
 As abas **AGENDA \<MÊS\> \<ANO\>** da planilha **GestorCC - Relatórios** são refeitas pela mesma rotina, alguns minutos depois de cada mudança.
+
+## 14. Escalas (fase 3)
+
+A fase 3 liga as rodadas, a disponibilidade, a montagem e a publicação das escalas, as trocas, a convocação extra, a presença e as avaliações.
+
+Para ligar:
+
+1. Cole o `Code.js` novo no projeto da API e salve. O manifesto não muda.
+2. Rode `instalar` de novo. Ele cria as abas `rodadas`, `rodadaSessoes`, `disponibilidades`, `escalas` e `avaliacoes` na planilha **GestorCC - Dados**.
+3. Em **Gerenciar implantações**, escolha **Nova versão** (seção 10).
+4. Publique o site com o `VITE_RECURSOS` da fase 3 (tabela da seção 7).
+
+Os avisos às pessoas (escala publicada, troca, convocação extra, cancelamento) aparecem no sininho do GestorCC. Nenhum e-mail é enviado.
+
+A planilha **GestorCC - Relatórios** ganha, alguns minutos depois de cada mudança, estas abas:
+
+- **ESCALA \<MÊS\> \<ANO\>**: a grade do mês, com experientes em negrito e "escalar menos" destacado;
+- **CONSULTA \<MÊS\> \<ANO\>**: quantas escalas cada pessoa teve no mês;
+- **HISTÓRICO DE TROCAS**.
