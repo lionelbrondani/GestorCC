@@ -109,7 +109,7 @@ export function Montador({ mes, aoPublicar }: { mes: string; aoPublicar: () => v
       <div className="linha-entre">
         <Abas
           abas={[
-            { id: 'foco', rotulo: 'Sessão a sessão' },
+            { id: 'foco', rotulo: 'Evento a evento' },
             { id: 'grade', rotulo: 'Grade do mês' },
           ]}
           ativa={visao}
@@ -143,6 +143,8 @@ export function Montador({ mes, aoPublicar }: { mes: string; aoPublicar: () => v
               acoes={acoes}
               aoAutoPreencher={() => despachar({ tipo: 'autoPreencher', sessaoIds: [sessao.id], ctx })}
               aoLimpar={() => despachar({ tipo: 'limpar', sessaoId: sessao.id })}
+              aoSalvar={async () => (estado.alterado ? salvar() : true)}
+              aoPublicar={() => (comRascunho.length ? setPublicando(true) : setAviso({ tom: 'sucesso', texto: 'Tudo revisado. Não há rascunho para publicar.' }))}
             />
           ) : (
             <MontadorGrade sessoes={ativas} dados={dados} ctx={ctx} acoes={acoes} />

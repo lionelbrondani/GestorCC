@@ -424,3 +424,19 @@ Para publicar:
 4. Depois disso, publique o site.
 
 **Onde ficam os dados:** os nomes e as matrículas ficam na planilha **Sigiloso** e não vão para o cache.
+
+## 22. Ajustes de uso (versão 0.11.0)
+
+- **Contratos:**
+  - cada contrato aparece num cartão com a trilha das 6 etapas (Contrato, Fatura, ECAD, ISS, FUNDEP, Cortesias). Verde = concluído, azul = em andamento, amarelo = a fazer, laranja = prazo perto, vermelho = atrasado, cinza = isento;
+  - o resumo no topo mostra o que falta em cada etapa, e clicar filtra a lista.
+- **Almoxarifado:**
+  - na Saída, "Quem está retirando" aceita digitar o nome. Um nome novo pode ser cadastrado na hora como autorizado;
+  - a aba **Quem pode retirar** lista as pessoas de fora, que podem ser incluídas, renomeadas e desativadas.
+- **Trocas:** valem também depois do evento. Se a presença já foi confirmada, quem entra fica como realizado. Só ficam travadas quando a pessoa já está num lote de pagamento.
+- **Montar escala:**
+  - o modo **Evento a evento** mostra um evento por tela, com as vagas como caixas e as pessoas como blocos para tocar;
+  - **Escalar próximo evento** salva e avança. No último evento, **Revisar e publicar**.
+- **Erro interno:** quem administra as Configurações passa a ver o detalhe técnico na mensagem.
+
+Para publicar: cole o `Code.js` novo, crie uma **Nova versão** e confira se o `/exec` mostra `"versao":"0.11.0"`. Não há abas novas, e não precisa rodar o `instalar`.
