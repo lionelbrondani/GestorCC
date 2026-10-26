@@ -1,0 +1,170 @@
+/* Cores das etapas (verde feito, azul andamento, amarelo a fazer, laranja atenção, vermelho atrasado, cinza isento) */
+:is(.trilha li, .contratos-resumo-item)[data-estado='feito'] {
+  --etapa: var(--cor-sucesso);
+  --etapa-fundo: var(--cor-sucesso-suave);
+}
+:is(.trilha li, .contratos-resumo-item)[data-estado='andamento'] {
+  --etapa: var(--cor-info);
+  --etapa-fundo: var(--cor-info-suave);
+}
+:is(.trilha li, .contratos-resumo-item)[data-estado='pendente'] {
+  --etapa: var(--cor-destaque-escuro);
+  --etapa-fundo: var(--cor-destaque-suave);
+}
+:is(.trilha li, .contratos-resumo-item)[data-estado='atencao'] {
+  --etapa: #d9730d;
+  --etapa-fundo: #fde9d6;
+}
+:is(.trilha li, .contratos-resumo-item)[data-estado='atrasado'] {
+  --etapa: var(--cor-erro);
+  --etapa-fundo: var(--cor-erro-suave);
+}
+:is(.trilha li, .contratos-resumo-item)[data-estado='isento'],
+:is(.trilha li, .contratos-resumo-item)[data-estado='cancelado'] {
+  --etapa: var(--cor-texto-3);
+  --etapa-fundo: var(--cor-superficie-2);
+}
+
+/* Resumo do topo: um botão por etapa, clicar filtra */
+.contratos-resumo {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: var(--esp-2);
+}
+.contratos-resumo-item {
+  display: grid;
+  justify-items: start;
+  gap: 2px;
+  padding: var(--esp-3);
+  border-radius: var(--raio-2);
+  border: 2px solid transparent;
+  border-left: 6px solid var(--etapa);
+  background: var(--cor-superficie);
+  box-shadow: var(--sombra-1);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.contratos-resumo-item strong {
+  font-family: var(--fonte-titulo);
+  font-size: 1.6rem;
+  line-height: 1;
+  color: var(--etapa);
+}
+.contratos-resumo-item small {
+  color: var(--cor-texto-2);
+}
+.contratos-resumo-item[aria-pressed='true'] {
+  border-color: var(--etapa);
+  background: var(--etapa-fundo);
+}
+
+/* Lista em cartões */
+.contratos-lista {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--esp-3);
+}
+.contrato-cartao {
+  display: grid;
+  gap: var(--esp-3);
+  padding: var(--esp-4);
+  background: var(--cor-superficie);
+  border: 1px solid var(--cor-borda);
+  border-radius: var(--raio-3);
+  color: inherit;
+  text-decoration: none;
+}
+.contrato-cartao:hover {
+  border-color: var(--cor-borda-forte);
+  box-shadow: var(--sombra-1);
+}
+.contrato-cartao[data-cancelado] {
+  opacity: 0.6;
+}
+.contrato-cabecalho {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: var(--esp-2);
+}
+.contrato-meta {
+  display: grid;
+  justify-items: end;
+  gap: 2px;
+}
+
+/* Trilha de 6 bolinhas */
+.trilha {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  position: relative;
+}
+.trilha li {
+  display: grid;
+  justify-items: center;
+  text-align: center;
+  gap: 2px;
+  position: relative;
+}
+.trilha li:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  top: 14px;
+  left: calc(50% + 16px);
+  right: calc(-50% + 16px);
+  height: 3px;
+  border-radius: 2px;
+  background: var(--cor-borda);
+}
+.trilha-bolinha {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--etapa-fundo);
+  color: var(--etapa);
+  border: 2.5px solid var(--etapa);
+}
+.trilha li[data-estado='feito'] .trilha-bolinha {
+  background: var(--etapa);
+  color: #fff;
+}
+.trilha li[data-estado='atrasado'] .trilha-bolinha {
+  background: var(--etapa);
+  color: #fff;
+  animation: trilha-pulso 1.6s ease-in-out infinite;
+}
+.trilha-rotulo {
+  font-weight: 700;
+  font-size: 13px;
+}
+.trilha-valor {
+  font-size: 11px;
+  color: var(--cor-texto-2);
+  line-height: 1.2;
+}
+@keyframes trilha-pulso {
+  50% {
+    box-shadow: 0 0 0 6px var(--etapa-fundo);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .trilha li[data-estado='atrasado'] .trilha-bolinha {
+    animation: none;
+  }
+}
+@media (max-width: 520px) {
+  .trilha-valor {
+    display: none;
+  }
+  .trilha-rotulo {
+    font-size: 11px;
+  }
+}
