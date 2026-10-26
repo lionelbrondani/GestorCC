@@ -53,6 +53,12 @@ export function criarRepositorioMemoria(
     remover(t: NomeTabela, id: string) {
       dados[t] = tabela(t).filter((x) => x.id !== id);
     },
+    inserirVarios<T extends { id: string }>(t: NomeTabela, registros: T[]) {
+      for (const r of registros) repo.inserir(t, r);
+    },
+    substituirTabela<T extends { id: string }>(t: NomeTabela, registros: T[]) {
+      dados[t] = copiar(registros) as unknown as Registro[];
+    },
     definirAutor(pessoaId: string) {
       repo.quem = pessoaId;
     },

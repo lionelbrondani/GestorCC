@@ -65,7 +65,11 @@ export function ResumoFicha({ evento, dados: d, aoBaixarAnexo }: { evento: Event
 
       <Secao titulo="Horários">
         <Item rotulo="Montagem">{d.montagem && formatarDataHora(d.montagem)}</Item>
+        {d.montagemFim && <Item rotulo="Fim da montagem">{formatarDataHora(d.montagemFim)}</Item>}
         <Item rotulo="Desmontagem">{d.desmontagem && formatarDataHora(d.desmontagem)}</Item>
+        <Item rotulo="Passagem de som">
+          {d.passagemSom ? `${d.passagemInicio ? formatarDataHora(d.passagemInicio) : '—'} até ${d.passagemFim ? d.passagemFim.slice(11) : '—'}` : d.passagemSom === false ? 'Não' : ''}
+        </Item>
         {d.sessoes.map((h) => (
           <Item key={h.sessaoId} rotulo={nomeSessao(h.sessaoId)} largo>
             {`Portas ${h.portas || '—'} · Início ${h.inicio || '—'} · Término ${h.fim || '—'} · ` +

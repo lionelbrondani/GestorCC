@@ -3,7 +3,7 @@ import { CalendarCheck, ClipboardList, Home, Menu, Wallet, Bell } from 'lucide-r
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { Link, NavLink, useLocation } from 'react-router-dom';
 import { recursoAtivo } from '../recursos';
-import { ITEM_INICIO, itensVisiveis, type ItemMenu } from './menu';
+import { CREDITO, ITEM_INICIO, itensVisiveis, type ItemMenu } from './menu';
 import './layout.css';
 
 function iniciais(nome: string): string {
@@ -36,6 +36,7 @@ export function MenuLateral({ pessoa }: { pessoa: Pessoa }) {
       <ListaMenu itens={[ITEM_INICIO]} />
       <ListaMenu titulo="Gestão" itens={gestao} />
       <ListaMenu titulo="Pessoal" itens={pessoais} />
+      <p className="cc-credito">{CREDITO}</p>
     </aside>
   );
 }

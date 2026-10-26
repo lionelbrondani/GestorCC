@@ -92,6 +92,7 @@ export const ACOES_FASE: Partial<Record<Acao, { regra: Regra; escrita: boolean }
   'fichas.link': { regra: ['eventos', 'editar'], escrita: true },
   'fichas.salvar': { regra: ['eventos', 'editar'], escrita: true },
   'fichas.travar': { regra: ['eventos', 'editar'], escrita: true },
+  'fichas.lancarAgenda': { regra: ['eventos', 'editar'], escrita: true },
   'fichas.anexo': { regra: ['eventos', 'editar'], escrita: false },
   'documentos.gerar': { regra: ['contratos', 'editar'], escrita: true },
   // fase 7

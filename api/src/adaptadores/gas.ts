@@ -172,6 +172,28 @@ export function repositorioGas(relogio: Relogio): Repositorio {
       if (linha > 0) folha.deleteRow(linha);
       a.linhas = a.linhas.filter((x) => x.id !== id);
     },
+    inserirVarios(t, registros) {
+      if (!registros.length) return;
+      const { a, folha } = paraGravar(t);
+      const ids = new Set(a.linhas.map((x) => x.id));
+      const agora = relogio.agora();
+      const objs = registros.map((r) => {
+        if (ids.has(r.id)) throw new Error(`Registro repetido em ${t}: ${r.id}`);
+        ids.add(r.id);
+        return { ...r, criadoEm: agora, atualizadoEm: agora, atualizadoPor: autor } as Record<string, unknown>;
+      });
+      const matriz = objs.map((o) => objetoParaLinha(t, a.cab, o).map(paraCelula));
+      folha.getRange(folha.getLastRow() + 1, 1, matriz.length, a.cab.length).setValues(matriz);
+      a.linhas.push(...objs);
+    },
+    substituirTabela(t, registros) {
+      const { a, folha } = paraGravar(t);
+      const ultima = folha.getLastRow();
+      if (ultima > 1) folha.getRange(2, 1, ultima - 1, Math.max(a.cab.length, folha.getLastColumn())).clearContent();
+      const objs = registros.map((r) => ({ ...r }) as Record<string, unknown>);
+      if (objs.length) folha.getRange(2, 1, objs.length, a.cab.length).setValues(objs.map((o) => objetoParaLinha(t, a.cab, o).map(paraCelula)));
+      a.linhas = objs;
+    },
     descartarLeituras: () => leitor.descartar(),
     concluirEscrita: () => leitor.concluirEscrita(),
     lerAbaLivre(p, nome) {

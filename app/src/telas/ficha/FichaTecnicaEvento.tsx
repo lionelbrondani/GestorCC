@@ -1,5 +1,5 @@
 import { formatarData, formatarDataHora, type Evento, type FichaPublica, type FichaTecnica, type Sessao } from '@shared';
-import { Copy, Eye, Link2, Lock, LockOpen, Pencil, Printer, RefreshCw } from 'lucide-react';
+import { CalendarPlus, Copy, Eye, Link2, Lock, LockOpen, Pencil, Printer, RefreshCw } from 'lucide-react';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useApi } from '../../api/cliente';
@@ -10,6 +10,7 @@ import { FormularioFicha } from './FormularioFicha';
 import { ResumoFicha } from './ResumoFicha';
 
 const INVALIDAR = ['fichas.obter'] as const;
+const NOME_ITEM = { montagem: 'montagem', passagem: 'passagem de som', desmontagem: 'desmontagem' } as const;
 
 /** O evento como a ficha o vê: nome e sessões ativas em ordem. */
 export function eventoDaFicha(evento: Evento, sessoes: Sessao[]): FichaPublica['evento'] {
@@ -52,6 +53,7 @@ export function FichaTecnicaEvento({ evento, sessoes }: { evento: Evento; sessoe
   const ficha = useConsulta('fichas.obter', { eventoId: evento.id });
   const gerar = useMutacao('fichas.link', [...INVALIDAR]);
   const travar = useMutacao('fichas.travar', [...INVALIDAR]);
+  const lancar = useMutacao('fichas.lancarAgenda', [...INVALIDAR]);
   const salvar = useMutacao('fichas.salvar', [...INVALIDAR]);
   const [aviso, setAviso] = useState<{ tom: 'sucesso' | 'erro'; texto: string } | null>(null);
   const [modal, setModal] = useState<'ver' | 'corrigir' | 'novoLink' | null>(null);
@@ -128,6 +130,26 @@ export function FichaTecnicaEvento({ evento, sessoes }: { evento: Evento; sessoe
             <Botao tamanho="pequeno" variante="fantasma" onClick={() => setModal('novoLink')}>
               <RefreshCw size={16} aria-hidden /> Gerar novo link
             </Botao>
+          </div>
+          <div className="linha">
+            <Botao
+              tamanho="pequeno"
+              variante={f.agenda ? 'secundario' : 'primario'}
+              carregando={lancar.isPending}
+              onClick={() =>
+                executar(async () => {
+                  const r = await lancar.mutateAsync({ eventoId: evento.id });
+                  setAviso({ tom: 'sucesso', texto: `Na agenda do CC: ${(r.agenda?.itens ?? []).map((i) => NOME_ITEM[i]).join(', ')}.` });
+                })
+              }
+            >
+              <CalendarPlus size={16} aria-hidden /> {f.agenda ? 'Atualizar na agenda do CC' : 'Lançar montagem e desmontagem na agenda do CC'}
+            </Botao>
+            {f.agenda && (
+              <span className="pequeno texto-2">
+                Lançado em {formatarDataHora(f.agenda.lancadoEm)}: {f.agenda.itens.map((i) => NOME_ITEM[i]).join(', ')}. Se a ficha mudar, atualize.
+              </span>
+            )}
           </div>
         </div>
       )}

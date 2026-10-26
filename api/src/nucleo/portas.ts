@@ -53,6 +53,10 @@ export interface Repositorio {
   /** Substitui o registro de mesmo id; carimba atualizadoEm/atualizadoPor. */
   atualizar<T extends { id: string }>(tabela: NomeTabela, registro: T): void;
   remover(tabela: NomeTabela, id: string): void;
+  /** Insere vários registros numa escrita só (cargas grandes, como os dados fictícios). */
+  inserirVarios<T extends { id: string }>(tabela: NomeTabela, registros: T[]): void;
+  /** Reescreve a tabela inteira só com estes registros (limpeza em massa); os registros vão como estão, com os carimbos. */
+  substituirTabela<T extends { id: string }>(tabela: NomeTabela, registros: T[]): void;
   /** Lê uma aba fora do esquema (ex.: IMPORTAR_PESSOAS), usando a primeira linha como cabeçalho. */
   lerAbaLivre(planilha: Planilha, aba: string): Record<string, unknown>[];
   /** Reescreve uma aba fora do esquema (relatórios): cria se faltar, limpa e grava as linhas; a primeira é o cabeçalho. */

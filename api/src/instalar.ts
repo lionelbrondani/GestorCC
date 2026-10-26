@@ -38,6 +38,12 @@ export function planoInstalacao(): { planilha: Planilha; nomeArquivo: string; ab
   ];
 }
 
+/** Colunas do esquema que a aba ainda não tem (o cabeçalho pode ter espaços). */
+export function colunasQueFaltam(atual: string[], esperado: string[]): string[] {
+  const tem = new Set(atual.map((c) => c.trim()));
+  return esperado.filter((c) => !tem.has(c));
+}
+
 function exigir(chave: string): string {
   const v = propriedadesGas.obter(chave);
   if (!v) throw new Error(`Preencha a propriedade do script "${chave}" antes de rodar instalar().`);
@@ -78,6 +84,11 @@ export function instalar(): void {
       if (folha.getLastRow() === 0) {
         folha.getRange(1, 1, 1, aba.cabecalhos.length).setValues([aba.cabecalhos]).setFontWeight('bold').setBackground('#232323').setFontColor('#F5C518');
         folha.setFrozenRows(1);
+      } else if (aba.nome !== 'LEIA-ME') {
+        // aba que já existia: acrescenta à direita as colunas novas (versões novas do sistema)
+        const largura = folha.getLastColumn();
+        const faltam = colunasQueFaltam(folha.getRange(1, 1, 1, largura).getValues()[0].map(String), aba.cabecalhos);
+        if (faltam.length) folha.getRange(1, largura + 1, 1, faltam.length).setValues([faltam]).setFontWeight('bold').setBackground('#232323').setFontColor('#F5C518');
       }
     }
     for (const sobra of planilha.getSheets()) {

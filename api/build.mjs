@@ -7,7 +7,7 @@ import { fileURLToPath, URL } from 'node:url';
 const raiz = fileURLToPath(new URL('.', import.meta.url));
 
 // O Apps Script só enxerga funções declaradas no topo do arquivo.
-const GLOBAIS = ['doPost', 'doGet', 'instalar', 'recuperarAcessoGestor', 'backupDiario', 'gatilhoMinutos', 'aoAlterarPlanilha'];
+const GLOBAIS = ['doPost', 'doGet', 'instalar', 'recuperarAcessoGestor', 'backupDiario', 'gatilhoMinutos', 'aoAlterarPlanilha', 'resetarDados', 'criarDadosFicticios'];
 const rodape = GLOBAIS.map((f) => `function ${f}(e) { return __gestor.${f}(e); }`).join('\n');
 
 /** Importa arquivos com '?raw' como texto (o manual de uso da busca), como o Vite faz nos testes. */

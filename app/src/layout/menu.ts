@@ -46,6 +46,9 @@ export const ITENS_GESTAO: ItemMenu[] = [
   { rota: '/configuracoes', rotulo: 'Configurações', icone: Settings, modulo: 'configuracoes' },
 ];
 
+/** Crédito de quem desenvolveu o sistema (login e rodapé do menu). */
+export const CREDITO = 'Desenvolvido pelo bolsista Lionel Brondani';
+
 export const ITEM_INICIO: ItemMenu = { rota: '/', rotulo: 'Início', icone: Home };
 
 export const ITENS_PESSOAIS: ItemMenu[] = [

@@ -236,3 +236,13 @@
     display: none !important;
   }
 }
+
+/* Crédito no rodapé do menu lateral */
+.cc-credito {
+  margin: auto 0 0;
+  padding-top: var(--esp-3);
+  border-top: 1px solid var(--cor-nav-2);
+  font-size: 11px;
+  color: var(--cor-nav-texto-2);
+  text-align: center;
+}

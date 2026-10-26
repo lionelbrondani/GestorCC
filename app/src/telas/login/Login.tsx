@@ -3,6 +3,7 @@ import { Navigate, useNavigate, useSearchParams } from 'react-router-dom';
 import { useSessao } from '../../auth/SessaoContexto';
 import { MODO_PROTOTIPO } from '../../ambiente';
 import { Alerta, Botao, Campo, Modal } from '../../componentes';
+import { CREDITO } from '../../layout/menu';
 import './login.css';
 
 function Padrao() {
@@ -83,6 +84,7 @@ export function Login() {
             </p>
           )}
         </form>
+        <p className="login-credito">{CREDITO}</p>
       </div>
       <Modal
         aberto={esqueci}

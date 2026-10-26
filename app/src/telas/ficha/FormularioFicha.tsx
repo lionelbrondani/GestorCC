@@ -216,9 +216,27 @@ export function FormularioFicha({ evento, inicial, modo, aoSalvar, aoAnexar, aoB
             <li>Em eventos de um dia, a montagem e a desmontagem acontecem na mesma data do evento.</li>
           </ul>
         </Alerta>
-        <Campo rotulo="Início da montagem" erro={erro('montagem')}>
-          {(id) => <input id={id} className="cc-entrada" type="datetime-local" value={d.montagem} onChange={(e) => mudar({ montagem: e.target.value })} />}
-        </Campo>
+        <div className="grade-2">
+          <Campo rotulo="Início da montagem" erro={erro('montagem')}>
+            {(id) => <input id={id} className="cc-entrada" type="datetime-local" value={d.montagem} onChange={(e) => mudar({ montagem: e.target.value })} />}
+          </Campo>
+          <Campo rotulo="Fim da montagem (opcional)" erro={erro('montagemFim')}>
+            {(id) => <input id={id} className="cc-entrada" type="datetime-local" value={d.montagemFim} onChange={(e) => mudar({ montagemFim: e.target.value })} />}
+          </Campo>
+        </div>
+        <Pergunta titulo="Haverá passagem de som?">
+          <SimNao nome="Passagem de som" valor={d.passagemSom} aoMudar={(v) => mudar({ passagemSom: v, ...(v ? {} : { passagemInicio: '', passagemFim: '' }) })} />
+          {d.passagemSom && (
+            <div className="grade-2">
+              <Campo rotulo="Início da passagem de som" erro={erro('passagemInicio')}>
+                {(id) => <input id={id} className="cc-entrada" type="datetime-local" value={d.passagemInicio} onChange={(e) => mudar({ passagemInicio: e.target.value })} />}
+              </Campo>
+              <Campo rotulo="Fim da passagem de som" erro={erro('passagemFim')}>
+                {(id) => <input id={id} className="cc-entrada" type="datetime-local" value={d.passagemFim} onChange={(e) => mudar({ passagemFim: e.target.value })} />}
+              </Campo>
+            </div>
+          )}
+        </Pergunta>
         {d.sessoes.map((h, i) => {
           const e = (c: string) => erro(`sessoes.${i}.${c}`);
           return (

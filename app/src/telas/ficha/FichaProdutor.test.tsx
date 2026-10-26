@@ -77,3 +77,14 @@ describe('ficha técnica na tela do evento', () => {
     expect(screen.queryByText('Ficha técnica')).not.toBeInTheDocument();
   });
 });
+
+describe('ficha técnica na agenda do CC', () => {
+  it('o gestor lança montagem, passagem de som e desmontagem na agenda', async () => {
+    const { api, token, sessaoId } = await prepararLink();
+    await api.chamar('ficha.salvar', { token, dados: { ...completa(sessaoId), passagemSom: true, passagemInicio: '2026-12-12T16:00', passagemFim: '2026-12-12T17:00' }, enviar: true });
+    await renderizar({ rota: '/agenda/e19' });
+    fireEvent.click(await screen.findByRole('button', { name: /Lançar montagem e desmontagem na agenda do CC/ }));
+    expect(await screen.findByText('Na agenda do CC: montagem, passagem de som, desmontagem.')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Atualizar na agenda do CC/ })).toBeInTheDocument();
+  });
+});

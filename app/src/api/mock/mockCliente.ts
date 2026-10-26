@@ -7,6 +7,7 @@ import {
   errosDaFicha,
   fichaTravada,
   fichaVazia,
+  itensDaAgenda,
   limparFicha,
   prazoDaFicha,
   type FichaPublica,
@@ -225,6 +226,7 @@ const REGRAS: Record<Acao, Regra> = {
   'fichas.link': ['eventos', 'editar'],
   'fichas.salvar': ['eventos', 'editar'],
   'fichas.travar': ['eventos', 'editar'],
+  'fichas.lancarAgenda': ['eventos', 'editar'],
   'fichas.anexo': ['eventos', 'editar'],
   'avisos.listar': 'logado',
   'avisos.salvar': ['mural', 'editar'],
@@ -775,7 +777,7 @@ const handlers: Handlers = {
     const atual = FICHAS_PROTOTIPO.get(eventoId);
     const token = `ficha-${eventoId}-${Date.now().toString(36)}${Math.random().toString(36).slice(2, 10)}`;
     if (!atual) {
-      FICHAS_PROTOTIPO.set(eventoId, { eventoId, status: 'rascunho', trava: 'auto', enviadaEm: '', token, dados: fichaVazia(sessoesDaFicha(ctx, eventoId)), atualizadoEm: ctx.agora });
+      FICHAS_PROTOTIPO.set(eventoId, { eventoId, status: 'rascunho', trava: 'auto', enviadaEm: '', token, dados: fichaVazia(sessoesDaFicha(ctx, eventoId)), atualizadoEm: ctx.agora, agenda: null });
     } else if (novo) atual.token = token;
     return fichaCompleta(ctx, eventoId);
   },
@@ -783,6 +785,13 @@ const handlers: Handlers = {
     const f = FICHAS_PROTOTIPO.get(eventoId);
     if (!f) throw erro('NAO_ENCONTRADO', 'Gere o link da ficha técnica primeiro.');
     Object.assign(f, { dados: limparFicha({ ...dados, anexos: f.dados.anexos.filter((a) => dados.anexos.some((x) => x.id === a.id)) }, sessoesDaFicha(ctx, eventoId)), atualizadoEm: ctx.agora });
+    return fichaCompleta(ctx, eventoId);
+  },
+  'fichas.lancarAgenda': ({ eventoId }, ctx) => {
+    const f = fichaCompleta(ctx, eventoId);
+    const itens = itensDaAgenda(f.dados, sessoesDaFicha(ctx, eventoId));
+    if (!itens.length) throw erro('VALIDACAO', 'Preencha a montagem ou a desmontagem na ficha antes de lançar na agenda.');
+    FICHAS_PROTOTIPO.get(eventoId)!.agenda = { lancadoEm: ctx.agora, itens: itens.map((i) => i.chave) };
     return fichaCompleta(ctx, eventoId);
   },
   'fichas.travar': ({ eventoId, trava }, ctx) => {

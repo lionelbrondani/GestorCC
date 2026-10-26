@@ -76,6 +76,11 @@ export interface FichaTecnicaDados {
   /** 'AAAA-MM-DDTHH:MM'. */
   montagem: string;
   desmontagem: string;
+  /** Opcional: até quando vai a montagem ('AAAA-MM-DDTHH:MM'). */
+  montagemFim: string;
+  passagemSom: boolean | null;
+  passagemInicio: string;
+  passagemFim: string;
   /** Uma linha por sessão do evento, na ordem das sessões. */
   sessoes: HorarioSessaoFicha[];
   responsavel: ResponsavelFicha;
@@ -114,6 +119,8 @@ export interface FichaTecnica {
   atualizadoEm?: string;
   /** Chave do link do produtor (/ficha/<token>). */
   token: string;
+  /** O que já foi lançado na agenda do CC (montagem, passagem de som, desmontagem); null se nunca foi. */
+  agenda: { lancadoEm: string; itens: ItemAgendaFicha['chave'][] } | null;
   dados: FichaTecnicaDados;
 }
 
@@ -128,6 +135,7 @@ type SessaoBase = { id: Id; data: DataISO };
 export function fichaVazia(sessoes: SessaoBase[]): FichaTecnicaDados {
   return {
     tipo: '', tipoOutro: '', sinopse: '', anexos: [], publico: null, elenco: null, montagem: '', desmontagem: '',
+    montagemFim: '', passagemSom: null, passagemInicio: '', passagemFim: '',
     sessoes: sessoes.map((s) => ({ sessaoId: s.id, portas: '', inicio: '', fim: '', intervalo: null, intervaloInicio: '', intervaloFim: '' })),
     responsavel: { vinculo: '', vinculoOutro: '', nome: '', documento: '', siapeMatricula: '', email: '', telefone: '' },
     descricaoMontagem: '', equipeMontagem: '', locais: [], sessaoFotos: null, leituraIngressos: null, ingressoSolidario: null,
@@ -163,6 +171,10 @@ export function limparFicha(bruto: unknown, sessoes: SessaoBase[]): FichaTecnica
     elenco: inteiro(b.elenco),
     montagem: dataHora(b.montagem),
     desmontagem: dataHora(b.desmontagem),
+    montagemFim: dataHora(b.montagemFim),
+    passagemSom: simNao(b.passagemSom),
+    passagemInicio: dataHora(b.passagemInicio),
+    passagemFim: dataHora(b.passagemFim),
     sessoes: sessoes.map((s) => {
       const h = horarios.find((x) => x.sessaoId === s.id) ?? {};
       return {
@@ -255,6 +267,13 @@ export function errosDaFicha(d: FichaTecnicaDados, sessoes: SessaoBase[]): ErroF
   else if (comecos.length && d.montagem > comecos.sort()[0]) erro('horarios', 'montagem', 'A montagem deve começar antes da abertura das portas.');
   if (!d.desmontagem) erro('horarios', 'desmontagem', 'Informe a data e o horário da desmontagem.');
   else if (fins.length && d.desmontagem < fins.sort()[fins.length - 1]) erro('horarios', 'desmontagem', 'A desmontagem deve ser depois do término da última sessão.');
+  if (d.montagemFim && d.montagem && d.montagemFim <= d.montagem) erro('horarios', 'montagemFim', 'O fim da montagem deve ser depois do início.');
+  if (d.passagemSom) {
+    if (!d.passagemInicio) erro('horarios', 'passagemInicio', 'Informe o início da passagem de som.');
+    else if (d.montagem && d.passagemInicio < d.montagem) erro('horarios', 'passagemInicio', 'A passagem de som deve ser depois do início da montagem.');
+    if (!d.passagemFim) erro('horarios', 'passagemFim', 'Informe o fim da passagem de som.');
+    else if (d.passagemInicio && d.passagemFim <= d.passagemInicio) erro('horarios', 'passagemFim', 'O fim da passagem de som deve ser depois do início.');
+  }
 
   // responsável e equipe
   const r = d.responsavel;
@@ -345,4 +364,47 @@ export interface FichaResumo {
   poltronas: number;
   camarins: number;
   coffeeBreak: boolean | null;
+}
+
+// ——— agenda do CC ———
+
+export interface ItemAgendaFicha {
+  chave: 'montagem' | 'passagem' | 'desmontagem';
+  titulo: string;
+  inicio: string;
+  fim: string;
+}
+
+/** 'AAAA-MM-DDTHH:MM' mais `min` minutos. */
+function somarMinutos(dataHora: string, min: number): string {
+  const d = new Date(`${dataHora}:00Z`);
+  d.setUTCMinutes(d.getUTCMinutes() + min);
+  return d.toISOString().slice(0, 16);
+}
+
+/**
+ * O que a ficha manda para a agenda do setor: montagem (até o fim informado ou 1 hora antes das portas da primeira
+ * sessão), passagem de som e desmontagem (do término da última sessão até o fim informado).
+ */
+export function itensDaAgenda(d: FichaTecnicaDados, sessoes: SessaoBase[]): ItemAgendaFicha[] {
+  const itens: ItemAgendaFicha[] = [];
+  const horarios = d.sessoes
+    .map((h) => ({ h, data: sessoes.find((s) => s.id === h.sessaoId)?.data ?? '' }))
+    .filter((x) => x.data)
+    .sort((a, b) => `${a.data}T${a.h.portas || a.h.inicio}`.localeCompare(`${b.data}T${b.h.portas || b.h.inicio}`));
+  const primeira = horarios[0];
+  const ultima = horarios[horarios.length - 1];
+  if (d.montagem) {
+    const portas = primeira && (primeira.h.portas || primeira.h.inicio) ? somarMinutos(`${primeira.data}T${primeira.h.portas || primeira.h.inicio}`, -60) : '';
+    const fim = d.montagemFim || (portas > d.montagem ? portas : somarMinutos(d.montagem, 240));
+    itens.push({ chave: 'montagem', titulo: 'Montagem', inicio: d.montagem, fim });
+  }
+  if (d.passagemSom && d.passagemInicio && d.passagemFim) itens.push({ chave: 'passagem', titulo: 'Passagem de som', inicio: d.passagemInicio, fim: d.passagemFim });
+  if (d.desmontagem) {
+    let inicio = ultima?.h.fim ? `${ultima.data}T${ultima.h.fim}` : '';
+    if (inicio && ultima.h.inicio && ultima.h.fim < ultima.h.inicio) inicio = `${somarDias(ultima.data, 1)}T${ultima.h.fim}`; // término de madrugada
+    if (!inicio || inicio >= d.desmontagem) inicio = somarMinutos(d.desmontagem, -120);
+    itens.push({ chave: 'desmontagem', titulo: 'Desmontagem', inicio, fim: d.desmontagem });
+  }
+  return itens;
 }

@@ -90,3 +90,11 @@
     padding: var(--esp-5) var(--esp-4);
   }
 }
+
+.login-credito {
+  position: relative;
+  margin: var(--esp-4) 0 0;
+  font-size: 12px;
+  color: var(--cor-nav-texto-2);
+  text-align: center;
+}

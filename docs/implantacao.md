@@ -440,3 +440,31 @@ Para publicar:
 - **Erro interno:** quem administra as Configurações passa a ver o detalhe técnico na mensagem.
 
 Para publicar: cole o `Code.js` novo, crie uma **Nova versão** e confira se o `/exec` mostra `"versao":"0.11.0"`. Não há abas novas, e não precisa rodar o `instalar`.
+
+## 23. Dados fictícios, reset e agenda da ficha (versão 0.12.0)
+
+**Para publicar:**
+1. Cole o `Code.js` novo e salve.
+2. Rode o **`instalar`**. Ele acrescenta a coluna `agenda` na aba `fichas`, porque o `instalar` agora acrescenta colunas novas em abas que já existem.
+3. Crie uma **Nova versão** e confira se o `/exec` mostra `"versao":"0.12.0"`.
+
+**Recomeçar do zero (`resetarDados`):** no editor do Apps Script, escolha `resetarDados` e clique em **Executar**.
+- **Fica:** você (a pessoa do `EMAIL_PRIMEIRO_GESTOR`), os itens reais do almoxarifado com os saldos, as configurações e os feriados.
+- **Sai todo o resto:** pessoas, eventos, escalas, contratos, fichas, cortesias, histórico e notificações. Os eventos dessas sessões também saem da agenda do CC.
+
+**Dados fictícios (`criarDadosFicticios`):** rode depois de um reset. A função cria:
+- **Pessoas:** 15 (12 bolsistas e 3 servidores), com e-mail `…@teste.invalid`. A senha inicial é a matrícula, de 2099000001 a 2099000015.
+- **Eventos:** 13 "TESTE · …", passados e futuros, um deles cancelado.
+- **Escalas e rodadas:** uma rodada fechada e outra aberta, disponibilidades, escalas realizadas, publicadas e em rascunho, e um lote de pagamento.
+- **Contratos:** 4, um deles com a fatura vencida, e 1 aditivo.
+- **Fichas e cortesias:** uma ficha enviada, uma em rascunho e destinos de cortesias.
+- **Almoxarifado:** itens "TESTE - …", retiradas, um autorizado e um pedido.
+- **Outros:** ocorrências, avisos e avaliações.
+
+Nada disso vai para a agenda Google sozinho. Para tirar tudo, rode `resetarDados` de novo.
+
+**Ficha técnica na agenda do CC:**
+- **Na ficha:** a etapa Horários tem "Fim da montagem" e "Haverá passagem de som?", com início e fim. As duas perguntas são opcionais.
+- **No evento:** o botão **Lançar montagem e desmontagem na agenda do CC** cria os eventos "Montagem", "Passagem de som" e "Desmontagem" na agenda do setor, sem convidados.
+- **Se a ficha mudar:** use **Atualizar na agenda do CC**. O que saiu da ficha também sai da agenda.
+- **Evento cancelado:** esses itens não saem sozinhos da agenda; apague à mão.

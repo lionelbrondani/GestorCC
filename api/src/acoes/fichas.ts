@@ -4,6 +4,7 @@ import {
   fichaTravada,
   fichaVazia,
   formatarData,
+  itensDaAgenda,
   limparFicha,
   MAX_ANEXOS_FICHA,
   prazoDaFicha,
@@ -12,6 +13,7 @@ import {
   type FichaResumo,
   type FichaTecnica,
   type FichaTecnicaDados,
+  type ItemAgendaFicha,
   type TravaFicha,
 } from '@shared';
 import { paraBase64Url } from '../auth/bytes';
@@ -26,6 +28,8 @@ interface LinhaFicha {
   trava: TravaFicha;
   dados: FichaTecnicaDados | null;
   enviadaEm: string;
+  /** Eventos criados na agenda do CC a partir da ficha (id do Google por item). */
+  agenda: { lancadoEm: string; ids: Partial<Record<ItemAgendaFicha['chave'], string>> } | null;
   atualizadoEm?: string;
   atualizadoPor?: string;
 }
@@ -41,6 +45,7 @@ interface LinhaSigilo {
 
 const SEM_LINK = () => new ErroApi('LINK', 'Este link não vale mais. Peça um novo ao Centro de Convenções.');
 const TRAVAS: TravaFicha[] = ['auto', 'travada', 'destravada'];
+const ORDEM_AGENDA: ItemAgendaFicha['chave'][] = ['montagem', 'passagem', 'desmontagem'];
 /** PDF, imagem ou Word, até ~10 MB (o arquivo chega em base64, que ocupa 4/3 do tamanho). */
 const TIPOS_ANEXO = /^data:(application\/pdf|image\/(png|jpeg|webp)|application\/msword|application\/vnd\.openxmlformats-officedocument\.wordprocessingml\.document);base64,/;
 const MAX_ANEXO_BASE64 = 14_000_000;
@@ -72,6 +77,7 @@ function montar(ctx: Contexto, f: Contexto_): FichaTecnica {
   return {
     eventoId: f.linha.id, status: f.linha.status, trava: f.linha.trava, travada: fichaTravada({ trava: f.linha.trava, prazo, hoje: ctx.portas.relogio.hoje() }),
     prazo, enviadaEm: f.linha.enviadaEm, atualizadoEm: f.linha.atualizadoEm, token: f.sigilo.token, dados,
+    agenda: f.linha.agenda ? { lancadoEm: f.linha.agenda.lancadoEm, itens: ORDEM_AGENDA.filter((k) => f.linha.agenda!.ids[k]) } : null,
   };
 }
 
@@ -156,7 +162,7 @@ export const handlersFichas: Handlers = {
     const atual = doEvento(ctx, eventoId);
     if (!atual) {
       const sessoes = sessoesAtivas(ctx, eventoId);
-      ctx.portas.repo.inserir('fichas', { id: eventoId, status: 'rascunho', trava: 'auto', dados: fichaVazia(sessoes), enviadaEm: '' });
+      ctx.portas.repo.inserir('fichas', { id: eventoId, status: 'rascunho', trava: 'auto', dados: fichaVazia(sessoes), enviadaEm: '', agenda: null });
       ctx.portas.repo.inserir('fichasSigilo', { id: eventoId, token: novoToken(ctx), documento: '', email: '', telefone: '' });
       registrar(ctx, 'evento', eventoId, 'gerou o link da ficha técnica', null, null);
     } else if (novo) {
@@ -171,6 +177,41 @@ export const handlersFichas: Handlers = {
     exigirVersao(f.linha, versao, nomeDe(ctx));
     gravar(ctx, f, limparFicha(dados, f.sessoes));
     registrar(ctx, 'evento', eventoId, 'corrigiu a ficha técnica', null, null);
+    return montar(ctx, doEventoOuErro(ctx, eventoId));
+  },
+
+  'fichas.lancarAgenda': ({ eventoId }, ctx) => {
+    const f = doEventoOuErro(ctx, eventoId);
+    if (!ctx.portas.agenda.ligada()) throw new ErroApi('AGENDA', 'A agenda do setor ainda não está ligada (rode o instalar).');
+    const dados = montar(ctx, f).dados;
+    const itens = itensDaAgenda(dados, f.sessoes);
+    if (!itens.length) throw new ErroApi('VALIDACAO', 'Preencha a montagem ou a desmontagem na ficha antes de lançar na agenda.');
+    const anteriores = f.linha.agenda?.ids ?? {};
+    const ids: Partial<Record<ItemAgendaFicha['chave'], string>> = {};
+    const descricao = [
+      'Lançado a partir da ficha técnica do GestorCC.',
+      dados.responsavel.nome && `Responsável: ${dados.responsavel.nome}.`,
+      dados.descricaoMontagem && `Montagem: ${dados.descricaoMontagem}`,
+    ]
+      .filter(Boolean)
+      .join('\n');
+    for (const item of itens) {
+      ids[item.chave] = ctx.portas.agenda.salvar(anteriores[item.chave] ?? null, {
+        titulo: `${item.titulo} · ${f.evento.nome}`, descricao, quando: { diaInteiro: false, inicio: item.inicio, fim: item.fim }, convidados: [],
+      });
+    }
+    for (const chave of ORDEM_AGENDA) {
+      const antigo = anteriores[chave];
+      if (!antigo || ids[chave]) continue;
+      try {
+        ctx.portas.agenda.remover(antigo); // o item saiu da ficha (ex.: não há mais passagem de som)
+      } catch {
+        // já apagado no Google
+      }
+    }
+    const { atualizadoPor: _p, ...linha } = f.linha;
+    ctx.portas.repo.atualizar('fichas', { ...linha, agenda: { lancadoEm: ctx.portas.relogio.agora(), ids } });
+    registrar(ctx, 'evento', eventoId, `lançou na agenda do CC: ${itens.map((i) => i.titulo.toLowerCase()).join(', ')}`, null, null);
     return montar(ctx, doEventoOuErro(ctx, eventoId));
   },
 

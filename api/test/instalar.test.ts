@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { pastasParaApagar } from '../src/backup';
-import { planoInstalacao } from '../src/instalar';
+import { colunasQueFaltam, planoInstalacao } from '../src/instalar';
 
 describe('plano de instalação', () => {
   const plano = planoInstalacao();
@@ -32,5 +32,12 @@ describe('backup', () => {
   it('apaga só as pastas com mais de 30 dias e ignora nomes fora do padrão', () => {
     const pastas = [{ nome: '2026-09-20' }, { nome: '2026-09-25' }, { nome: '2026-10-20' }, { nome: 'outra coisa' }];
     expect(pastasParaApagar(pastas, '2026-10-24', 30)).toEqual(['2026-09-20']);
+  });
+});
+
+describe('colunas novas em abas que já existem', () => {
+  it('acrescenta só as colunas que faltam, na ordem do esquema', () => {
+    expect(colunasQueFaltam(['id', 'status', ' trava ', 'dados'], ['id', 'status', 'trava', 'dados', 'enviadaEm', 'agenda'])).toEqual(['enviadaEm', 'agenda']);
+    expect(colunasQueFaltam(['id', 'nome'], ['id', 'nome'])).toEqual([]);
   });
 });

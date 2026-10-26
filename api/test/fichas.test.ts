@@ -1,6 +1,7 @@
 import { fichaVazia, type FichaPublica, type FichaResumo, type FichaTecnica, type FichaTecnicaDados } from '@shared';
 import { describe, expect, it } from 'vitest';
 import { handlersFichas } from '../src/acoes/fichas';
+import { agendaMemoria } from '../src/adaptadores/memoria';
 import { criarAmbiente } from './apoio';
 import { linhaEvento, linhaSessao } from './fabricasApi';
 
@@ -162,5 +163,50 @@ describe('ficha técnica: lista do menu', () => {
   it('bolsista não lista fichas', () => {
     const amb = ambiente();
     expect(amb.chamar('fichas.listar', null, { token: amb.token('p02') })).toMatchObject({ ok: false, erro: { codigo: 'SEM_PERMISSAO' } });
+  });
+});
+
+describe('ficha técnica: lançar na agenda do CC', () => {
+  function comAgenda() {
+    const agenda = agendaMemoria();
+    const amb = criarAmbiente({ handlers: handlersFichas, agenda });
+    amb.relogio.definir('2026-11-01T10:00');
+    amb.repo.inserir('eventos', linhaEvento('e1', 'Show Teste'));
+    amb.repo.inserir('sessoes', linhaSessao({ id: 's1', eventoId: 'e1', data: '2026-11-18', inicio: '19:30', fim: '22:00' }));
+    const gestor = amb.token('p01');
+    const token = (amb.chamar('fichas.link', { eventoId: 'e1', novo: false }, { token: gestor }) as Ok<FichaTecnica>).dados.token;
+    const lancar = () => amb.chamar('fichas.lancarAgenda', { eventoId: 'e1' }, { token: gestor });
+    const salvar = (t: string, dados: FichaTecnicaDados) => amb.chamar('ficha.salvar', { token: t, dados, enviar: false });
+    return { ...amb, agenda, gestor, token, lancar, salvar };
+  }
+  const comPassagem = (): FichaTecnicaDados => ({ ...completa(), passagemSom: true, passagemInicio: '2026-11-18T16:00', passagemFim: '2026-11-18T17:30' });
+
+  it('cria montagem, passagem de som e desmontagem na agenda, sem convidados', () => {
+    const amb = comAgenda();
+    amb.salvar(amb.token, comPassagem());
+    const r = amb.lancar() as Ok<FichaTecnica>;
+    expect(r.dados.agenda).toEqual({ lancadoEm: '2026-11-01T10:00', itens: ['montagem', 'passagem', 'desmontagem'] });
+    const eventos = [...amb.agenda.eventos.values()];
+    expect(eventos.map((e) => e.titulo)).toEqual(['Montagem · Show Teste', 'Passagem de som · Show Teste', 'Desmontagem · Show Teste']);
+    expect(eventos[1].quando).toEqual({ diaInteiro: false, inicio: '2026-11-18T16:00', fim: '2026-11-18T17:30' });
+    expect(eventos.every((e) => e.convidados.length === 0)).toBe(true);
+  });
+
+  it('lançar de novo atualiza os mesmos eventos e tira o que saiu da ficha', () => {
+    const amb = comAgenda();
+    amb.salvar(amb.token, comPassagem());
+    amb.lancar();
+    amb.salvar(amb.token, { ...comPassagem(), passagemSom: false, montagem: '2026-11-18T10:00' });
+    const r = amb.lancar() as Ok<FichaTecnica>;
+    expect(r.dados.agenda?.itens).toEqual(['montagem', 'desmontagem']);
+    expect([...amb.agenda.eventos.values()].map((e) => [e.titulo, e.quando.diaInteiro ? '' : e.quando.inicio])).toEqual([
+      ['Montagem · Show Teste', '2026-11-18T10:00'],
+      ['Desmontagem · Show Teste', '2026-11-18T22:00'],
+    ]);
+  });
+
+  it('sem montagem nem desmontagem na ficha, avisa', () => {
+    const amb = comAgenda();
+    expect(amb.lancar()).toMatchObject({ ok: false, erro: { codigo: 'VALIDACAO', mensagem: 'Preencha a montagem ou a desmontagem na ficha antes de lançar na agenda.' } });
   });
 });

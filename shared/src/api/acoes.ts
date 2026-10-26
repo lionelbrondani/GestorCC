@@ -156,6 +156,8 @@ export interface Acoes {
   /** Gera o link (ou um novo, invalidando o antigo, com novo = true). */
   'fichas.link': A<{ eventoId: Id; novo: boolean }, FichaTecnica>;
   'fichas.salvar': A<{ eventoId: Id; dados: FichaTecnicaDados; versao?: string }, FichaTecnica>;
+  /** Cria ou atualiza na agenda do CC a montagem, a passagem de som e a desmontagem informadas na ficha. */
+  'fichas.lancarAgenda': A<{ eventoId: Id }, FichaTecnica>;
   'fichas.travar': A<{ eventoId: Id; trava: TravaFicha }, FichaTecnica>;
   /** Anexo da ficha como data URL. */
   'fichas.anexo': A<{ eventoId: Id; anexoId: Id }, string | null>;

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { errosDaFicha, fichaTravada, fichaVazia, limparFicha, prazoDaFicha, type FichaTecnicaDados } from './fichaTecnica';
+import { errosDaFicha, fichaTravada, fichaVazia, itensDaAgenda, limparFicha, prazoDaFicha, type FichaTecnicaDados } from './fichaTecnica';
 
 const SESSOES = [{ id: 's1', data: '2026-11-18' }];
 
@@ -144,5 +144,28 @@ describe('ficha técnica: prazo', () => {
   it('o gestor pode travar ou destravar à mão', () => {
     expect(fichaTravada({ trava: 'travada', prazo: '2026-11-16', hoje: '2026-10-01' })).toBe(true);
     expect(fichaTravada({ trava: 'destravada', prazo: '2026-11-16', hoje: '2026-11-17' })).toBe(false);
+  });
+});
+
+describe('ficha técnica: montagem e passagem de som', () => {
+  it('fim da montagem e passagem de som são opcionais, mas precisam fazer sentido', () => {
+    expect(campos({ ...completa(), montagemFim: '2026-11-18T08:00' })).toEqual(['montagemFim']);
+    expect(campos({ ...completa(), montagemFim: '2026-11-18T16:00' })).toEqual([]);
+    expect(campos({ ...completa(), passagemSom: true })).toEqual(['passagemInicio', 'passagemFim']);
+    expect(campos({ ...completa(), passagemSom: true, passagemInicio: '2026-11-18T17:00', passagemFim: '2026-11-18T16:00' })).toEqual(['passagemFim']);
+    expect(campos({ ...completa(), passagemSom: true, passagemInicio: '2026-11-18T07:00', passagemFim: '2026-11-18T08:00' })).toEqual(['passagemInicio']);
+    expect(campos({ ...completa(), passagemSom: true, passagemInicio: '2026-11-18T16:00', passagemFim: '2026-11-18T17:30' })).toEqual([]);
+  });
+
+  it('itens para a agenda do CC: montagem, passagem de som e desmontagem', () => {
+    const d = { ...completa(), montagemFim: '2026-11-18T16:00', passagemSom: true, passagemInicio: '2026-11-18T16:00', passagemFim: '2026-11-18T17:30' };
+    expect(itensDaAgenda(d, SESSOES)).toEqual([
+      { chave: 'montagem', titulo: 'Montagem', inicio: '2026-11-18T08:30', fim: '2026-11-18T16:00' },
+      { chave: 'passagem', titulo: 'Passagem de som', inicio: '2026-11-18T16:00', fim: '2026-11-18T17:30' },
+      { chave: 'desmontagem', titulo: 'Desmontagem', inicio: '2026-11-18T22:00', fim: '2026-11-18T22:30' },
+    ]);
+    // sem fim da montagem: vai até 1 hora antes da abertura das portas da primeira sessão
+    expect(itensDaAgenda({ ...completa(), passagemSom: false }, SESSOES)[0]).toEqual({ chave: 'montagem', titulo: 'Montagem', inicio: '2026-11-18T08:30', fim: '2026-11-18T18:00' });
+    expect(itensDaAgenda(fichaVazia(SESSOES), SESSOES)).toEqual([]);
   });
 });

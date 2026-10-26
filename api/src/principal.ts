@@ -18,6 +18,7 @@ import { handlersRodadas } from './acoes/rodadas';
 import { handlersSistema } from './acoes/sistema';
 import { portasGas, propriedadesGas, relogioGas, travaGas } from './adaptadores/gas';
 import { sincronizarPendentes } from './agenda/sincronizar';
+import { criarDadosFicticios as criarFicticios, resetarDados as resetar } from './dadosTeste';
 import { tratarRequisicao, type Handlers } from './nucleo/roteador';
 import { gerarRelatoriosPendentes } from './relatorios/pendentes';
 import { garantirEpocaCache, novaEpocaCache } from './tabelas/leitorAbas';
@@ -76,4 +77,35 @@ export function aoAlterarPlanilha(): void {
   } catch {
     invalidar(); // sistema ocupado por muito tempo: invalida mesmo assim
   }
+}
+
+/** Rodar pelo editor: apaga os dados de teste e mantém só o primeiro gestor, os itens do almoxarifado, as configurações e os feriados. */
+export function resetarDados(): void {
+  const email = (propriedadesGas.obter('EMAIL_PRIMEIRO_GESTOR') ?? '').trim().toLowerCase();
+  travaGas.executar(() => {
+    const portas = portasGas();
+    const eu = portas.repo.listar<{ id: string; emailAcademico: string }>('pessoas').find((p) => p.emailAcademico.toLowerCase() === email);
+    if (!eu) throw new Error('Não achei a pessoa com o EMAIL_PRIMEIRO_GESTOR das propriedades; nada foi apagado.');
+    try {
+      console.log('Apagado:', JSON.stringify(resetar(portas, eu.id)));
+    } finally {
+      portas.repo.concluirEscrita();
+    }
+  }, 30_000);
+  novaEpocaCache(propriedadesGas, relogioGas.agoraMs);
+  console.log('Pronto. Só você, os itens do almoxarifado, as configurações e os feriados ficaram.');
+}
+
+/** Rodar pelo editor: cria os dados fictícios (pessoas @teste.invalid, eventos "TESTE · …"). Para tirar, rode resetarDados. */
+export function criarDadosFicticios(): void {
+  travaGas.executar(() => {
+    const portas = portasGas();
+    try {
+      console.log('Criado:', JSON.stringify(criarFicticios(portas)));
+    } finally {
+      portas.repo.concluirEscrita();
+    }
+  }, 30_000);
+  novaEpocaCache(propriedadesGas, relogioGas.agoraMs);
+  console.log('Pronto. As pessoas fictícias entram com o e-mail (…@teste.invalid) e a matrícula (2099000001 a 2099000015) como senha.');
 }
