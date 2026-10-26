@@ -37,7 +37,9 @@ export type NomeTabela =
   | 'dadosPessoais'
   | 'credenciais'
   | 'fichas'
-  | 'fichasSigilo';
+  | 'fichasSigilo'
+  | 'cortesiasDestinos'
+  | 'cortesiasSigilo';
 
 /** Linhas (a partir de 0) em negrito e com fundo de destaque numa aba de relatório. */
 export interface FormatoAba {

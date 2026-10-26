@@ -54,3 +54,10 @@ Manual resumido, sem dados reais. Ele serve de contexto para as perguntas sobre 
 - **Preenchimento:** o produtor preenche em etapas, sem login, e marca no mapa as poltronas que quer reservar. O progresso fica salvo a cada etapa.
 - **Prazo:** dá para corrigir até 2 dias antes da primeira sessão. Depois, a ficha trava. O gestor pode destravar.
 - **Imprimir:** **Imprimir resumo** gera os dados para a equipe e o mapa das poltronas reservadas.
+
+## Cortesias
+
+- **Criar destino (gestor):** no evento, use **Cortesias → Novo destino**, com o nome do destino (ex.: Casa do Estudante) e a quantidade.
+- **Mandar o link:** **Copiar mensagem** gera o texto com o link do destino. O GestorCC não envia e-mails.
+- **Lançar os nomes:** o destino abre o link sem login e lança nome e matrícula de quem vai receber, até o dia anterior ao evento.
+- **Dia do evento:** **Imprimir lista** gera a lista em ordem alfabética, com a coluna para marcar a retirada.

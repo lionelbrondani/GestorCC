@@ -9,6 +9,7 @@ import { Alerta, Botao, Campo, Carregando, Cartao, EstadoVazio, Etiqueta, Modal,
 import { recursoAtivo } from '../../recursos';
 import { janela } from '../../util/hoje';
 import { dataLonga, horarioTexto } from '../../util/sessoes';
+import { CortesiasEvento } from '../cortesias/CortesiasEvento';
 import { FichaTecnicaEvento } from '../ficha/FichaTecnicaEvento';
 import { EventoForm } from './EventoForm';
 
@@ -216,6 +217,7 @@ export function EventoDetalhe() {
         />
       </Cartao>
       {podeEditar && !novo && evento.status === 'ativo' && <FichaTecnicaEvento evento={evento} sessoes={sessoes} />}
+      {podeEditar && !novo && evento.status === 'ativo' && <CortesiasEvento evento={evento} sessoes={sessoes} />}
       <ModalCancelar alvo={cancelando} aoFechar={() => setCancelando(null)} />
     </Pagina>
   );

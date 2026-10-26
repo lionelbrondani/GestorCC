@@ -22,3 +22,4 @@ export * from './agendaMes';
 export * from './busca';
 export * from './poltronas';
 export * from './fichaTecnica';
+export * from './cortesias';
