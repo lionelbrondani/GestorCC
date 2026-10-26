@@ -1,0 +1,369 @@
+/* Ficha técnica: pensada primeiro para o celular; no computador ganha a lista de etapas ao lado. */
+
+.ficha-form {
+  display: grid;
+  gap: var(--esp-4);
+  scroll-margin-top: var(--esp-4);
+}
+
+.ficha-etapas {
+  display: none;
+}
+
+.ficha-corpo {
+  display: flex;
+  flex-direction: column;
+  gap: var(--esp-4);
+  min-width: 0;
+  background: var(--cor-superficie);
+  border: 1px solid var(--cor-borda);
+  border-radius: var(--raio-3);
+  padding: var(--esp-4);
+  padding-bottom: 0;
+}
+
+.ficha-progresso {
+  display: grid;
+  gap: 6px;
+}
+.ficha-progresso h2 {
+  margin: 0;
+  font-family: var(--fonte-titulo);
+  font-size: 1.3rem;
+}
+
+/* Botões de opção grandes, fáceis de tocar */
+.ficha-opcoes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--esp-2);
+}
+.ficha-opcao {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 8px 16px;
+  border: 1.5px solid var(--cor-borda-forte);
+  border-radius: 999px;
+  background: var(--cor-superficie);
+  color: var(--cor-texto);
+  font: inherit;
+  cursor: pointer;
+}
+.ficha-opcao:hover {
+  border-color: var(--cor-texto-3);
+}
+.ficha-opcao[aria-checked='true'],
+.ficha-opcao[data-marcada] {
+  background: var(--cor-nav);
+  border-color: var(--cor-nav);
+  color: var(--cor-destaque);
+  font-weight: 600;
+}
+.ficha-opcao:focus-within,
+.ficha-opcao:focus-visible {
+  outline: 2px solid var(--cor-destaque-escuro);
+  outline-offset: 2px;
+}
+
+.ficha-pergunta {
+  border: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--esp-2);
+  min-width: 0;
+}
+.ficha-pergunta > legend {
+  font-weight: 600;
+  margin-bottom: var(--esp-2);
+  padding: 0;
+}
+
+.ficha-sessao {
+  border: 1px solid var(--cor-borda);
+  border-radius: var(--raio-2);
+  padding: var(--esp-3);
+  margin: 0;
+  display: grid;
+  gap: var(--esp-3);
+  min-width: 0;
+}
+.ficha-sessao > legend {
+  font-weight: 700;
+  padding: 0 6px;
+}
+.ficha-horas {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: var(--esp-3);
+}
+
+.ficha-regras {
+  margin: 0;
+  padding-left: 1.1em;
+  display: grid;
+  gap: 4px;
+}
+
+.ficha-anexo {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+}
+
+.link-botao {
+  border: none;
+  background: none;
+  padding: 0;
+  color: var(--cor-info);
+  text-decoration: underline;
+  font: inherit;
+  cursor: pointer;
+}
+
+/* Grupos de poltronas */
+.ficha-grupos {
+  display: grid;
+  gap: var(--esp-2);
+}
+.ficha-grupo {
+  display: grid;
+  grid-template-columns: auto 1fr auto auto;
+  align-items: center;
+  gap: var(--esp-2);
+  padding: 4px;
+  border-radius: var(--raio-2);
+  border: 1.5px solid transparent;
+}
+.ficha-grupo[data-ativo] {
+  border-color: var(--cor);
+  background: var(--cor-superficie-2);
+}
+.ficha-grupo-cor {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: none;
+  background: var(--cor);
+  color: #fff;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+}
+.ficha-grupo-total {
+  min-width: 2ch;
+  text-align: right;
+}
+.ficha-grupo-erro {
+  grid-column: 2 / -1;
+}
+.ficha-lista-lugares {
+  margin: 0;
+  padding-left: 1.1em;
+  font-size: 14px;
+  display: grid;
+  gap: 4px;
+}
+
+/* Rodapé fixo no celular: Voltar / Continuar sempre à mão */
+.ficha-rodape {
+  position: sticky;
+  bottom: 0;
+  display: flex;
+  justify-content: space-between;
+  gap: var(--esp-2);
+  padding: var(--esp-3) 0;
+  margin-top: var(--esp-2);
+  background: var(--cor-superficie);
+  border-top: 1px solid var(--cor-borda);
+}
+.ficha-rodape .cc-botao {
+  min-height: 46px;
+}
+.ficha-rodape .cc-botao:last-child {
+  margin-left: auto;
+}
+
+/* Resumo */
+.resumo-ficha {
+  display: grid;
+  gap: var(--esp-4);
+}
+.resumo-secao h3 {
+  margin: 0 0 var(--esp-2);
+  font-family: var(--fonte-titulo);
+  font-size: 1rem;
+  border-bottom: 2px solid var(--cor-destaque);
+  padding-bottom: 4px;
+}
+.resumo-secao dl {
+  margin: 0;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--esp-2) var(--esp-4);
+}
+.resumo-item dt {
+  font-size: 13px;
+  color: var(--cor-texto-2);
+}
+.resumo-item dd {
+  margin: 0;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+.resumo-texto {
+  white-space: pre-wrap;
+  font-weight: 400;
+}
+.resumo-cor {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex: none;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
+@media (min-width: 640px) {
+  .resumo-secao dl {
+    grid-template-columns: 1fr 1fr;
+  }
+  .resumo-item[data-largo] {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (min-width: 900px) {
+  .ficha-form {
+    grid-template-columns: 220px minmax(0, 1fr);
+    align-items: start;
+  }
+  .ficha-etapas {
+    display: block;
+    position: sticky;
+    top: var(--esp-4);
+  }
+  .ficha-etapas ol {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 2px;
+  }
+  .ficha-etapas button {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: var(--esp-2);
+    padding: 8px 10px;
+    border: none;
+    border-radius: var(--raio-2);
+    background: none;
+    font: inherit;
+    text-align: left;
+    color: var(--cor-texto-2);
+    cursor: pointer;
+  }
+  .ficha-etapas button:hover {
+    background: var(--cor-superficie);
+  }
+  .ficha-etapas button[aria-current='step'] {
+    background: var(--cor-superficie);
+    color: var(--cor-texto);
+    font-weight: 700;
+    box-shadow: var(--sombra-1);
+  }
+  .ficha-etapa-num {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    font-size: 12px;
+    background: var(--cor-borda);
+    flex: none;
+  }
+  .ficha-etapas button[aria-current='step'] .ficha-etapa-num {
+    background: var(--cor-destaque);
+    color: var(--cor-texto);
+  }
+  .ficha-etapas button[data-pronta] .ficha-etapa-num {
+    background: var(--cor-sucesso);
+    color: #fff;
+  }
+  .ficha-corpo {
+    padding: var(--esp-5);
+    padding-bottom: 0;
+  }
+}
+
+/* Página pública do produtor */
+.ficha-pagina {
+  min-height: 100vh;
+  background: var(--cor-fundo);
+}
+.ficha-topo {
+  background: var(--cor-nav);
+  color: var(--cor-nav-texto);
+  padding: var(--esp-3) var(--esp-4);
+  display: flex;
+  align-items: center;
+  gap: var(--esp-3);
+}
+.ficha-topo img {
+  height: 36px;
+}
+.ficha-topo strong {
+  display: block;
+  color: var(--cor-destaque);
+  font-family: var(--fonte-titulo);
+}
+.ficha-topo small {
+  color: var(--cor-nav-texto-2);
+}
+.ficha-conteudo {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: var(--esp-4);
+  display: grid;
+  gap: var(--esp-4);
+}
+.ficha-conteudo > h1 {
+  margin: 0;
+  font-family: var(--fonte-titulo);
+  font-size: 1.5rem;
+}
+
+@media print {
+  .ficha-etapas,
+  .ficha-rodape {
+    display: none !important;
+  }
+}
+
+.ficha-impressa .so-impressao {
+  display: none;
+}
+@media print {
+  .ficha-impressa .so-impressao {
+    display: block;
+    font-size: 14pt;
+    margin: 0 0 8px;
+  }
+  .ficha-impressa .resumo-secao dl {
+    grid-template-columns: 1fr 1fr;
+  }
+  .ficha-impressa .resumo-item[data-largo] {
+    grid-column: 1 / -1;
+  }
+  .ficha-impressa .resumo-ficha {
+    gap: 8px;
+    font-size: 10pt;
+  }
+  .ficha-pagina-mapa {
+    break-before: page;
+  }
+}

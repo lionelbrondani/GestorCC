@@ -1,5 +1,12 @@
 import { interpretarSimulado } from '../../busca/interpretarSimulado';
 import {
+  errosDaFicha,
+  fichaTravada,
+  fichaVazia,
+  limparFicha,
+  prazoDaFicha,
+  type FichaPublica,
+  type FichaTecnica,
   ehGestor,
   ErroApi,
   formatarCod,
@@ -68,6 +75,36 @@ function sessaoAbertaParaMim(ctx: Contexto, sessaoId: Id): boolean {
 /** PDFs anexados no protótipo (só na memória da página). */
 const ANEXOS_PROTOTIPO = new Map<string, string>();
 
+/** Fichas técnicas do protótipo (só em memória), por evento. */
+const FICHAS_PROTOTIPO = new Map<Id, Omit<FichaTecnica, 'travada' | 'prazo'>>();
+
+function sessoesDaFicha(ctx: Contexto, eventoId: Id) {
+  return ctx.banco.sessoes.filter((s) => s.eventoId === eventoId && s.status === 'ativa').sort((a, b) => a.data.localeCompare(b.data));
+}
+
+function fichaCompleta(ctx: Contexto, eventoId: Id): FichaTecnica {
+  const f = FICHAS_PROTOTIPO.get(eventoId)!;
+  const prazo = prazoDaFicha(sessoesDaFicha(ctx, eventoId).map((s) => s.data));
+  return { ...f, dados: limparFicha(f.dados, sessoesDaFicha(ctx, eventoId)), prazo, travada: fichaTravada({ trava: f.trava, prazo, hoje: ctx.hoje }) };
+}
+
+function fichaPorToken(ctx: Contexto, token: string) {
+  const f = [...FICHAS_PROTOTIPO.values()].find((x) => x.token === token);
+  const ev = f && ctx.banco.eventos.find((e) => e.id === f.eventoId);
+  if (!f || !ev) throw erro('LINK', 'Este link não vale mais. Peça um novo ao Centro de Convenções.');
+  if (ev.status === 'cancelado') throw erro('LINK', 'Este evento foi cancelado.');
+  return { f: fichaCompleta(ctx, ev.id), ev };
+}
+
+function fichaPublica(ctx: Contexto, token: string): FichaPublica {
+  const { f, ev } = fichaPorToken(ctx, token);
+  return {
+    evento: { nome: ev.nome, sessoes: sessoesDaFicha(ctx, ev.id).map((s) => ({ id: s.id, data: s.data, rotulo: s.rotulo ?? '', inicio: s.inicio, fim: s.fim })) },
+    status: f.status, travada: f.travada, prazo: f.prazo, enviadaEm: f.enviadaEm, dados: f.dados,
+    linkFolder: ctx.banco.config.linksFormularios.find((l) => /folder/i.test(l.nome))?.url ?? '',
+  };
+}
+
 function publicoDaPessoa(p: Pessoa): Pessoa {
   return { ...p, emailAcademico: '', emailAlternativo: undefined, matricula: '', siape: undefined };
 }
@@ -130,6 +167,14 @@ const REGRAS: Record<Acao, Regra> = {
   'infra.importarFormulario': ['infraestrutura', 'editar'],
   'infra.foto': 'logado',
   'busca.interpretar': ['busca', 'ver'],
+  'ficha.abrir': 'publica',
+  'ficha.salvar': 'publica',
+  'ficha.anexar': 'publica',
+  'fichas.obter': ['eventos', 'editar'],
+  'fichas.link': ['eventos', 'editar'],
+  'fichas.salvar': ['eventos', 'editar'],
+  'fichas.travar': ['eventos', 'editar'],
+  'fichas.anexo': ['eventos', 'editar'],
   'avisos.listar': 'logado',
   'avisos.salvar': ['mural', 'editar'],
   'avisos.confirmarLeitura': 'logado',
@@ -595,6 +640,46 @@ const handlers: Handlers = {
   },
   'infra.foto': ({ id }, ctx) => ctx.banco.ocorrencias.find((o) => o.id === id)?.foto ?? null,
   'busca.interpretar': ({ pergunta }, ctx) => ({ consulta: interpretarSimulado(pergunta, ctx.hoje), ajuda: null, motivo: null }),
+  'fichas.obter': ({ eventoId }, ctx) => (FICHAS_PROTOTIPO.has(eventoId) ? fichaCompleta(ctx, eventoId) : null),
+  'fichas.link': ({ eventoId, novo }, ctx) => {
+    const atual = FICHAS_PROTOTIPO.get(eventoId);
+    const token = `ficha-${eventoId}-${Date.now().toString(36)}${Math.random().toString(36).slice(2, 10)}`;
+    if (!atual) {
+      FICHAS_PROTOTIPO.set(eventoId, { eventoId, status: 'rascunho', trava: 'auto', enviadaEm: '', token, dados: fichaVazia(sessoesDaFicha(ctx, eventoId)), atualizadoEm: ctx.agora });
+    } else if (novo) atual.token = token;
+    return fichaCompleta(ctx, eventoId);
+  },
+  'fichas.salvar': ({ eventoId, dados }, ctx) => {
+    const f = FICHAS_PROTOTIPO.get(eventoId);
+    if (!f) throw erro('NAO_ENCONTRADO', 'Gere o link da ficha técnica primeiro.');
+    Object.assign(f, { dados: limparFicha({ ...dados, anexos: f.dados.anexos.filter((a) => dados.anexos.some((x) => x.id === a.id)) }, sessoesDaFicha(ctx, eventoId)), atualizadoEm: ctx.agora });
+    return fichaCompleta(ctx, eventoId);
+  },
+  'fichas.travar': ({ eventoId, trava }, ctx) => {
+    FICHAS_PROTOTIPO.get(eventoId)!.trava = trava;
+    return fichaCompleta(ctx, eventoId);
+  },
+  'fichas.anexo': ({ anexoId }) => ANEXOS_PROTOTIPO.get(anexoId) ?? null,
+  'ficha.abrir': ({ token }, ctx) => fichaPublica(ctx, token),
+  'ficha.salvar': ({ token, dados, enviar }, ctx) => {
+    const { f, ev } = fichaPorToken(ctx, token);
+    if (f.travada) throw erro('TRAVADA', 'O prazo da ficha terminou. Fale com o Centro de Convenções para alterar.');
+    const sessoes = sessoesDaFicha(ctx, ev.id);
+    const limpa = limparFicha({ ...dados, anexos: f.dados.anexos.filter((a) => dados.anexos.some((x) => x.id === a.id)) }, sessoes);
+    const erros = enviar ? errosDaFicha(limpa, sessoes) : [];
+    if (erros.length) throw erro('FICHA_INCOMPLETA', `Faltam ${erros.length} itens: ${erros.slice(0, 5).map((e) => e.mensagem).join(' ')}`);
+    Object.assign(FICHAS_PROTOTIPO.get(ev.id)!, { dados: limpa, atualizadoEm: ctx.agora, ...(enviar ? { status: 'enviada', enviadaEm: ctx.agora } : {}) });
+    return fichaPublica(ctx, token);
+  },
+  'ficha.anexar': ({ token, nome, arquivo }, ctx) => {
+    const { ev } = fichaPorToken(ctx, token);
+    const f = FICHAS_PROTOTIPO.get(ev.id)!;
+    if (f.dados.anexos.length >= 5) throw erro('ARQUIVO', 'Limite de 5 arquivos por ficha.');
+    const anexo = { id: novoId('anexo'), nome };
+    ANEXOS_PROTOTIPO.set(anexo.id, arquivo);
+    f.dados = { ...f.dados, anexos: [...f.dados.anexos, anexo] };
+    return anexo;
+  },
   'infra.importarFormulario': (_d, ctx) => {
     const pendentes = ctx.banco.respostasFormularioInfra;
     for (const r of pendentes) novaOcorrencia(ctx, r);

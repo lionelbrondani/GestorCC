@@ -46,3 +46,11 @@ Manual resumido, sem dados reais. Ele serve de contexto para as perguntas sobre 
 - **Onde ficam:** em **Contratos**, com contratante, valor, aditivos e situações.
 - **Documentos:** são gerados a partir dos modelos do Google Docs.
 - **FUNDEP:** o pedido é só um texto para copiar e colar no seu e-mail.
+
+## Ficha técnica
+
+- **Gerar o link (gestor):** abra o evento na **Agenda** e use **Ficha técnica → Gerar link da ficha técnica**.
+- **Mandar ao produtor:** use **Copiar mensagem para o produtor** e cole no e-mail ou no WhatsApp. O GestorCC não envia e-mails.
+- **Preenchimento:** o produtor preenche em etapas, sem login, e marca no mapa as poltronas que quer reservar. O progresso fica salvo a cada etapa.
+- **Prazo:** dá para corrigir até 2 dias antes da primeira sessão. Depois, a ficha trava. O gestor pode destravar.
+- **Imprimir:** **Imprimir resumo** gera os dados para a equipe e o mapa das poltronas reservadas.
