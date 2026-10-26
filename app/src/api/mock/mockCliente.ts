@@ -78,6 +78,8 @@ function sessaoAbertaParaMim(ctx: Contexto, sessaoId: Id): boolean {
 
 /** PDFs anexados no protótipo (só na memória da página). */
 const ANEXOS_PROTOTIPO = new Map<string, string>();
+/** Autorizados do almoxarifado desativados no protótipo (os ativos ficam no banco). */
+const AUTORIZADOS_INATIVOS = new Set<string>();
 
 /** Destinos de cortesias do protótipo (só em memória). */
 const CORTESIAS_PROTOTIPO = new Map<Id, Omit<DestinoCortesias, 'travada' | 'prazo'>>();
@@ -196,6 +198,8 @@ const REGRAS: Record<Acao, Regra> = {
   'almox.salvarItem': ['almoxEstoque', 'editar'],
   'almox.ajustar': ['almoxEstoque', 'editar'],
   'almox.retirar': ['almoxSaidas', 'editar'],
+  'almox.autorizados': ['almoxSaidas', 'ver'],
+  'almox.salvarAutorizado': ['almoxSaidas', 'editar'],
   'almox.pedidos': ['almoxEstoque', 'ver'],
   'almox.criarPedido': ['almoxEstoque', 'editar'],
   'almox.receber': ['almoxEstoque', 'editar'],
@@ -426,9 +430,10 @@ const handlers: Handlers = {
   'escalas.trocar': ({ sessaoId, sai, entra, justificativa }, ctx) => {
     if (!justificativa.trim()) throw erro('JUSTIFICATIVA', 'Informe a justificativa da troca.');
     if (!sai && !entra) throw erro('TROCA_VAZIA', 'Escolha quem sai e/ou quem entra.');
-    const daSessao = ctx.banco.escalas.filter((e) => e.sessaoId === sessaoId && ['publicado', 'rascunho'].includes(e.status));
+    const daSessao = ctx.banco.escalas.filter((e) => e.sessaoId === sessaoId && ['publicado', 'rascunho', 'realizado', 'faltou'].includes(e.status));
     const saindo = sai ? daSessao.find((e) => e.pessoaId === sai) : undefined;
     if (sai && !saindo) throw erro('NAO_ENCONTRADO', 'Esta pessoa não está escalada nesta sessão.');
+    if (saindo?.loteId) throw erro('EM_LOTE', 'Esta pessoa já está num lote de pagamento. Retire-a do lote antes de trocar.');
     const papel = saindo?.papel ?? (ctx.banco.pessoas.find((p) => p.id === entra)?.tipo === 'servidor' ? 'servidor' : 'bolsista');
     if (entra) {
       const quem = ctx.banco.pessoas.find((p) => p.id === entra);
@@ -440,7 +445,7 @@ const handlers: Handlers = {
     if (saindo) ctx.banco.escalas = ctx.banco.escalas.filter((e) => e.id !== saindo.id);
     if (entra) {
       const disp = ctx.banco.disponibilidades.some((d) => d.pessoaId === entra && d.sessaoId === sessaoId && d.disponivel);
-      ctx.banco.escalas.push({ id: novoId('x'), sessaoId, pessoaId: entra, papel, status: saindo?.status ?? 'publicado', adicaoDireta: !disp, loteId: null });
+      ctx.banco.escalas.push({ id: novoId('x'), sessaoId, pessoaId: entra, papel, status: saindo?.status === 'faltou' ? 'realizado' : (saindo?.status ?? (daSessao.some((e) => e.status === 'realizado' || e.status === 'faltou') ? 'realizado' : 'publicado')), adicaoDireta: !disp, loteId: null });
     }
     const nome = nomeSessao(ctx, sessaoId);
     if (sai) notificar(ctx, [sai], `Você foi retirado(a) da escala: ${nome}.`, '/minhas-escalas');
@@ -605,8 +610,26 @@ const handlers: Handlers = {
     registrar(ctx, 'almox', item.cod, `ajuste de estoque (${qtd > 0 ? '+' : ''}${qtd})`, motivo);
     return item;
   },
+  'almox.autorizados': (_d, ctx) => [
+    ...ctx.banco.autorizadosExternos.map((nome) => ({ id: nome, nome, ativo: true })),
+    ...[...AUTORIZADOS_INATIVOS].map((nome) => ({ id: nome, nome, ativo: false })),
+  ],
+  'almox.salvarAutorizado': ({ id, nome, ativo }, ctx) => {
+    const limpo = nome.trim().replace(/\s+/g, ' ');
+    if (!limpo) throw erro('VALIDACAO', 'Informe o nome.');
+    const todos = [...ctx.banco.autorizadosExternos, ...AUTORIZADOS_INATIVOS];
+    if (todos.some((n) => n !== id && n.toLowerCase() === limpo.toLowerCase())) throw erro('VALIDACAO', 'Já existe um autorizado com este nome.');
+    ctx.banco.autorizadosExternos = ctx.banco.autorizadosExternos.filter((n) => n !== id);
+    AUTORIZADOS_INATIVOS.delete(id);
+    if (ativo) ctx.banco.autorizadosExternos.push(limpo);
+    else AUTORIZADOS_INATIVOS.add(limpo);
+    return { id: limpo, nome: limpo, ativo };
+  },
   'almox.retirar': (d, ctx) => {
     if (!d.finalidade.trim()) throw erro('FINALIDADE', 'Informe a finalidade da retirada.');
+    if (d.cadastrarExterno && d.retiradoPorExterno && !ctx.banco.autorizadosExternos.includes(d.retiradoPorExterno.trim())) {
+      ctx.banco.autorizadosExternos.push(d.retiradoPorExterno.trim());
+    }
     const erros = validarRetirada(d.itens, ctx.banco.almoxItens);
     if (erros.length) throw erro('ESTOQUE', erros.map((e) => `${e.cod}: ${e.erro}`).join('; '));
     const movs = d.itens.map((i) => {

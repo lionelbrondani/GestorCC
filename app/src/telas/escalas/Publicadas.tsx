@@ -225,15 +225,14 @@ export function Publicadas({ mes }: { mes: string }) {
                   {vagasDe(s)}/{s.vagasBolsistas}
                 </Etiqueta>
                 {s.convocacao && s.convocacao.abertaAte >= agora() && <Etiqueta tom="destaque">Convocação aberta</Etiqueta>}
+                {/* troca vale também depois do evento (troca de última hora) */}
+                <Botao tamanho="pequeno" onClick={() => setTroca(s)}>
+                  Trocar
+                </Botao>
                 {futura && (
-                  <>
-                    <Botao tamanho="pequeno" onClick={() => setTroca(s)}>
-                      Trocar
-                    </Botao>
-                    <Botao tamanho="pequeno" onClick={() => setConvocacao(s)}>
-                      Pedir mais bolsistas
-                    </Botao>
-                  </>
+                  <Botao tamanho="pequeno" onClick={() => setConvocacao(s)}>
+                    Pedir mais bolsistas
+                  </Botao>
                 )}
               </>
             }

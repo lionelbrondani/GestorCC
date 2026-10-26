@@ -104,3 +104,27 @@ describe('almoxarifado', () => {
     expect(amb.chamar('almox.retirar', { itens: [], finalidade: 'x' }, amb.token('p02'))).toMatchObject({ erro: { codigo: 'SEM_PERMISSAO' } });
   });
 });
+
+describe('almoxarifado: autorizados a retirar', () => {
+  it('cadastra, renomeia e desativa autorizados', () => {
+    const amb = ambiente();
+    const a = amb.chamar<{ id: string; nome: string; ativo: boolean }>('almox.salvarAutorizado', { id: '', nome: '  Técnico da Luz  ', ativo: true }) as Ok<{ id: string; nome: string; ativo: boolean }>;
+    expect(a.dados).toMatchObject({ nome: 'Técnico da Luz', ativo: true });
+    amb.chamar('almox.salvarAutorizado', { id: a.dados.id, nome: 'Técnico de Luz', ativo: false });
+    expect((amb.chamar<{ nome: string; ativo: boolean }[]>('almox.autorizados', null) as Ok<{ nome: string; ativo: boolean }[]>).dados).toEqual([
+      expect.objectContaining({ nome: 'Técnico de Luz', ativo: false }),
+    ]);
+    expect(amb.chamar('almox.salvarAutorizado', { id: '', nome: ' ', ativo: true })).toMatchObject({ ok: false, erro: { codigo: 'VALIDACAO' } });
+    expect(amb.chamar('almox.salvarAutorizado', { id: '', nome: 'técnico de luz', ativo: true })).toMatchObject({ ok: false, erro: { mensagem: 'Já existe um autorizado com este nome.' } });
+  });
+
+  it('na retirada, um nome novo pode ser cadastrado na hora', () => {
+    const amb = ambiente();
+    amb.cadastrarCom(5);
+    const sem = amb.chamar('almox.retirar', { itens: [{ cod: '12', qtd: 1 }], retiradoPorExterno: 'Produtora Teste', finalidade: 'Montagem' });
+    expect(sem).toMatchObject({ ok: false, erro: { codigo: 'QUEM_RETIRA' } });
+    const com = amb.chamar<AlmoxMovimento[]>('almox.retirar', { itens: [{ cod: '12', qtd: 1 }], retiradoPorExterno: ' Produtora Teste ', cadastrarExterno: true, finalidade: 'Montagem' });
+    expect((com as Ok<AlmoxMovimento[]>).dados[0].retiradoPorExterno).toBe('Produtora Teste');
+    expect((amb.chamar<{ autorizadosExternos: string[] }>('almox.listar', null) as Ok<{ autorizadosExternos: string[] }>).dados.autorizadosExternos).toContain('Produtora Teste');
+  });
+});

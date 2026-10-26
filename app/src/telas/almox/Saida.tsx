@@ -20,6 +20,7 @@ export function Saida() {
   const [finalidade, setFinalidade] = useState('');
   const [eventoId, setEventoId] = useState('');
   const [camera, setCamera] = useState(false);
+  const [nomeNovo, setNomeNovo] = useState(false);
   const [msg, setMsg] = useState<{ tom: 'sucesso' | 'erro' | 'aviso'; texto: string } | null>(null);
   const aoLer = useCallback((texto: string) => {
     const lido = (texto.match(/\d{1,4}/)?.[0] ?? '').trim();
@@ -48,21 +49,30 @@ export function Saida() {
     setQtd('1');
   }
 
-  async function registrar() {
+  /** Quem retira pelo nome digitado: alguém da equipe, um autorizado externo, ou um nome novo. */
+  const nome = quem.trim().replace(/\s+/g, ' ');
+  const igual = (a: string) => a.toLowerCase() === nome.toLowerCase();
+  const daEquipe = pessoasAtivas.find((p) => igual(p.nome));
+  const externo = q.data.autorizadosExternos.find(igual);
+
+  async function registrar(cadastrarExterno = false) {
     setMsg(null);
-    const [tipo, valor] = quem.split(':');
-    if (!quem) return setMsg({ tom: 'aviso', texto: 'Informe quem está retirando.' });
+    setNomeNovo(false);
+    if (!nome) return setMsg({ tom: 'aviso', texto: 'Informe quem está retirando.' });
     if (!finalidade.trim()) return setMsg({ tom: 'aviso', texto: 'Informe a finalidade.' });
+    if (!daEquipe && !externo && !cadastrarExterno) return setNomeNovo(true);
     try {
       await retirar.mutateAsync({
         itens: carrinho,
-        retiradoPorPessoaId: tipo === 'p' ? valor : undefined,
-        retiradoPorExterno: tipo === 'x' ? valor : undefined,
+        retiradoPorPessoaId: daEquipe?.id,
+        retiradoPorExterno: daEquipe ? undefined : (externo ?? nome),
+        cadastrarExterno: !daEquipe && !externo,
         finalidade,
         eventoId: eventoId || undefined,
       });
       setCarrinho([]);
       setFinalidade('');
+      setQuem('');
       setMsg({ tom: 'sucesso', texto: 'Retirada registrada e estoque atualizado.' });
     } catch (e) {
       setMsg({ tom: 'erro', texto: (e as Error).message });
@@ -135,25 +145,33 @@ export function Saida() {
               })}
             </ul>
           )}
-          <Campo rotulo="Quem está retirando">
+          <Campo
+            rotulo="Quem está retirando"
+            ajuda={nome && (daEquipe ? 'Da equipe.' : externo ? 'Autorizado externo.' : 'Nome novo: será cadastrado como autorizado ao registrar.')}
+          >
             {(id) => (
-              <select id={id} className="cc-entrada" value={quem} onChange={(e) => setQuem(e.target.value)}>
-                <option value="">Escolha…</option>
-                <optgroup label="Equipe">
+              <>
+                <input
+                  id={id}
+                  className="cc-entrada"
+                  list="quem-retira"
+                  autoComplete="off"
+                  placeholder="Digite o nome…"
+                  value={quem}
+                  onChange={(e) => {
+                    setQuem(e.target.value);
+                    setNomeNovo(false);
+                  }}
+                />
+                <datalist id="quem-retira">
                   {pessoasAtivas.map((p) => (
-                    <option key={p.id} value={`p:${p.id}`}>
-                      {p.nome}
-                    </option>
+                    <option key={p.id} value={p.nome} />
                   ))}
-                </optgroup>
-                <optgroup label="Autorizados externos">
-                  {q.data.autorizadosExternos.map((n) => (
-                    <option key={n} value={`x:${n}`}>
-                      {n}
-                    </option>
+                  {q.data!.autorizadosExternos.map((n) => (
+                    <option key={n} value={n} />
                   ))}
-                </optgroup>
-              </select>
+                </datalist>
+              </>
             )}
           </Campo>
           <Campo rotulo="Finalidade">{(id) => <input id={id} className="cc-entrada" value={finalidade} placeholder="Ex.: montagem do palco" onChange={(e) => setFinalidade(e.target.value)} />}</Campo>
@@ -171,10 +189,25 @@ export function Saida() {
           </Campo>
           <div className="linha-entre">
             <span className="texto-2">Valor estimado: {formatarReais(total)}</span>
-            <Botao variante="primario" disabled={!carrinho.length || erros.length > 0} carregando={retirar.isPending} onClick={registrar}>
+            <Botao variante="primario" disabled={!carrinho.length || erros.length > 0} carregando={retirar.isPending} onClick={() => registrar()}>
               Registrar retirada
             </Botao>
           </div>
+          {nomeNovo && (
+            <Alerta tom="aviso">
+              <p style={{ margin: '0 0 8px' }}>
+                <strong>{nome}</strong> não está na lista de quem pode retirar. Cadastrar como autorizado e registrar a retirada?
+              </p>
+              <span className="linha">
+                <Botao variante="primario" tamanho="pequeno" carregando={retirar.isPending} onClick={() => registrar(true)}>
+                  Cadastrar e registrar
+                </Botao>
+                <Botao tamanho="pequeno" onClick={() => setNomeNovo(false)}>
+                  Corrigir o nome
+                </Botao>
+              </span>
+            </Alerta>
+          )}
           {msg && <Alerta tom={msg.tom}>{msg.texto}</Alerta>}
         </div>
       </Cartao>
