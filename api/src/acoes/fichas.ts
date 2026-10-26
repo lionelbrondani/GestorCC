@@ -51,7 +51,7 @@ const novoToken = (ctx: Contexto) => paraBase64Url(ctx.portas.cripto.aleatorio(3
 const nomeDe = (ctx: Contexto) => (id: string) =>
   ctx.portas.repo.listar<{ id: string; nome: string }>('pessoas').find((p) => p.id === id)?.nome ?? 'Outra pessoa';
 
-function sessoesAtivas(ctx: Contexto, eventoId: string): LinhaSessao[] {
+export function sessoesAtivas(ctx: Contexto, eventoId: string): LinhaSessao[] {
   return linhasSessoes(ctx)
     .filter((s) => s.eventoId === eventoId && s.status === 'ativa')
     .sort((a, b) => a.data.localeCompare(b.data) || (a.inicio ?? '').localeCompare(b.inicio ?? ''));

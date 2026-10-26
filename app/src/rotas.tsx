@@ -10,6 +10,8 @@ import { EventoDetalhe } from './telas/agenda/EventoDetalhe';
 import { ImprimirAgenda } from './telas/agenda/ImprimirAgenda';
 import { ImprimirEscala } from './telas/escalas/ImprimirEscala';
 import { Escalas } from './telas/escalas/Escalas';
+import { CortesiasDestino } from './telas/cortesias/CortesiasDestino';
+import { ImprimirCortesias } from './telas/cortesias/ImprimirCortesias';
 import { FichaProdutor } from './telas/ficha/FichaProdutor';
 import { Fichas } from './telas/ficha/Fichas';
 import { ImprimirFicha } from './telas/ficha/ImprimirFicha';
@@ -46,6 +48,8 @@ export const ROTAS: RouteObject[] = [
   { path: '/entrar', element: <Login /> },
   // link da ficha técnica: o produtor entra sem login
   { path: '/ficha/:token', element: <FichaProdutor /> },
+  // link das cortesias: o destino lança os nomes sem login
+  { path: '/cortesias/:token', element: <CortesiasDestino /> },
   {
     element: <LayoutAutenticado busca={<Busca />} notificacoes={<Notificacoes />} />,
     children: [
@@ -62,6 +66,7 @@ export const ROTAS: RouteObject[] = [
       { path: '/agenda/imprimir', element: comPermissao(['eventos'], <ImprimirAgenda />) },
       { path: '/agenda/:eventoId', element: comPermissao(['eventos'], <EventoDetalhe />) },
       { path: '/fichas', element: comPermissao(['eventos'], <Fichas />, 'editar') },
+      { path: '/agenda/:eventoId/cortesias', element: comPermissao(['eventos'], <ImprimirCortesias />, 'editar') },
       { path: '/agenda/:eventoId/ficha', element: comPermissao(['eventos'], <ImprimirFicha />, 'editar') },
       { path: '/escalas', element: comPermissao(['escalas'], <Escalas />) },
       { path: '/escalas/imprimir', element: comPermissao(['escalas'], <ImprimirEscala />) },

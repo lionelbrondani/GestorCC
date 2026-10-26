@@ -408,3 +408,19 @@ Para publicar:
 - Só quem pode **editar eventos** vê a ficha no GestorCC.
 
 **Folder do espaço:** para a ficha mostrar o link do folder, cadastre em **Configurações → Links de formulários** um link com "Folder" no nome.
+
+## 21. Distribuição de cortesias (versão 0.10.0)
+
+Na tela do evento, o cartão **Cortesias** reparte as cortesias entre destinos, por exemplo "Casa do Estudante: 30":
+- **Copiar mensagem:** cada destino recebe um link próprio e um texto pronto para mandar. O sistema não envia nada.
+- **O que o destino faz:** abre o link sem login, vê "Você recebeu 30 cortesias para distribuir à Casa do Estudante" e lança nome e matrícula de cada pessoa, sem passar da quantidade. Dá para salvar e voltar até o dia anterior ao evento. Depois disso a lista trava, e o gestor pode destravar.
+- **Matrícula:** é pedida por padrão. Para um destino de fora da UFSM, desmarque "Pedir a matrícula".
+- **Imprimir lista:** sai uma lista única em ordem alfabética (ou separada por destino), com uma coluna para marcar quem retirou.
+
+Para publicar:
+1. Cole o `Code.js` novo e salve.
+2. Rode o **`instalar`**. Ele cria a aba `cortesiasDestinos` na planilha Dados e a aba `cortesiasSigilo` na planilha Sigiloso.
+3. Crie uma **Nova versão** e confira se o `/exec` mostra `"versao":"0.10.0"`.
+4. Depois disso, publique o site.
+
+**Onde ficam os dados:** os nomes e as matrículas ficam na planilha **Sigiloso** e não vão para o cache.

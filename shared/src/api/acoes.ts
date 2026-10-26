@@ -1,4 +1,5 @@
 import type { Consulta } from '../busca';
+import type { CortesiasPublica, DestinoCortesias, PessoaCortesia } from '../cortesias';
 import type { AnexoFicha, FichaPublica, FichaResumo, FichaTecnica, FichaTecnicaDados, TravaFicha } from '../fichaTecnica';
 import type { MeusGanhos } from '../pagamentos/ganhos';
 import type {
@@ -153,6 +154,19 @@ export interface Acoes {
   'fichas.travar': A<{ eventoId: Id; trava: TravaFicha }, FichaTecnica>;
   /** Anexo da ficha como data URL. */
   'fichas.anexo': A<{ eventoId: Id; anexoId: Id }, string | null>;
+  /** Destinos das cortesias do evento e o total do contrato (null sem contrato). */
+  'cortesias.listar': A<{ eventoId: Id }, { destinos: DestinoCortesias[]; totalContrato: number | null }>;
+  /** Cria (id vazio) ou altera um destino; a quantidade não pode ficar abaixo dos nomes já lançados. */
+  'cortesias.salvarDestino': A<{ id: Id; eventoId: Id; nome: string; quantidade: number; pedirMatricula: boolean }, DestinoCortesias>;
+  'cortesias.removerDestino': A<{ id: Id }, null>;
+  /** Novo link: o antigo deixa de valer. */
+  'cortesias.novoLink': A<{ id: Id }, DestinoCortesias>;
+  'cortesias.travar': A<{ id: Id; trava: TravaFicha }, DestinoCortesias>;
+  /** O gestor corrige a lista de um destino. */
+  'cortesias.salvarPessoas': A<{ id: Id; pessoas: PessoaCortesia[] }, DestinoCortesias>;
+  /** Página do destino, pelo link (sem login). */
+  'cortesia.abrir': A<{ token: string }, CortesiasPublica>;
+  'cortesia.salvar': A<{ token: string; pessoas: PessoaCortesia[] }, CortesiasPublica>;
   'busca.interpretar': A<{ pergunta: string }, { consulta: Consulta | null; ajuda: string | null; motivo: 'limite' | 'indisponivel' | null }>;
 
   'avisos.listar': A<null, Aviso[]>;

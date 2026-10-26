@@ -1,5 +1,9 @@
 import { interpretarSimulado } from '../../busca/interpretarSimulado';
 import {
+  errosCortesias,
+  limparPessoas,
+  prazoCortesias,
+  type DestinoCortesias,
   errosDaFicha,
   fichaTravada,
   fichaVazia,
@@ -74,6 +78,40 @@ function sessaoAbertaParaMim(ctx: Contexto, sessaoId: Id): boolean {
 
 /** PDFs anexados no protótipo (só na memória da página). */
 const ANEXOS_PROTOTIPO = new Map<string, string>();
+
+/** Destinos de cortesias do protótipo (só em memória). */
+const CORTESIAS_PROTOTIPO = new Map<Id, Omit<DestinoCortesias, 'travada' | 'prazo'>>();
+
+function destinoCompleto(ctx: Contexto, id: Id): DestinoCortesias {
+  const d = CORTESIAS_PROTOTIPO.get(id);
+  if (!d) throw erro('NAO_ENCONTRADO', 'Destino não encontrado.');
+  const prazo = prazoCortesias(sessoesDaFicha(ctx, d.eventoId).map((s) => s.data));
+  return { ...d, pessoas: [...d.pessoas], prazo, travada: fichaTravada({ trava: d.trava, prazo, hoje: ctx.hoje }) };
+}
+
+function destinoPorToken(ctx: Contexto, token: string) {
+  const d = [...CORTESIAS_PROTOTIPO.values()].find((x) => x.token === token);
+  const ev = d && ctx.banco.eventos.find((e) => e.id === d.eventoId);
+  if (!d || !ev) throw erro('LINK', 'Este link não vale mais. Peça um novo ao Centro de Convenções.');
+  if (ev.status === 'cancelado') throw erro('LINK', 'Este evento foi cancelado.');
+  const c = destinoCompleto(ctx, d.id);
+  return {
+    d: c,
+    publica: {
+      evento: { nome: ev.nome, datas: sessoesDaFicha(ctx, ev.id).map((s) => s.data) },
+      destino: { nome: c.nome, quantidade: c.quantidade, pedirMatricula: c.pedirMatricula },
+      travada: c.travada, prazo: c.prazo, pessoas: c.pessoas,
+    },
+  };
+}
+
+function gravarPessoasMock(id: Id, bruto: unknown) {
+  const d = CORTESIAS_PROTOTIPO.get(id)!;
+  const pessoas = limparPessoas(bruto, d.quantidade);
+  const [e] = errosCortesias(pessoas, d.pedirMatricula);
+  if (e) throw erro('VALIDACAO', `Linha ${e.indice + 1}: ${e.mensagem}`);
+  d.pessoas = pessoas;
+}
 
 /** Fichas técnicas do protótipo (só em memória), por evento. */
 const FICHAS_PROTOTIPO = new Map<Id, Omit<FichaTecnica, 'travada' | 'prazo'>>();
@@ -171,6 +209,14 @@ const REGRAS: Record<Acao, Regra> = {
   'ficha.salvar': 'publica',
   'ficha.anexar': 'publica',
   'fichas.listar': ['eventos', 'editar'],
+  'cortesias.listar': ['eventos', 'editar'],
+  'cortesias.salvarDestino': ['eventos', 'editar'],
+  'cortesias.removerDestino': ['eventos', 'editar'],
+  'cortesias.novoLink': ['eventos', 'editar'],
+  'cortesias.travar': ['eventos', 'editar'],
+  'cortesias.salvarPessoas': ['eventos', 'editar'],
+  'cortesia.abrir': 'publica',
+  'cortesia.salvar': 'publica',
   'fichas.obter': ['eventos', 'editar'],
   'fichas.link': ['eventos', 'editar'],
   'fichas.salvar': ['eventos', 'editar'],
@@ -641,6 +687,51 @@ const handlers: Handlers = {
   },
   'infra.foto': ({ id }, ctx) => ctx.banco.ocorrencias.find((o) => o.id === id)?.foto ?? null,
   'busca.interpretar': ({ pergunta }, ctx) => ({ consulta: interpretarSimulado(pergunta, ctx.hoje), ajuda: null, motivo: null }),
+  'cortesias.listar': ({ eventoId }, ctx) => {
+    const contratos = ctx.banco.contratos.filter((c) => c.eventoId === eventoId && c.statusContrato !== 'Cancelado');
+    return {
+      destinos: [...CORTESIAS_PROTOTIPO.values()].filter((d) => d.eventoId === eventoId).map((d) => destinoCompleto(ctx, d.id)),
+      totalContrato: contratos.length ? contratos.reduce((n, c) => n + c.cortesiasQtd, 0) : null,
+    };
+  },
+  'cortesias.salvarDestino': ({ id, eventoId, nome, quantidade, pedirMatricula }, ctx) => {
+    if (!nome.trim()) throw erro('VALIDACAO', 'Informe o nome do destino.');
+    if (!(quantidade >= 1 && quantidade <= 2000)) throw erro('VALIDACAO', 'A quantidade deve ser de 1 a 2000.');
+    if (id) {
+      const d = CORTESIAS_PROTOTIPO.get(id)!;
+      if (quantidade < d.pessoas.length) throw erro('VALIDACAO', `Já há ${d.pessoas.length} nomes lançados. Peça para tirar nomes antes de baixar a quantidade.`);
+      Object.assign(d, { nome: nome.trim(), quantidade, pedirMatricula });
+      return destinoCompleto(ctx, id);
+    }
+    const novo = novoId('cort');
+    const token = `cortesia-${novo}-${Math.random().toString(36).slice(2, 12)}`;
+    CORTESIAS_PROTOTIPO.set(novo, { id: novo, eventoId, nome: nome.trim(), quantidade, pedirMatricula, trava: 'auto', atualizadoPeloDestinoEm: '', token, pessoas: [] });
+    return destinoCompleto(ctx, novo);
+  },
+  'cortesias.removerDestino': ({ id }) => {
+    CORTESIAS_PROTOTIPO.delete(id);
+    return null;
+  },
+  'cortesias.novoLink': ({ id }, ctx) => {
+    CORTESIAS_PROTOTIPO.get(id)!.token = `cortesia-${id}-${Math.random().toString(36).slice(2, 12)}`;
+    return destinoCompleto(ctx, id);
+  },
+  'cortesias.travar': ({ id, trava }, ctx) => {
+    CORTESIAS_PROTOTIPO.get(id)!.trava = trava;
+    return destinoCompleto(ctx, id);
+  },
+  'cortesias.salvarPessoas': ({ id, pessoas }, ctx) => {
+    gravarPessoasMock(id, pessoas);
+    return destinoCompleto(ctx, id);
+  },
+  'cortesia.abrir': ({ token }, ctx) => destinoPorToken(ctx, token).publica,
+  'cortesia.salvar': ({ token, pessoas }, ctx) => {
+    const { d } = destinoPorToken(ctx, token);
+    if (d.travada) throw erro('TRAVADA', 'O prazo para lançar os nomes terminou. Fale com o Centro de Convenções.');
+    gravarPessoasMock(d.id, pessoas);
+    CORTESIAS_PROTOTIPO.get(d.id)!.atualizadoPeloDestinoEm = ctx.agora;
+    return destinoPorToken(ctx, token).publica;
+  },
   'fichas.listar': (_d, ctx) =>
     [...FICHAS_PROTOTIPO.keys()]
       .map((eventoId) => {
