@@ -3,6 +3,7 @@ import {
   descreverLugares,
   DESTINOS_ALIMENTOS,
   errosDaFicha,
+  eventoDeUmDia,
   ETAPAS_FICHA,
   formatarData,
   LINK_REGULAMENTO,
@@ -91,6 +92,7 @@ export function FormularioFicha({ evento, inicial, modo, aoSalvar, aoAnexar, aoB
 
   const sessoesBase = evento.sessoes.map((s) => ({ id: s.id, data: s.data }));
   const erros = errosDaFicha(d, sessoesBase);
+  const umDia = eventoDeUmDia(sessoesBase);
   const atual = ETAPAS_FICHA[etapa];
   const ultima = etapa === ETAPAS_FICHA.length - 1;
   const mostrar = modo === 'gestor' || tentadas.has(atual.id);
@@ -216,6 +218,13 @@ export function FormularioFicha({ evento, inicial, modo, aoSalvar, aoAnexar, aoB
             <li>Em eventos de um dia, a montagem e a desmontagem acontecem na mesma data do evento.</li>
           </ul>
         </Alerta>
+        {umDia && (
+          <Alerta tom="aviso">
+            <strong>
+              Este evento reservou apenas 1 dia ({formatarData(umDia)}): a montagem e a desmontagem DEVEM ser realizadas no mesmo dia.
+            </strong>
+          </Alerta>
+        )}
         <div className="grade-2">
           <Campo rotulo="Início da montagem" erro={erro('montagem')}>
             {(id) => <input id={id} className="cc-entrada" type="datetime-local" value={d.montagem} onChange={(e) => mudar({ montagem: e.target.value })} />}

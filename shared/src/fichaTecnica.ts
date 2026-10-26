@@ -214,6 +214,12 @@ export function limparFicha(bruto: unknown, sessoes: SessaoBase[]): FichaTecnica
 
 // ——— validação ———
 
+/** Data única do evento quando todas as sessões caem no mesmo dia (reserva de 1 dia); null se há mais dias. */
+export function eventoDeUmDia(sessoes: SessaoBase[]): DataISO | null {
+  const dias = [...new Set(sessoes.map((s) => s.data))];
+  return dias.length === 1 ? dias[0] : null;
+}
+
 const vazio = (s: string) => !s.trim();
 const minutos = (h: string) => Number(h.slice(0, 2)) * 60 + Number(h.slice(3, 5));
 /** Término antes desta hora (e antes do início) é de madrugada, no dia seguinte. */
@@ -262,11 +268,16 @@ export function errosDaFicha(d: FichaTecnicaDados, sessoes: SessaoBase[]): ErroF
       }
     }
   });
+  const umDia = eventoDeUmDia(sessoes);
+  const diaTexto = umDia ? `${umDia.slice(8, 10)}/${umDia.slice(5, 7)}/${umDia.slice(0, 4)}` : '';
   if (!d.montagem) erro('horarios', 'montagem', 'Informe a data e o horário da montagem.');
+  else if (umDia && d.montagem.slice(0, 10) !== umDia) erro('horarios', 'montagem', `O evento reservou apenas 1 dia (${diaTexto}): a montagem deve ser no mesmo dia.`);
   else if (d.montagem.slice(11) < HORA_MINIMA_MONTAGEM) erro('horarios', 'montagem', 'A entrada de materiais é liberada a partir das 8h30.');
   else if (comecos.length && d.montagem > comecos.sort()[0]) erro('horarios', 'montagem', 'A montagem deve começar antes da abertura das portas.');
   if (!d.desmontagem) erro('horarios', 'desmontagem', 'Informe a data e o horário da desmontagem.');
-  else if (fins.length && d.desmontagem < fins.sort()[fins.length - 1]) erro('horarios', 'desmontagem', 'A desmontagem deve ser depois do término da última sessão.');
+  else if (umDia && d.desmontagem.slice(0, 10) !== umDia && !(d.desmontagem.slice(0, 10) === somarDias(umDia, 1) && d.desmontagem.slice(11) < VIRADA_DO_DIA)) {
+    erro('horarios', 'desmontagem', `O evento reservou apenas 1 dia (${diaTexto}): a desmontagem deve ser no mesmo dia.`);
+  } else if (fins.length && d.desmontagem < fins.sort()[fins.length - 1]) erro('horarios', 'desmontagem', 'A desmontagem deve ser depois do término da última sessão.');
   if (d.montagemFim && d.montagem && d.montagemFim <= d.montagem) erro('horarios', 'montagemFim', 'O fim da montagem deve ser depois do início.');
   if (d.passagemSom) {
     if (!d.passagemInicio) erro('horarios', 'passagemInicio', 'Informe o início da passagem de som.');

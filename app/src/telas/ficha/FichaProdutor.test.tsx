@@ -3,12 +3,12 @@ import { fireEvent, screen, within } from '@testing-library/react';
 import { criarMockCliente } from '../../api/mock/mockCliente';
 import { CONTAS, renderizar } from '../../teste/renderizar';
 
-/** Gera o link da ficha do evento e19 (Concerto de Natal) como o gestor faria. */
-async function prepararLink() {
+/** Gera o link da ficha do evento (padrão: e19, Concerto de Natal) como o gestor faria. */
+async function prepararLink(eventoId = 'e19') {
   const api = criarMockCliente({ latenciaMs: 0, persistir: false });
   const { token } = await api.chamar('auth.entrar', CONTAS.gestor);
   api.definirToken(token);
-  const f = await api.chamar('fichas.link', { eventoId: 'e19', novo: true });
+  const f = await api.chamar('fichas.link', { eventoId, novo: true });
   const aberta = await api.chamar('ficha.abrir', { token: f.token });
   return { api, token: f.token, sessaoId: aberta.evento.sessoes[0].id };
 }
@@ -86,5 +86,18 @@ describe('ficha técnica na agenda do CC', () => {
     fireEvent.click(await screen.findByRole('button', { name: /Lançar montagem e desmontagem na agenda do CC/ }));
     expect(await screen.findByText('Na agenda do CC: montagem, passagem de som, desmontagem.')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Atualizar na agenda do CC/ })).toBeInTheDocument();
+  });
+});
+
+describe('ficha técnica: evento de 1 dia', () => {
+  it('avisa que montagem e desmontagem devem ser no mesmo dia', async () => {
+    const { token } = await prepararLink('e20'); // a ficha do e19 já foi enviada em outro teste
+    await renderizar({ pessoa: null, rota: `/ficha/${token}` });
+    fireEvent.click(within(await screen.findByRole('radiogroup', { name: 'Tipo do evento' })).getByRole('radio', { name: 'Música' }));
+    fireEvent.change(screen.getByLabelText('Estimativa de público'), { target: { value: '600' } });
+    fireEvent.change(screen.getByLabelText('Pessoas no elenco'), { target: { value: '40' } });
+    fireEvent.click(screen.getByRole('button', { name: /Salvar e continuar/ }));
+    await screen.findByRole('heading', { name: 'Horários' });
+    expect(await screen.findByText(/reservou apenas 1 dia \(19\/12\/2026\): a montagem e a desmontagem DEVEM ser realizadas no mesmo dia/)).toBeInTheDocument();
   });
 });

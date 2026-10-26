@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { errosDaFicha, fichaTravada, fichaVazia, itensDaAgenda, limparFicha, prazoDaFicha, type FichaTecnicaDados } from './fichaTecnica';
+import { errosDaFicha, eventoDeUmDia, fichaTravada, fichaVazia, itensDaAgenda, limparFicha, prazoDaFicha, type FichaTecnicaDados } from './fichaTecnica';
 
 const SESSOES = [{ id: 's1', data: '2026-11-18' }];
 
@@ -167,5 +167,23 @@ describe('ficha técnica: montagem e passagem de som', () => {
     // sem fim da montagem: vai até 1 hora antes da abertura das portas da primeira sessão
     expect(itensDaAgenda({ ...completa(), passagemSom: false }, SESSOES)[0]).toEqual({ chave: 'montagem', titulo: 'Montagem', inicio: '2026-11-18T08:30', fim: '2026-11-18T18:00' });
     expect(itensDaAgenda(fichaVazia(SESSOES), SESSOES)).toEqual([]);
+  });
+});
+
+describe('ficha técnica: evento de um dia só', () => {
+  it('montagem e desmontagem devem ser no mesmo dia (desmontagem pode passar da meia-noite até as 6h)', () => {
+    expect(errosDaFicha({ ...completa(), montagem: '2026-11-17T09:00' }, SESSOES)).toContainEqual({
+      etapa: 'horarios', campo: 'montagem', mensagem: 'O evento reservou apenas 1 dia (18/11/2026): a montagem deve ser no mesmo dia.',
+    });
+    expect(campos({ ...completa(), desmontagem: '2026-11-19T10:00' })).toEqual(['desmontagem']);
+    expect(campos({ ...completa(), desmontagem: '2026-11-19T01:00' })).toEqual([]);
+    expect(eventoDeUmDia(SESSOES)).toBe('2026-11-18');
+    expect(eventoDeUmDia([...SESSOES, { id: 's2', data: '2026-11-19' }])).toBeNull();
+  });
+
+  it('com mais de um dia reservado, a montagem pode ser na véspera', () => {
+    const dois = [...SESSOES, { id: 's2', data: '2026-11-19' }];
+    const d = { ...completa(), montagem: '2026-11-17T09:00', sessoes: [...completa().sessoes, { ...completa().sessoes[0], sessaoId: 's2' }], desmontagem: '2026-11-19T23:00' };
+    expect(errosDaFicha(d, dois).map((e) => e.campo)).toEqual([]);
   });
 });
