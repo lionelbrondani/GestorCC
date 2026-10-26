@@ -98,9 +98,35 @@ export const handlersAlmox: Handlers = {
     return paraItem(itemOuErro(ctx, cod));
   },
 
+  'almox.autorizados': (_d, ctx) =>
+    autorizados(ctx)
+      .map(({ id, nome, ativo }) => ({ id, nome, ativo: !!ativo }))
+      .sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR')),
+
+  'almox.salvarAutorizado': ({ id, nome, ativo }, ctx) => {
+    const limpo = String(nome ?? '').trim().replace(/\s+/g, ' ').slice(0, 80);
+    if (!limpo) throw new ErroApi('VALIDACAO', 'Informe o nome.');
+    const lista = autorizados(ctx);
+    if (lista.some((a) => a.id !== id && a.nome.toLowerCase() === limpo.toLowerCase())) throw new ErroApi('VALIDACAO', 'Já existe um autorizado com este nome.');
+    const atual = id ? lista.find((a) => a.id === id) : undefined;
+    if (id && !atual) throw new ErroApi('NAO_ENCONTRADO', 'Autorizado não encontrado.');
+    const linha = { id: atual?.id ?? novoId(ctx.portas, 'aut'), nome: limpo, ativo: !!ativo };
+    if (atual) ctx.portas.repo.atualizar('almoxAutorizadosExternos', linha);
+    else ctx.portas.repo.inserir('almoxAutorizadosExternos', linha);
+    registrar(ctx, 'almox', linha.id, atual ? `alterou o autorizado ${limpo}` : `cadastrou o autorizado ${limpo}`, null, null);
+    return linha;
+  },
+
   'almox.retirar': (d, ctx) => {
     const finalidade = (d.finalidade ?? '').trim();
     if (!finalidade) throw new ErroApi('FINALIDADE', 'Informe a finalidade da retirada.');
+    const externo = (d.retiradoPorExterno ?? '').trim().replace(/\s+/g, ' ');
+    if (externo && d.cadastrarExterno && !d.retiradoPorPessoaId) {
+      const existente = autorizados(ctx).find((a) => a.nome.toLowerCase() === externo.toLowerCase());
+      if (!existente) ctx.portas.repo.inserir('almoxAutorizadosExternos', { id: novoId(ctx.portas, 'aut'), nome: externo.slice(0, 80), ativo: true });
+      else if (!existente.ativo) ctx.portas.repo.atualizar('almoxAutorizadosExternos', { ...existente, ativo: true });
+      d = { ...d, retiradoPorExterno: existente?.nome ?? externo.slice(0, 80) };
+    }
     const pessoaOk = !!d.retiradoPorPessoaId && linhasPessoas(ctx).some((p) => p.id === d.retiradoPorPessoaId && p.ativo);
     const externoOk = !!d.retiradoPorExterno && autorizados(ctx).some((a) => a.ativo && a.nome === d.retiradoPorExterno);
     if (!pessoaOk && !externoOk) throw new ErroApi('QUEM_RETIRA', 'Informe quem está retirando.');

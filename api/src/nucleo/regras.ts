@@ -56,6 +56,8 @@ export const ACOES_FASE: Partial<Record<Acao, { regra: Regra; escrita: boolean }
   'almox.salvarItem': { regra: ['almoxEstoque', 'editar'], escrita: true },
   'almox.ajustar': { regra: ['almoxEstoque', 'editar'], escrita: true },
   'almox.retirar': { regra: ['almoxSaidas', 'editar'], escrita: true },
+  'almox.autorizados': { regra: ['almoxSaidas', 'ver'], escrita: false },
+  'almox.salvarAutorizado': { regra: ['almoxSaidas', 'editar'], escrita: true },
   'almox.pedidos': { regra: ['almoxEstoque', 'ver'], escrita: false },
   'almox.criarPedido': { regra: ['almoxEstoque', 'editar'], escrita: true },
   'almox.receber': { regra: ['almoxEstoque', 'editar'], escrita: true },

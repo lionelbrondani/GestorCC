@@ -78,6 +78,8 @@ function sessaoAbertaParaMim(ctx: Contexto, sessaoId: Id): boolean {
 
 /** PDFs anexados no protótipo (só na memória da página). */
 const ANEXOS_PROTOTIPO = new Map<string, string>();
+/** Autorizados do almoxarifado desativados no protótipo (os ativos ficam no banco). */
+const AUTORIZADOS_INATIVOS = new Set<string>();
 
 /** Destinos de cortesias do protótipo (só em memória). */
 const CORTESIAS_PROTOTIPO = new Map<Id, Omit<DestinoCortesias, 'travada' | 'prazo'>>();
@@ -196,6 +198,8 @@ const REGRAS: Record<Acao, Regra> = {
   'almox.salvarItem': ['almoxEstoque', 'editar'],
   'almox.ajustar': ['almoxEstoque', 'editar'],
   'almox.retirar': ['almoxSaidas', 'editar'],
+  'almox.autorizados': ['almoxSaidas', 'ver'],
+  'almox.salvarAutorizado': ['almoxSaidas', 'editar'],
   'almox.pedidos': ['almoxEstoque', 'ver'],
   'almox.criarPedido': ['almoxEstoque', 'editar'],
   'almox.receber': ['almoxEstoque', 'editar'],
@@ -606,8 +610,26 @@ const handlers: Handlers = {
     registrar(ctx, 'almox', item.cod, `ajuste de estoque (${qtd > 0 ? '+' : ''}${qtd})`, motivo);
     return item;
   },
+  'almox.autorizados': (_d, ctx) => [
+    ...ctx.banco.autorizadosExternos.map((nome) => ({ id: nome, nome, ativo: true })),
+    ...[...AUTORIZADOS_INATIVOS].map((nome) => ({ id: nome, nome, ativo: false })),
+  ],
+  'almox.salvarAutorizado': ({ id, nome, ativo }, ctx) => {
+    const limpo = nome.trim().replace(/\s+/g, ' ');
+    if (!limpo) throw erro('VALIDACAO', 'Informe o nome.');
+    const todos = [...ctx.banco.autorizadosExternos, ...AUTORIZADOS_INATIVOS];
+    if (todos.some((n) => n !== id && n.toLowerCase() === limpo.toLowerCase())) throw erro('VALIDACAO', 'Já existe um autorizado com este nome.');
+    ctx.banco.autorizadosExternos = ctx.banco.autorizadosExternos.filter((n) => n !== id);
+    AUTORIZADOS_INATIVOS.delete(id);
+    if (ativo) ctx.banco.autorizadosExternos.push(limpo);
+    else AUTORIZADOS_INATIVOS.add(limpo);
+    return { id: limpo, nome: limpo, ativo };
+  },
   'almox.retirar': (d, ctx) => {
     if (!d.finalidade.trim()) throw erro('FINALIDADE', 'Informe a finalidade da retirada.');
+    if (d.cadastrarExterno && d.retiradoPorExterno && !ctx.banco.autorizadosExternos.includes(d.retiradoPorExterno.trim())) {
+      ctx.banco.autorizadosExternos.push(d.retiradoPorExterno.trim());
+    }
     const erros = validarRetirada(d.itens, ctx.banco.almoxItens);
     if (erros.length) throw erro('ESTOQUE', erros.map((e) => `${e.cod}: ${e.erro}`).join('; '));
     const movs = d.itens.map((i) => {

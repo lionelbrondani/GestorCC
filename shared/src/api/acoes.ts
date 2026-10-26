@@ -96,6 +96,9 @@ export interface Acoes {
   'documentos.gerar': A<{ contratoId: Id; tipo: 'contrato' | 'termo' | 'piano' }, { url: string; docx: string }>;
 
   'almox.listar': A<null, { itens: AlmoxItem[]; autorizadosExternos: string[] }>;
+  /** Pessoas de fora da equipe que podem retirar material (inclui as desativadas). */
+  'almox.autorizados': A<null, { id: Id; nome: string; ativo: boolean }[]>;
+  'almox.salvarAutorizado': A<{ id: Id; nome: string; ativo: boolean }, { id: Id; nome: string; ativo: boolean }>;
   /** Catálogo antigo colado nas abas IMPORTAR_ALMOX e IMPORTAR_AUTORIZADOS da planilha Dados. */
   'almox.importar': A<null, { itens: number; autorizados: number; problemas: { linha: number; mensagem: string }[] }>;
   'almox.movimentos': A<{ cod?: string; ocorrenciaId?: Id }, AlmoxMovimento[]>;
@@ -106,6 +109,8 @@ export interface Acoes {
       itens: { cod: string; qtd: number }[];
       retiradoPorPessoaId?: Id;
       retiradoPorExterno?: string;
+      /** Cadastra na hora o nome externo que ainda não está na lista de autorizados. */
+      cadastrarExterno?: boolean;
       finalidade: string;
       eventoId?: Id;
       ocorrenciaId?: Id;
