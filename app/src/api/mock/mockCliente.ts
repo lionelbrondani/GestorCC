@@ -426,9 +426,10 @@ const handlers: Handlers = {
   'escalas.trocar': ({ sessaoId, sai, entra, justificativa }, ctx) => {
     if (!justificativa.trim()) throw erro('JUSTIFICATIVA', 'Informe a justificativa da troca.');
     if (!sai && !entra) throw erro('TROCA_VAZIA', 'Escolha quem sai e/ou quem entra.');
-    const daSessao = ctx.banco.escalas.filter((e) => e.sessaoId === sessaoId && ['publicado', 'rascunho'].includes(e.status));
+    const daSessao = ctx.banco.escalas.filter((e) => e.sessaoId === sessaoId && ['publicado', 'rascunho', 'realizado', 'faltou'].includes(e.status));
     const saindo = sai ? daSessao.find((e) => e.pessoaId === sai) : undefined;
     if (sai && !saindo) throw erro('NAO_ENCONTRADO', 'Esta pessoa não está escalada nesta sessão.');
+    if (saindo?.loteId) throw erro('EM_LOTE', 'Esta pessoa já está num lote de pagamento. Retire-a do lote antes de trocar.');
     const papel = saindo?.papel ?? (ctx.banco.pessoas.find((p) => p.id === entra)?.tipo === 'servidor' ? 'servidor' : 'bolsista');
     if (entra) {
       const quem = ctx.banco.pessoas.find((p) => p.id === entra);
@@ -440,7 +441,7 @@ const handlers: Handlers = {
     if (saindo) ctx.banco.escalas = ctx.banco.escalas.filter((e) => e.id !== saindo.id);
     if (entra) {
       const disp = ctx.banco.disponibilidades.some((d) => d.pessoaId === entra && d.sessaoId === sessaoId && d.disponivel);
-      ctx.banco.escalas.push({ id: novoId('x'), sessaoId, pessoaId: entra, papel, status: saindo?.status ?? 'publicado', adicaoDireta: !disp, loteId: null });
+      ctx.banco.escalas.push({ id: novoId('x'), sessaoId, pessoaId: entra, papel, status: saindo?.status === 'faltou' ? 'realizado' : (saindo?.status ?? (daSessao.some((e) => e.status === 'realizado' || e.status === 'faltou') ? 'realizado' : 'publicado')), adicaoDireta: !disp, loteId: null });
     }
     const nome = nomeSessao(ctx, sessaoId);
     if (sai) notificar(ctx, [sai], `Você foi retirado(a) da escala: ${nome}.`, '/minhas-escalas');

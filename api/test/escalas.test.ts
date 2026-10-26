@@ -138,6 +138,24 @@ describe('depois de publicada', () => {
     expect(amb.trocar({ sai: 'p02', entra: null })).toMatchObject({ erro: { codigo: 'SESSAO_CANCELADA' } });
   });
 
+  it('troca depois do evento, com a presença já confirmada: quem entra fica como realizado', () => {
+    const amb = publicado();
+    amb.relogio.definir('2026-12-06T10:00');
+    const gestor = amb.token('p01');
+    expect(amb.chamar('escalas.confirmarPresenca', { sessaoId: 's1', faltaram: [] }, { token: gestor }).ok).toBe(true);
+    const r = amb.chamar('escalas.trocar', { sessaoId: 's1', sai: 'p02', entra: 'p03', justificativa: 'Trocaram na hora' }, { token: gestor }) as Ok<Escala[]>;
+    expect(r.dados.filter((e) => e.papel === 'bolsista').map((e) => [e.pessoaId, e.status])).toEqual([['p03', 'realizado']]);
+  });
+
+  it('troca bloqueada quando a sessão já está num lote de pagamento', () => {
+    const amb = publicado();
+    const e = amb.repo.listar<{ id: string; pessoaId: string }>('escalas').find((x) => x.pessoaId === 'p02')!;
+    amb.repo.atualizar('escalas', { ...e, status: 'realizado', loteId: 'l1' });
+    expect(amb.trocar({ sai: 'p02', entra: 'p03' })).toMatchObject({
+      erro: { codigo: 'EM_LOTE', mensagem: 'Esta pessoa já está num lote de pagamento. Retire-a do lote antes de trocar.' },
+    });
+  });
+
   it('convocação aumenta as vagas e avisa só bolsistas fora da sessão', () => {
     const amb = publicado();
     const r = amb.chamar('escalas.convocar', { sessaoId: 's1', vagas: 3, abertaAte: '2026-10-24T18:00' }, { token: amb.gestor }) as Ok<{ vagasBolsistas: number; convocacao: unknown }>;

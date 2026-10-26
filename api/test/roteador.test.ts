@@ -83,6 +83,20 @@ describe('roteador', () => {
     });
   });
 
+  it('erro inesperado mostra o detalhe só para quem administra as configurações', () => {
+    const amb = criarAmbiente({
+      handlers: {
+        'config.obter': () => {
+          throw new Error('Aba "cortesiasDestinos" não encontrada (rode instalar()).');
+        },
+      },
+    });
+    expect(amb.chamar('config.obter', null, { token: amb.token('p01') })).toMatchObject({
+      erro: { codigo: 'INTERNO', mensagem: 'Algo deu errado do nosso lado. Detalhe: Aba "cortesiasDestinos" não encontrada (rode instalar()).' },
+    });
+    expect((amb.chamar('config.obter', null, { token: amb.token('p02') }) as { erro: { mensagem: string } }).erro.mensagem).not.toContain('Detalhe');
+  });
+
   it('ErroApi do handler chega como está', () => {
     const amb = criarAmbiente({
       handlers: {

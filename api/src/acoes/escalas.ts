@@ -81,7 +81,10 @@ export const handlersEscalas: Handlers = {
     return null;
   },
 
-  /** Toda mudança depois de publicada é uma troca com justificativa (spec 7.5). */
+  /**
+   * Toda mudança depois de publicada é uma troca com justificativa (spec 7.5). Vale também depois do evento (troca de
+   * última hora): com a presença confirmada, quem entra já fica como realizado. Só trava se a pessoa já está num lote.
+   */
   'escalas.trocar': ({ sessaoId, sai, entra, justificativa }, ctx) => {
     const motivo = (justificativa ?? '').trim();
     if (!motivo) throw new ErroApi('JUSTIFICATIVA', 'Informe a justificativa da troca.');
@@ -89,9 +92,10 @@ export const handlersEscalas: Handlers = {
     const sessao = sessaoOuErro(ctx, sessaoId);
     exigirSessaoAtiva(sessao);
     const pessoas = linhasPessoas(ctx);
-    const daSessao = linhasEscalas(ctx).filter((e) => e.sessaoId === sessaoId && (e.status === 'publicado' || e.status === 'rascunho'));
+    const daSessao = linhasEscalas(ctx).filter((e) => e.sessaoId === sessaoId && ['publicado', 'rascunho', 'realizado', 'faltou'].includes(e.status));
     const saindo = sai ? daSessao.find((e) => e.pessoaId === sai) : undefined;
     if (sai && !saindo) throw new ErroApi('NAO_ENCONTRADO', 'Esta pessoa não está escalada nesta sessão.');
+    if (saindo?.loteId) throw new ErroApi('EM_LOTE', 'Esta pessoa já está num lote de pagamento. Retire-a do lote antes de trocar.');
 
     const quemEntra = entra ? pessoas.find((p) => p.id === entra && p.ativo) : undefined;
     if (entra && !quemEntra) throw new ErroApi('NAO_ENCONTRADO', 'Pessoa não encontrada ou inativa.');
@@ -105,7 +109,7 @@ export const handlersEscalas: Handlers = {
     if (saindo) ctx.portas.repo.remover('escalas', saindo.id);
     if (quemEntra) {
       ctx.portas.repo.inserir('escalas', {
-        id: novoId(ctx.portas, 'x'), sessaoId, pessoaId: quemEntra.id, papel, status: saindo?.status ?? 'publicado',
+        id: novoId(ctx.portas, 'x'), sessaoId, pessoaId: quemEntra.id, papel, status: saindo?.status === 'faltou' ? 'realizado' : (saindo?.status ?? (daSessao.some((e) => e.status === 'realizado' || e.status === 'faltou') ? 'realizado' : 'publicado')),
         adicaoDireta: !estaDisponivel(ctx, quemEntra.id, sessaoId), loteId: '',
       } satisfies LinhaEscala);
     }

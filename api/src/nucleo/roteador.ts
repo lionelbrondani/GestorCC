@@ -69,13 +69,14 @@ export function tratarRequisicao(corpo: string, portas: Portas, handlers: Handle
   }
   if (Array.isArray(req.lote)) return tratarLote({ token: req.token, lote: req.lote }, portas, handlers);
 
+  let eu: Contexto['eu'] = null;
   try {
     const acao = req.acao as Acao;
     const def = ACOES_FASE[acao];
     const handler = handlers[acao] as Handler<Acao> | undefined;
     if (!def || !handler) throw new ErroApi('NAO_DISPONIVEL', 'Esta função ainda não está disponível.');
 
-    const eu = def.regra === 'publica' ? null : sessao(req.token, portas);
+    eu = def.regra === 'publica' ? null : sessao(req.token, portas);
     if (Array.isArray(def.regra) && !pode(eu!.permissoes, def.regra[0], def.regra[1])) {
       throw new ErroApi('SEM_PERMISSAO', 'Você não tem permissão para esta ação.');
     }
@@ -103,9 +104,11 @@ export function tratarRequisicao(corpo: string, portas: Portas, handlers: Handle
   } catch (e) {
     if (e instanceof ErroApi) return resposta({ ok: false, erro: { codigo: e.codigo, mensagem: e.message } });
     console.error(e);
+    // quem administra o sistema vê o detalhe técnico, para resolver sem abrir o registro do Apps Script
+    const detalhe = eu && pode(eu.permissoes, 'configuracoes', 'editar') ? ` Detalhe: ${String((e as Error)?.message ?? e).slice(0, 300)}` : '';
     return resposta({
       ok: false,
-      erro: { codigo: 'INTERNO', mensagem: 'Algo deu errado do nosso lado. Tente de novo; se continuar, avise o gestor do sistema.' },
+      erro: { codigo: 'INTERNO', mensagem: detalhe ? `Algo deu errado do nosso lado.${detalhe}` : 'Algo deu errado do nosso lado. Tente de novo; se continuar, avise o gestor do sistema.' },
     });
   }
 }
