@@ -386,3 +386,25 @@ Para publicar:
 **O que nunca vai para o cache:** `dadosPessoais` (CPF, banco, conta) e `contratantes`.
 
 **Se algum dia aparecer um dado velho no site,** rode `instalar` de novo, que começa o cache do zero.
+
+## 20. Ficha técnica pelo link do evento (versão 0.9.0)
+
+A ficha técnica sai do Google Forms e passa para o GestorCC. Na tela do evento, o cartão **Ficha técnica** tem estas ações:
+- **Gerar link:** cria o endereço único do evento. O produtor preenche sem login, no celular ou no computador, e marca as poltronas no mapa.
+- **Copiar mensagem para o produtor:** um texto pronto para colar no e-mail ou no WhatsApp. O sistema não envia nada.
+- **Ver ficha, Corrigir e Imprimir resumo:** a impressão tem uma página com os dados e outra com o mapa das poltronas reservadas.
+- **Travar e Destravar:** a ficha trava sozinha no dia seguinte ao prazo (2 dias antes da primeira sessão). Os dois botões sobrepõem o prazo.
+- **Gerar novo link:** o link antigo deixa de valer e o que já foi preenchido continua salvo.
+
+Para publicar:
+1. Cole o `Code.js` novo e salve.
+2. Rode o **`instalar`**. Ele cria a aba `fichas` na planilha Dados e a aba `fichasSigilo` na planilha Sigiloso.
+3. Crie uma **Nova versão** e confira se o `/exec` mostra `"versao":"0.9.0"`.
+4. Depois disso, publique o site.
+
+**Onde ficam os dados:**
+- CPF/CNPJ, e-mail e telefone do responsável e a chave do link ficam na planilha **Sigiloso**. O resto fica na aba `fichas`.
+- Os arquivos anexados pelo produtor vão para **GestorCC/Fichas técnicas**, sem link público.
+- Só quem pode **editar eventos** vê a ficha no GestorCC.
+
+**Folder do espaço:** para a ficha mostrar o link do folder, cadastre em **Configurações → Links de formulários** um link com "Folder" no nome.

@@ -9,6 +9,7 @@ import { Alerta, Botao, Campo, Carregando, Cartao, EstadoVazio, Etiqueta, Modal,
 import { recursoAtivo } from '../../recursos';
 import { janela } from '../../util/hoje';
 import { dataLonga, horarioTexto } from '../../util/sessoes';
+import { FichaTecnicaEvento } from '../ficha/FichaTecnicaEvento';
 import { EventoForm } from './EventoForm';
 
 const INVALIDAR = ['eventos.listar', 'escalas.listar'] as const;
@@ -214,6 +215,7 @@ export function EventoDetalhe() {
           chaveLinha={(s) => s.id}
         />
       </Cartao>
+      {podeEditar && !novo && evento.status === 'ativo' && <FichaTecnicaEvento evento={evento} sessoes={sessoes} />}
       <ModalCancelar alvo={cancelando} aoFechar={() => setCancelando(null)} />
     </Pagina>
   );

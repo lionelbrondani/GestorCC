@@ -20,3 +20,5 @@ export * from './infraestrutura';
 export * from './eventos';
 export * from './agendaMes';
 export * from './busca';
+export * from './poltronas';
+export * from './fichaTecnica';

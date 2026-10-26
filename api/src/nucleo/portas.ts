@@ -35,7 +35,9 @@ export type NomeTabela =
   | 'aditivos'
   | 'contratantes'
   | 'dadosPessoais'
-  | 'credenciais';
+  | 'credenciais'
+  | 'fichas'
+  | 'fichasSigilo';
 
 /** Linhas (a partir de 0) em negrito e com fundo de destaque numa aba de relatório. */
 export interface FormatoAba {
@@ -117,7 +119,7 @@ export interface AgendaGoogle {
 /** Arquivos enviados pelo app (fotos das ocorrências, PDFs dos contratos), no Drive, sem link público. */
 export interface Arquivos {
   /** Grava o arquivo (data URL) numa subpasta da pasta do sistema e devolve o id do arquivo. */
-  salvarImagem(dataUrl: string, nome: string, pasta?: 'Infraestrutura' | 'Contratos'): string;
+  salvarImagem(dataUrl: string, nome: string, pasta?: 'Infraestrutura' | 'Contratos' | 'Fichas técnicas'): string;
   /** Devolve a imagem como data URL, ou null se o arquivo não existe mais. */
   lerImagem(id: string): string | null;
 }
