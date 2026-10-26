@@ -170,6 +170,7 @@ const REGRAS: Record<Acao, Regra> = {
   'ficha.abrir': 'publica',
   'ficha.salvar': 'publica',
   'ficha.anexar': 'publica',
+  'fichas.listar': ['eventos', 'editar'],
   'fichas.obter': ['eventos', 'editar'],
   'fichas.link': ['eventos', 'editar'],
   'fichas.salvar': ['eventos', 'editar'],
@@ -640,6 +641,21 @@ const handlers: Handlers = {
   },
   'infra.foto': ({ id }, ctx) => ctx.banco.ocorrencias.find((o) => o.id === id)?.foto ?? null,
   'busca.interpretar': ({ pergunta }, ctx) => ({ consulta: interpretarSimulado(pergunta, ctx.hoje), ajuda: null, motivo: null }),
+  'fichas.listar': (_d, ctx) =>
+    [...FICHAS_PROTOTIPO.keys()]
+      .map((eventoId) => {
+        const f = fichaCompleta(ctx, eventoId);
+        const ev = ctx.banco.eventos.find((e) => e.id === eventoId)!;
+        const d = f.dados;
+        return {
+          eventoId, evento: ev.nome, eventoCancelado: ev.status === 'cancelado', datas: sessoesDaFicha(ctx, eventoId).map((s) => s.data),
+          status: f.status, travada: f.travada, prazo: f.prazo, enviadaEm: f.enviadaEm, atualizadoEm: f.atualizadoEm, token: f.token,
+          responsavel: d.responsavel.nome, tipo: d.tipo, publico: d.publico, elenco: d.elenco,
+          poltronas: d.reservarPoltronas ? d.grupos.reduce((n, g) => n + g.lugares.length, 0) : 0,
+          camarins: d.camarinsIndividuais.length + d.camarinsColetivos.length, coffeeBreak: d.coffeeBreak,
+        };
+      })
+      .sort((a, b) => (a.datas[0] ?? '9999').localeCompare(b.datas[0] ?? '9999')),
   'fichas.obter': ({ eventoId }, ctx) => (FICHAS_PROTOTIPO.has(eventoId) ? fichaCompleta(ctx, eventoId) : null),
   'fichas.link': ({ eventoId, novo }, ctx) => {
     const atual = FICHAS_PROTOTIPO.get(eventoId);

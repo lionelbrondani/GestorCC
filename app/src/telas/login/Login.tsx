@@ -48,10 +48,9 @@ export function Login() {
   return (
     <div className="login">
       <div className="login-faixa">
-        <img src="/logo-cc.png" alt="Centro de Convenções PRE | UFSM" className="login-logo" />
+        <img src="/logo-cc-escuro.png" alt="Centro de Convenções PRE | UFSM" className="login-logo" />
         <div className="login-marca">
           <span>GestorCC</span>
-          <small>Centro de Convenções · PRE | UFSM</small>
         </div>
       </div>
       <div className="login-palco">

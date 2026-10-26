@@ -24,11 +24,11 @@ export function eventoDaFicha(evento: Evento, sessoes: Sessao[]): FichaPublica['
 
 export const linkDaFicha = (token: string) => `${window.location.origin}/ficha/${token}`;
 
-export function mensagemDaFicha(evento: Evento, f: FichaTecnica): string {
+export function mensagemDaFicha(nomeEvento: string, token: string, prazo: string): string {
   return (
-    `Olá! Para o evento "${evento.nome}", pedimos que preencha a ficha técnica do Centro de Convenções da UFSM neste link:\n${linkDaFicha(f.token)}\n\n` +
+    `Olá! Para o evento "${nomeEvento}", pedimos que preencha a ficha técnica do Centro de Convenções da UFSM neste link:\n${linkDaFicha(token)}\n\n` +
     `Você pode salvar e continuar depois pelo mesmo link, no celular ou no computador.` +
-    (f.prazo ? ` Prazo para enviar e corrigir: ${formatarData(f.prazo)}.` : '')
+    (prazo ? ` Prazo para enviar e corrigir: ${formatarData(prazo)}.` : '')
   );
 }
 
@@ -99,7 +99,7 @@ export function FichaTecnicaEvento({ evento, sessoes }: { evento: Evento; sessoe
             <Botao tamanho="pequeno" onClick={() => copiar(linkDaFicha(f.token), 'Link copiado.')}>
               <Copy size={16} aria-hidden /> Copiar link
             </Botao>
-            <Botao tamanho="pequeno" onClick={() => copiar(mensagemDaFicha(evento, f), 'Mensagem copiada. Cole no e-mail ou no WhatsApp do produtor.')}>
+            <Botao tamanho="pequeno" onClick={() => copiar(mensagemDaFicha(evento.nome, f.token, f.prazo), 'Mensagem copiada. Cole no e-mail ou no WhatsApp do produtor.')}>
               <Copy size={16} aria-hidden /> Copiar mensagem para o produtor
             </Botao>
             <Botao tamanho="pequeno" onClick={() => setModal('ver')}>

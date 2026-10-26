@@ -324,3 +324,25 @@ export interface FichaPublica {
   /** Link do folder (Configurações → links com "Folder" no nome); '' sem link. */
   linkFolder: string;
 }
+
+/** Linha da lista de fichas (menu Fichas técnicas), sem dados sigilosos do responsável. */
+export interface FichaResumo {
+  eventoId: Id;
+  evento: string;
+  eventoCancelado: boolean;
+  /** Datas das sessões ativas, em ordem. */
+  datas: DataISO[];
+  status: FichaTecnica['status'];
+  travada: boolean;
+  prazo: DataISO | '';
+  enviadaEm: string;
+  atualizadoEm?: string;
+  token: string;
+  responsavel: string;
+  tipo: string;
+  publico: number | null;
+  elenco: number | null;
+  poltronas: number;
+  camarins: number;
+  coffeeBreak: boolean | null;
+}

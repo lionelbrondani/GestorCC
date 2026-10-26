@@ -1,5 +1,6 @@
 import { descreverLugares, formatarData, formatarDataHora, type AnexoFicha, type FichaPublica, type FichaTecnicaDados } from '@shared';
 import type { ReactNode } from 'react';
+import { nomesDaLista } from './ListaNomes';
 import { corDoGrupo } from './MapaPoltronas';
 
 type Evento = FichaPublica['evento'];
@@ -83,8 +84,14 @@ export function ResumoFicha({ evento, dados: d, aoBaixarAnexo }: { evento: Event
         <Item rotulo="O que será montado" largo>
           {textoLongo(d.descricaoMontagem)}
         </Item>
-        <Item rotulo="Equipe de montagem (portaria)" largo>
-          {textoLongo(d.equipeMontagem)}
+        <Item rotulo={`Equipe de montagem (portaria) · ${nomesDaLista(d.equipeMontagem).length} pessoas`} largo>
+          {nomesDaLista(d.equipeMontagem).length > 0 && (
+            <ol className="resumo-nomes">
+              {nomesDaLista(d.equipeMontagem).map((n, i) => (
+                <li key={i}>{n}</li>
+              ))}
+            </ol>
+          )}
         </Item>
       </Secao>
 

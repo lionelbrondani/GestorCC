@@ -5,6 +5,7 @@ import { usePeriodo } from '../../api/consultas';
 import { useConsulta } from '../../api/hooks';
 import { Botao, Carregando, EstadoVazio, Pagina } from '../../componentes';
 import { janela } from '../../util/hoje';
+import { CabecalhoImpresso } from '../impressao/ModeloImpressao';
 import { eventoDaFicha } from './FichaTecnicaEvento';
 import { corDoGrupo, MapaPoltronas } from './MapaPoltronas';
 import { ResumoFicha } from './ResumoFicha';
@@ -43,12 +44,12 @@ export function ImprimirFicha() {
     >
       <div className="folha-impressao ficha-impressa">
         <section className="pagina-impressao">
-          <h1 className="so-impressao">Ficha técnica · {evento.nome}</h1>
+          <CabecalhoImpresso titulo="FICHA TÉCNICA" subtitulo={`${evento.nome} · ${ev.sessoes.map((s) => formatarData(s.data)).join(', ')}`} />
           <ResumoFicha evento={ev} dados={d} />
         </section>
         {comPoltronas && (
           <section className="pagina-impressao ficha-pagina-mapa">
-            <h2>Poltronas reservadas · {evento.nome}</h2>
+            <CabecalhoImpresso titulo="POLTRONAS RESERVADAS" subtitulo={evento.nome} />
             <ul className="ficha-lista-lugares">
               {d.grupos.map(
                 (g, i) =>

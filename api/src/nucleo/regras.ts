@@ -76,6 +76,7 @@ export const ACOES_FASE: Partial<Record<Acao, { regra: Regra; escrita: boolean }
   'ficha.abrir': { regra: 'publica', escrita: false },
   'ficha.salvar': { regra: 'publica', escrita: true },
   'ficha.anexar': { regra: 'publica', escrita: true },
+  'fichas.listar': { regra: ['eventos', 'editar'], escrita: false },
   'fichas.obter': { regra: ['eventos', 'editar'], escrita: false },
   'fichas.link': { regra: ['eventos', 'editar'], escrita: true },
   'fichas.salvar': { regra: ['eventos', 'editar'], escrita: true },

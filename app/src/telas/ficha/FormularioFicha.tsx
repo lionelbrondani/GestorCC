@@ -22,6 +22,7 @@ import {
 import { Check, ChevronLeft, ChevronRight, Paperclip, Plus, Trash2, X } from 'lucide-react';
 import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { Alerta, BarraProgresso, Botao, Campo } from '../../componentes';
+import { ListaNomes } from './ListaNomes';
 import { corDoGrupo, MapaPoltronas } from './MapaPoltronas';
 import { ResumoFicha } from './ResumoFicha';
 import './ficha.css';
@@ -292,9 +293,10 @@ export function FormularioFicha({ evento, inicial, modo, aoSalvar, aoAnexar, aoB
         <Campo rotulo="O que será montado" ajuda="Cenário, painéis, mesas de exposição, equipamentos de som ou luz próprios…" erro={erro('descricaoMontagem')}>
           {(id) => <textarea id={id} className="cc-entrada" rows={4} value={d.descricaoMontagem} onChange={(e) => mudar({ descricaoMontagem: e.target.value })} />}
         </Campo>
-        <Campo rotulo="Nomes da equipe de montagem (um por linha)" ajuda="Para a liberação na portaria de serviço. Pode completar até 2 dias antes do evento.">
-          {(id) => <textarea id={id} className="cc-entrada" rows={4} value={d.equipeMontagem} onChange={(e) => mudar({ equipeMontagem: e.target.value })} />}
-        </Campo>
+        <ListaNomes rotulo="Equipe de montagem" valor={d.equipeMontagem} aoMudar={(equipeMontagem) => mudar({ equipeMontagem })} />
+        <p className="cc-campo-ajuda" style={{ margin: 0 }}>
+          Para a liberação na portaria de serviço. Pode completar até 2 dias antes do evento.
+        </p>
       </>
     ),
 

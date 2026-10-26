@@ -8,7 +8,7 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['logo-cc.png'],
+      includeAssets: ['logo-cc.png', 'logo-cc-branco.png', 'logo-cc-escuro.png'],
       manifest: {
         name: 'GestorCC',
         short_name: 'GestorCC',

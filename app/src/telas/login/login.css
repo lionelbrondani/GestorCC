@@ -14,8 +14,7 @@
   padding: var(--esp-6);
 }
 .login-logo {
-  width: min(260px, 80%);
-  filter: invert(1);
+  width: min(300px, 85%);
 }
 .login-marca span {
   display: block;
@@ -76,7 +75,7 @@
     gap: var(--esp-3);
   }
   .login-logo {
-    width: 110px;
+    width: 150px;
   }
   .login-padrao {
     display: none;

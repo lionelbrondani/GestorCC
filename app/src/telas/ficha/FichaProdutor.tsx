@@ -87,11 +87,9 @@ export function FichaProdutor() {
   return (
     <div className="ficha-pagina">
       <header className="ficha-topo">
-        <img src="/logo-cc.png" alt="" />
-        <div>
-          <strong>Ficha técnica</strong>
-          <small>Centro de Convenções · PRE | UFSM</small>
-        </div>
+        <img src="/logo-cc-branco.png" alt="Centro de Convenções PRE | UFSM" className="so-tela" />
+        <img src="/logo-cc-escuro.png" alt="" className="so-impressao" />
+        <strong>Ficha técnica</strong>
       </header>
       <main className="ficha-conteudo">
         {ficha.data && <h1>{ficha.data.evento.nome}</h1>}

@@ -106,17 +106,16 @@
   border-bottom: 3px solid var(--cor-destaque);
   padding-bottom: 12px;
 }
+/* logo escuro direto no papel: sem tarja preta, gasta menos tinta */
 .impresso-faixa {
-  background: #232323;
-  border-radius: 6px;
-  padding: 8px 12px;
   display: grid;
   place-items: center;
-  -webkit-print-color-adjust: exact;
-  print-color-adjust: exact;
+  padding-right: 16px;
+  border-right: 1px solid #ddd;
 }
 .impresso-faixa img {
-  height: 46px;
+  height: 44px;
+  width: auto;
 }
 .impresso-cabecalho h1 {
   font-size: 15pt;

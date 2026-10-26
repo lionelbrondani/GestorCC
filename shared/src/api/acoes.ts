@@ -1,5 +1,5 @@
 import type { Consulta } from '../busca';
-import type { AnexoFicha, FichaPublica, FichaTecnica, FichaTecnicaDados, TravaFicha } from '../fichaTecnica';
+import type { AnexoFicha, FichaPublica, FichaResumo, FichaTecnica, FichaTecnicaDados, TravaFicha } from '../fichaTecnica';
 import type { MeusGanhos } from '../pagamentos/ganhos';
 import type {
   Aditivo,
@@ -144,6 +144,8 @@ export interface Acoes {
   /** Anexo da sinopse (data URL), guardado no Drive em GestorCC/Fichas técnicas. */
   'ficha.anexar': A<{ token: string; nome: string; arquivo: string }, AnexoFicha>;
   /** Ficha do evento para o gestor (com os dados sigilosos do responsável); null se o link ainda não foi gerado. */
+  /** Todas as fichas (menu Fichas técnicas), da mais próxima para a mais distante. */
+  'fichas.listar': A<null, FichaResumo[]>;
   'fichas.obter': A<{ eventoId: Id }, FichaTecnica | null>;
   /** Gera o link (ou um novo, invalidando o antigo, com novo = true). */
   'fichas.link': A<{ eventoId: Id; novo: boolean }, FichaTecnica>;

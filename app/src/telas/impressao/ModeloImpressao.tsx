@@ -49,7 +49,7 @@ export function CabecalhoImpresso({ titulo, subtitulo }: { titulo: string; subti
   return (
     <header className="impresso-cabecalho">
       <div className="impresso-faixa">
-        <img src="/logo-cc.png" alt="Centro de Convenções PRE | UFSM" />
+        <img src="/logo-cc-escuro.png" alt="Centro de Convenções PRE | UFSM" />
       </div>
       <div>
         <h1>{titulo}</h1>

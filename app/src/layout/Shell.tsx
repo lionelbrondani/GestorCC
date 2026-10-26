@@ -31,7 +31,7 @@ export function MenuLateral({ pessoa }: { pessoa: Pessoa }) {
   return (
     <aside className="cc-menu-lateral">
       <Link to="/" className="cc-marca" aria-label="GestorCC — Início">
-        <img src="/logo-cc.png" alt="Centro de Convenções PRE | UFSM" />
+        <img src="/logo-cc-branco.png" alt="Centro de Convenções PRE | UFSM" />
       </Link>
       <ListaMenu itens={[ITEM_INICIO]} />
       <ListaMenu titulo="Gestão" itens={gestao} />
@@ -63,7 +63,7 @@ export function BarraSuperior({
   return (
     <header className="cc-barra-superior">
       <Link to="/" className="so-celular" aria-label="Início">
-        <img src="/logo-cc.png" alt="" style={{ height: 30, filter: 'invert(1)' }} />
+        <img src="/logo-cc-escuro.png" alt="Centro de Convenções PRE | UFSM" style={{ height: 28, width: 'auto' }} />
       </Link>
       <div className="cc-espaco">{busca}</div>
       {notificacoes}

@@ -9,6 +9,7 @@ import {
   prazoDaFicha,
   type AnexoFicha,
   type FichaPublica,
+  type FichaResumo,
   type FichaTecnica,
   type FichaTecnicaDados,
   type TravaFicha,
@@ -123,6 +124,29 @@ function exigirAberta(ctx: Contexto, f: Contexto_) {
 }
 
 export const handlersFichas: Handlers = {
+  'fichas.listar': (_d, ctx) => {
+    const sigilos = new Map(linhasSigilo(ctx).map((x) => [x.id, x]));
+    const eventos = new Map(linhasEventos(ctx).map((e) => [e.id, e]));
+    const lista: FichaResumo[] = [];
+    for (const linha of linhasFichas(ctx)) {
+      const sigilo = sigilos.get(linha.id);
+      const evento = eventos.get(linha.id);
+      if (!sigilo || !evento) continue;
+      const sessoes = sessoesAtivas(ctx, evento.id);
+      const f = montar(ctx, { linha, sigilo, evento, sessoes });
+      const d = f.dados;
+      lista.push({
+        eventoId: evento.id, evento: evento.nome, eventoCancelado: evento.status === 'cancelado', datas: sessoes.map((s) => s.data),
+        status: f.status, travada: f.travada, prazo: f.prazo, enviadaEm: f.enviadaEm, atualizadoEm: f.atualizadoEm, token: f.token,
+        responsavel: d.responsavel.nome, tipo: d.tipo === 'Outro' ? d.tipoOutro : d.tipo, publico: d.publico, elenco: d.elenco,
+        poltronas: d.reservarPoltronas ? d.grupos.reduce((n, g) => n + g.lugares.length, 0) : 0,
+        camarins: d.camarinsIndividuais.length + d.camarinsColetivos.length, coffeeBreak: d.coffeeBreak,
+      });
+    }
+    const primeira = (f: FichaResumo) => f.datas[0] ?? '9999';
+    return lista.sort((a, b) => primeira(a).localeCompare(primeira(b)) || a.evento.localeCompare(b.evento));
+  },
+
   'fichas.obter': ({ eventoId }, ctx) => {
     const f = doEvento(ctx, eventoId);
     return f ? montar(ctx, f) : null;

@@ -5,6 +5,7 @@ import {
   Bell,
   CalendarCheck,
   CalendarDays,
+  ClipboardCheck,
   ClipboardList,
   FileSignature,
   FileText,
@@ -25,12 +26,15 @@ export interface ItemMenu {
   rotulo: string;
   icone: LucideIcon;
   modulo?: Modulo;
+  /** Nível mínimo no módulo (padrão: ver). */
+  nivel?: 'ver' | 'editar';
   /** Área pessoal que só aparece quando o recurso está ligado. */
   recurso?: Recurso;
 }
 
 export const ITENS_GESTAO: ItemMenu[] = [
   { rota: '/agenda', rotulo: 'Agenda', icone: CalendarDays, modulo: 'eventos' },
+  { rota: '/fichas', rotulo: 'Fichas técnicas', icone: ClipboardCheck, modulo: 'eventos', nivel: 'editar' },
   { rota: '/escalas', rotulo: 'Escalas', icone: ClipboardList, modulo: 'escalas' },
   { rota: '/pagamentos', rotulo: 'Pagamentos', icone: Banknote, modulo: 'pagamentos' },
   { rota: '/contratos', rotulo: 'Contratos', icone: FileSignature, modulo: 'contratos' },
@@ -59,7 +63,7 @@ export function itensVisiveis(p: Pessoa): { gestao: ItemMenu[]; pessoais: ItemMe
     if (!recursoAtivo(i.modulo) && !(i.modulo === 'almoxEstoque' && recursoAtivo('almoxSaidas'))) return false;
     if (i.modulo === 'almoxEstoque') return pode(p.permissoes, 'almoxEstoque', 'ver') || pode(p.permissoes, 'almoxSaidas', 'ver');
     if (i.modulo === 'mural') return pode(p.permissoes, 'mural', 'editar');
-    return pode(p.permissoes, i.modulo, 'ver');
+    return pode(p.permissoes, i.modulo, i.nivel ?? 'ver');
   });
   const pessoais = ITENS_PESSOAIS.filter((i) => (i.rota !== '/ganhos' || p.tipo === 'bolsista') && (!i.recurso || recursoAtivo(i.recurso)));
   return { gestao, pessoais };

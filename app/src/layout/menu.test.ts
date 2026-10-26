@@ -23,4 +23,11 @@ describe('itensVisiveis', () => {
     expect(itensVisiveis(pessoa('gestor', 'servidor')).pessoais.map((i) => i.rotulo)).not.toContain('Ganhos');
     expect(itensVisiveis(pessoa('eventual')).pessoais.map((i) => i.rotulo)).toContain('Ganhos');
   });
+
+  it('Fichas técnicas aparece para quem edita eventos, logo depois da Agenda', () => {
+    const rotulos = itensVisiveis(pessoa('gestor', 'servidor')).gestao.map((i) => i.rotulo);
+    expect(rotulos.slice(0, 2)).toEqual(['Agenda', 'Fichas técnicas']);
+    expect(itensVisiveis(pessoa('operacao')).gestao.map((i) => i.rotulo)).toContain('Fichas técnicas');
+    expect(itensVisiveis(pessoa('eventual')).gestao.map((i) => i.rotulo)).not.toContain('Fichas técnicas');
+  });
 });

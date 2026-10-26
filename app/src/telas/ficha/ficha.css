@@ -314,15 +314,36 @@
   gap: var(--esp-3);
 }
 .ficha-topo img {
-  height: 36px;
+  height: 40px;
+  width: auto;
+}
+.ficha-topo .so-impressao {
+  display: none;
 }
 .ficha-topo strong {
-  display: block;
   color: var(--cor-destaque);
   font-family: var(--fonte-titulo);
+  padding-left: var(--esp-3);
+  border-left: 1px solid var(--cor-nav-texto-2);
 }
-.ficha-topo small {
-  color: var(--cor-nav-texto-2);
+@media print {
+  .ficha-topo {
+    background: none;
+    padding: 0 0 8px;
+    border-bottom: 3px solid var(--cor-destaque);
+  }
+  .ficha-topo .so-tela {
+    display: none;
+  }
+  .ficha-topo .so-impressao {
+    display: block;
+  }
+  .ficha-topo strong {
+    color: #000;
+  }
+  .ficha-pagina {
+    background: #fff;
+  }
 }
 .ficha-conteudo {
   max-width: 1100px;
@@ -366,4 +387,52 @@
   .ficha-pagina-mapa {
     break-before: page;
   }
+}
+
+/* Menu Fichas técnicas */
+.fichas-numeros {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: var(--esp-3);
+}
+.fichas-numeros > div {
+  background: var(--cor-superficie);
+  border: 1px solid var(--cor-borda);
+  border-radius: var(--raio-2);
+  padding: var(--esp-3) var(--esp-4);
+  display: grid;
+}
+.fichas-numeros strong {
+  font-family: var(--fonte-titulo);
+  font-size: 1.6rem;
+}
+.fichas-numeros span {
+  color: var(--cor-texto-2);
+  font-size: 14px;
+}
+
+/* Equipe de montagem: um campo por nome */
+.ficha-nomes {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--esp-2);
+}
+.ficha-nomes li {
+  display: grid;
+  grid-template-columns: 24px 1fr auto;
+  align-items: center;
+  gap: var(--esp-2);
+}
+.ficha-nomes-num {
+  font-size: 13px;
+  color: var(--cor-texto-3);
+  text-align: right;
+}
+.resumo-nomes {
+  margin: 0;
+  padding-left: 1.4em;
+  font-weight: 400;
+  columns: 2;
 }

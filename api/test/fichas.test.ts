@@ -1,4 +1,4 @@
-import { fichaVazia, type FichaPublica, type FichaTecnica, type FichaTecnicaDados } from '@shared';
+import { fichaVazia, type FichaPublica, type FichaResumo, type FichaTecnica, type FichaTecnicaDados } from '@shared';
 import { describe, expect, it } from 'vitest';
 import { handlersFichas } from '../src/acoes/fichas';
 import { criarAmbiente } from './apoio';
@@ -138,5 +138,29 @@ describe('ficha técnica: preenchimento', () => {
     const amb = ambiente();
     amb.link();
     expect(amb.chamar('fichas.obter', { eventoId: 'e1' }, { token: amb.token('p02') })).toMatchObject({ ok: false, erro: { codigo: 'SEM_PERMISSAO' } });
+  });
+});
+
+describe('ficha técnica: lista do menu', () => {
+  it('lista as fichas com o resumo, a situação e o link, na ordem das datas', () => {
+    const amb = ambiente();
+    amb.repo.inserir('eventos', linhaEvento('e2', 'Peça Antes'));
+    amb.repo.inserir('sessoes', linhaSessao({ id: 's9', eventoId: 'e2', data: '2026-11-05' }));
+    const t1 = amb.link().token;
+    amb.chamar('fichas.link', { eventoId: 'e2', novo: false }, { token: amb.gestor });
+    amb.salvar(t1, doisDias(completa()), true);
+    const r = amb.chamar('fichas.listar', null, { token: amb.gestor }) as Ok<FichaResumo[]>;
+    expect(r.dados.map((f) => f.evento)).toEqual(['Peça Antes', 'Show Teste']);
+    expect(r.dados[1]).toMatchObject({
+      eventoId: 'e1', datas: ['2026-11-18', '2026-11-19'], status: 'enviada', travada: false, prazo: '2026-11-16', token: t1,
+      responsavel: 'Produtora Teste', tipo: 'Dança', publico: 800, elenco: 350, poltronas: 1, camarins: 0, coffeeBreak: false, eventoCancelado: false,
+    });
+    expect(r.dados[0]).toMatchObject({ status: 'rascunho', responsavel: '', poltronas: 0 });
+    expect(JSON.stringify(r.dados)).not.toContain('00.000.000/0001-00');
+  });
+
+  it('bolsista não lista fichas', () => {
+    const amb = ambiente();
+    expect(amb.chamar('fichas.listar', null, { token: amb.token('p02') })).toMatchObject({ ok: false, erro: { codigo: 'SEM_PERMISSAO' } });
   });
 });
