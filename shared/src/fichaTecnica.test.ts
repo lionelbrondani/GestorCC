@@ -67,6 +67,14 @@ describe('ficha técnica: validação', () => {
     expect(com({ intervalo: false, intervaloInicio: '', intervaloFim: '' })).toEqual([]);
   });
 
+  it('término de madrugada (antes das 6h) conta como o dia seguinte', () => {
+    const s = completa().sessoes[0];
+    const madrugada = { ...completa(), sessoes: [{ ...s, fim: '00:30', intervaloInicio: '23:40', intervaloFim: '23:50' }], desmontagem: '2026-11-19T01:30' };
+    expect(campos(madrugada)).toEqual([]);
+    expect(campos({ ...madrugada, desmontagem: '2026-11-18T23:00' })).toEqual(['desmontagem']);
+    expect(campos({ ...madrugada, sessoes: [{ ...s, fim: '19:30' }] })).toContain('sessoes.0.fim');
+  });
+
   it('desmontagem antes do fim da última sessão é erro', () => {
     expect(campos({ ...completa(), desmontagem: '2026-11-18T21:00' })).toEqual(['desmontagem']);
   });

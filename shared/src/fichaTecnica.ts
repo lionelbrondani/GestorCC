@@ -203,6 +203,9 @@ export function limparFicha(bruto: unknown, sessoes: SessaoBase[]): FichaTecnica
 // ——— validação ———
 
 const vazio = (s: string) => !s.trim();
+const minutos = (h: string) => Number(h.slice(0, 2)) * 60 + Number(h.slice(3, 5));
+/** Término antes desta hora (e antes do início) é de madrugada, no dia seguinte. */
+const VIRADA_DO_DIA = '06:00';
 const digitos = (s: string) => s.replace(/\D/g, '').length;
 
 /** Tudo o que falta ou está errado, etapa por etapa. Vazio = pode enviar. */
@@ -229,17 +232,20 @@ export function errosDaFicha(d: FichaTecnicaDados, sessoes: SessaoBase[]): ErroF
     if (!h.inicio) erro('horarios', c('inicio'), 'Informe o horário de início.');
     if (!h.fim) erro('horarios', c('fim'), 'Informe o horário de término.');
     if (h.portas && h.inicio && h.portas > h.inicio) erro('horarios', c('portas'), 'A abertura das portas deve ser antes do início.');
-    const fimOk = !!h.inicio && !!h.fim && h.fim > h.inicio;
+    // na linha do tempo da sessão, horário de madrugada depois do início é do dia seguinte
+    const linha = (x: string) => minutos(x) + (h.inicio && x < h.inicio && x < VIRADA_DO_DIA ? 24 * 60 : 0);
+    const fimOk = !!h.inicio && !!h.fim && linha(h.fim) > minutos(h.inicio);
     if (h.inicio && h.fim && !fimOk) erro('horarios', c('fim'), 'O término deve ser depois do início.');
     if (h.portas || h.inicio) comecos.push(`${data}T${h.portas || h.inicio}`);
-    if (h.fim) fins.push(`${data}T${h.fim}`);
+    if (h.fim) fins.push(`${fimOk && linha(h.fim) >= 24 * 60 ? somarDias(data, 1) : data}T${h.fim}`);
     if (h.intervalo === null) erro('horarios', c('intervalo'), 'Informe se haverá intervalo.');
     if (h.intervalo) {
-      const iniOk = !!h.intervaloInicio && (!fimOk || (h.intervaloInicio > h.inicio && h.intervaloInicio < h.fim));
+      const ini = h.intervaloInicio ? linha(h.intervaloInicio) : 0;
+      const iniOk = !!h.intervaloInicio && (!fimOk || (ini > minutos(h.inicio) && ini < linha(h.fim)));
       if (!h.intervaloInicio) erro('horarios', c('intervaloInicio'), 'Informe o começo do intervalo.');
       else if (!iniOk) erro('horarios', c('intervaloInicio'), 'O intervalo deve ficar entre o início e o término.');
       if (!h.intervaloFim) erro('horarios', c('intervaloFim'), 'Informe o fim do intervalo.');
-      else if (iniOk && (h.intervaloFim <= h.intervaloInicio || (fimOk && h.intervaloFim > h.fim))) {
+      else if (iniOk && (linha(h.intervaloFim) <= ini || (fimOk && linha(h.intervaloFim) > linha(h.fim)))) {
         erro('horarios', c('intervaloFim'), 'O fim do intervalo deve ser depois do começo e antes do término.');
       }
     }
