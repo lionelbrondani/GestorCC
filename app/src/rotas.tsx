@@ -25,6 +25,7 @@ import { Almox } from './telas/almox/Almox';
 import { Configuracoes } from './telas/configuracoes/Configuracoes';
 import { Formularios } from './telas/formularios/Formularios';
 import { Mural } from './telas/mural/Mural';
+import { Orcamento } from './telas/orcamento/Orcamento';
 import { PessoaForm } from './telas/pessoas/PessoaForm';
 import { Pessoas } from './telas/pessoas/Pessoas';
 import { Infra } from './telas/infra/Infra';
@@ -71,6 +72,7 @@ export const ROTAS: RouteObject[] = [
       { path: '/escalas', element: comPermissao(['escalas'], <Escalas />) },
       { path: '/escalas/imprimir', element: comPermissao(['escalas'], <ImprimirEscala />) },
       { path: '/pagamentos', element: comPermissao(['pagamentos'], <Pagamentos />) },
+      { path: '/orcamento', element: comPermissao(['pagamentos'], <Orcamento />, 'editar') },
       { path: '/pagamentos/novo', element: comPermissao(['pagamentos'], <NovoLote />, 'editar') },
       { path: '/pagamentos/:loteId', element: comPermissao(['pagamentos'], <LoteDetalhe />) },
       { path: '/contratos', element: comPermissao(['contratos'], <Contratos />) },

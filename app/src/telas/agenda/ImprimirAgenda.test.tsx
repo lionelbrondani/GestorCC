@@ -13,5 +13,7 @@ describe('Imprimir agenda do mês', () => {
     const dia18 = linhas.find((l) => l.textContent?.includes('Quarta-feira, 18'))!;
     expect(dia18).toHaveTextContent('No Movimento dos Anos 2000');
     expect(dia18).toHaveTextContent('a definir');
+    expect(dia18).toHaveClass('com-evento');
+    expect(dia02).not.toHaveClass('com-evento');
   });
 });

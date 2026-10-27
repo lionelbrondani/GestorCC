@@ -45,7 +45,7 @@ function AgendaLegado({ linhas, mes, ano }: { linhas: LinhaAgendaMes[]; mes: num
               );
             }
             return (
-              <tr key={dia}>
+              <tr key={dia} className={eventos.length ? 'com-evento' : undefined}>
                 <td>{rotuloDiaAgenda(dia)}</td>
                 <td>
                   {eventos.map((e, i) => (
