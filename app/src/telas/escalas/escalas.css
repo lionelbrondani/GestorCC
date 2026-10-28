@@ -458,3 +458,12 @@
   border-color: var(--cor-erro);
   text-decoration: line-through;
 }
+
+/* no celular, a contagem do mês fica no fim e mais compacta */
+@media (max-width: 1099px) {
+  .totais .lista-pessoas {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 2px var(--esp-3);
+  }
+}

@@ -90,9 +90,9 @@
   gap: var(--esp-4);
   align-items: start;
 }
-@media (min-width: 820px) {
-  .manual-conteudo:has(.manual-tela) {
-    grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+@media (min-width: 720px) {
+  .manual-conteudo[data-lado] {
+    grid-template-columns: minmax(0, 1fr) 220px;
   }
 }
 .manual-passos {
@@ -124,62 +124,47 @@
   font-weight: 700;
   font-size: 13px;
 }
-.manual-tela {
+.manual-prints {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: flex-start;
+  gap: var(--esp-4);
+}
+.manual-print {
   margin: 0;
+  display: grid;
+  gap: 6px;
+  flex: 1 1 380px;
+  max-width: 760px;
+}
+.manual-print[data-formato='recorte'] {
+  flex-basis: 100%;
+}
+.manual-print[data-formato='cel'] {
+  flex: 0 0 220px;
+}
+.manual-print img {
+  display: block;
+  width: 100%;
+  height: auto;
   border-radius: var(--raio-2);
-  overflow: hidden;
   border: 1px solid var(--cor-borda-forte);
   box-shadow: var(--sombra-2);
   background: var(--cor-fundo);
 }
-.manual-tela figcaption {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 6px 10px;
-  font-size: 12px;
-  font-weight: 600;
-  background: var(--cor-nav);
-  color: var(--cor-nav-texto);
-  -webkit-print-color-adjust: exact;
-  print-color-adjust: exact;
+.manual-print[data-formato='cel'] img {
+  border: 6px solid var(--cor-nav);
+  border-radius: 22px;
 }
-.manual-tela-bolinhas {
-  display: inline-flex;
-  gap: 4px;
-}
-.manual-tela-bolinhas i {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: var(--cor-destaque);
-}
-.manual-tela-corpo {
-  padding: var(--esp-4);
-  pointer-events: none;
-}
-.manual-form {
-  display: grid;
-  gap: var(--esp-2);
-}
-.manual-form label {
-  display: grid;
-  gap: 2px;
+.manual-print figcaption {
   font-size: 13px;
-  font-weight: 600;
-}
-.manual-form .cc-entrada {
-  font-weight: 400;
+  text-align: center;
   color: var(--cor-texto-3);
 }
-.manual-aviso {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-  padding: var(--esp-3);
-  border-radius: var(--raio-2);
-  background: var(--cor-superficie);
-  border-left: 4px solid var(--cor-info);
+.manual-capa .manual-capa-nota {
+  margin-top: 4px;
+  font-size: 13px;
 }
 .manual-dica {
   margin: 0;
@@ -198,13 +183,29 @@
     gap: 12px;
   }
   .manual-secao {
-    break-inside: avoid;
     padding: 12px 14px;
+  }
+  .manual-secao h3,
+  .manual-serve {
+    break-after: avoid;
+  }
+  .manual-passos,
+  .manual-print,
+  .manual-dica {
+    break-inside: avoid;
   }
   .manual-sumario {
     break-after: page;
   }
-  .manual-conteudo:has(.manual-tela) {
-    grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+  .manual-conteudo[data-lado] {
+    grid-template-columns: minmax(0, 1fr) 55mm;
+  }
+  .manual-print[data-formato='pc'] img {
+    width: auto;
+    max-width: 100%;
+    max-height: 105mm;
+  }
+  .manual-print[data-formato='cel'] {
+    flex-basis: 55mm;
   }
 }

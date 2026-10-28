@@ -106,7 +106,7 @@ export function RelatorioMensal() {
         </>
       }
     >
-      <div className="folha-impressao relatorio-mensal">
+      <div className="relatorio-mensal">
         <CabecalhoImpresso titulo={`RELATÓRIO MENSAL · ${nomeMes}`} subtitulo={`Centro de Convenções · gerado em ${formatarData(hoje())} pelo GestorCC`} />
 
         <div className="rel-numeros">

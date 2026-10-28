@@ -293,6 +293,10 @@ textarea.cc-entrada {
   border-bottom: 1px solid var(--cor-borda);
   overflow-x: auto;
   scrollbar-width: none;
+  /* esmaece a ponta direita: mostra que há mais abas para o lado */
+  -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 28px), transparent);
+  mask-image: linear-gradient(to right, #000 calc(100% - 28px), transparent);
+  padding-right: 24px;
 }
 .cc-aba {
   background: none;

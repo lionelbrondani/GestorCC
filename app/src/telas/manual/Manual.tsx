@@ -1,7 +1,6 @@
 import { ehGestor } from '@shared';
 import {
   BarChart3,
-  Bell,
   BookOpen,
   CalendarCheck,
   CalendarDays,
@@ -9,6 +8,7 @@ import {
   ClipboardList,
   FileSignature,
   Gift,
+  Home,
   KeyRound,
   Package,
   Printer,
@@ -21,14 +21,15 @@ import {
 import type { ReactNode } from 'react';
 import { useEu } from '../../auth/SessaoContexto';
 import { Botao, Etiqueta, Pagina } from '../../componentes';
-import { Trilha } from '../contratos/Contratos';
-import { etapasDoContrato } from '../contratos/trilha';
-import '../contratos/contratos.css';
-import '../cortesias/cortesias.css';
-import '../escalas/escalas.css';
-import '../pessoal/pessoal.css';
-import '../relatorio/relatorio.css';
 import './manual.css';
+
+/** Print de uma tela real do sistema (modo protótipo, dados fictícios), salvo em public/manual/. */
+interface Print {
+  arquivo: string;
+  legenda: string;
+  /** pc: a tela inteira no computador; cel: a tela do celular; recorte: um cartão da tela. */
+  formato: 'pc' | 'cel' | 'recorte';
+}
 
 interface Secao {
   id: string;
@@ -38,30 +39,9 @@ interface Secao {
   publico: 'todos' | 'gestao';
   serve: string;
   passos: ReactNode[];
-  ilustracao?: ReactNode;
+  prints?: Print[];
   dicas?: string[];
 }
-
-/** Moldura de "tela" para as ilustrações. */
-function Tela({ titulo, children }: { titulo: string; children: ReactNode }) {
-  return (
-    <figure className="manual-tela">
-      <figcaption>
-        <span className="manual-tela-bolinhas" aria-hidden>
-          <i />
-          <i />
-          <i />
-        </span>
-        {titulo}
-      </figcaption>
-      <div className="manual-tela-corpo">{children}</div>
-    </figure>
-  );
-}
-
-const contratoExemplo = {
-  statusContrato: 'Assinado', statusFatura: 'Não paga', statusEcad: 'Enviado p/ processamento', statusIss: 'Isento', statusFundep: 'Não enviado', statusCortesias: 'Não recebidas',
-} as Parameters<typeof etapasDoContrato>[0];
 
 const SECOES: Secao[] = [
   {
@@ -73,15 +53,7 @@ const SECOES: Secao[] = [
       <>Para trocar a senha depois: <strong>Perfil → Trocar senha</strong> (mínimo de 8 caracteres).</>,
       'Esqueceu a senha? Peça a um gestor: ele volta a senha para a sua matrícula.',
     ],
-    ilustracao: (
-      <Tela titulo="Entrar">
-        <div className="manual-form">
-          <label>E-mail<span className="cc-entrada">nome@acad.ufsm.br</span></label>
-          <label>Senha<span className="cc-entrada">••••••••</span></label>
-          <Botao variante="primario">Entrar</Botao>
-        </div>
-      </Tela>
-    ),
+    prints: [{ arquivo: 'entrar', legenda: 'Tela de entrada', formato: 'pc' }],
     dicas: ['No celular, use "Adicionar à tela inicial" para abrir o GestorCC como um aplicativo.'],
   },
   {
@@ -93,23 +65,7 @@ const SECOES: Secao[] = [
       'As marcações são salvas sozinhas logo depois do último toque ("Salvo ✓").',
       'Responda até o prazo da rodada. Sem resposta conta como indisponível.',
     ],
-    ilustracao: (
-      <Tela titulo="Disponibilidade · Concerto de Natal">
-        <div className="linha-entre">
-          <span>
-            <strong>Concerto de Natal</strong>
-            <br />
-            <span className="pequeno texto-2">Chegada 18:30 · início 20:00</span>
-          </span>
-          <span className="sim-nao">
-            <button data-valor="sim" aria-pressed>
-              Sim
-            </button>
-            <button data-valor="nao">Não</button>
-          </span>
-        </div>
-      </Tela>
-    ),
+    prints: [{ arquivo: 'bolsista-disponibilidade', legenda: 'Disponibilidade no celular', formato: 'cel' }],
     dicas: ['Sessão com o selo "nova" entrou na rodada depois que ela abriu: confira se pode.'],
   },
   {
@@ -121,13 +77,7 @@ const SECOES: Secao[] = [
       <>Quer receber as escalas no Google Agenda? <strong>Perfil → Receber minhas escalas no Google Agenda</strong>.</>,
       <>Bolsistas veem em <strong>Ganhos</strong> o previsto, o enviado para pagamento e o já pago.</>,
     ],
-    ilustracao: (
-      <Tela titulo="Avisos">
-        <div className="manual-aviso">
-          <Bell size={18} aria-hidden /> Você foi escalado(a): Formatura de Direito (12/12).
-        </div>
-      </Tela>
-    ),
+    prints: [{ arquivo: 'bolsista-minhas-escalas', legenda: 'Minhas escalas no celular', formato: 'cel' }],
   },
   {
     id: 'relatar', titulo: 'Relatar um problema no prédio', icone: TriangleAlert, publico: 'todos',
@@ -137,6 +87,18 @@ const SECOES: Secao[] = [
       'Descreva o ponto exato e, se puder, tire uma foto.',
       'Acompanhe a situação do seu relato na mesma tela.',
     ],
+    prints: [{ arquivo: 'bolsista-relatar', legenda: 'Relatar problema no celular', formato: 'cel' }],
+  },
+  {
+    id: 'inicio', titulo: 'Início, busca e avisos', icone: Home, publico: 'gestao',
+    serve: 'Ver o dia e a semana e chegar rápido a cada parte do sistema.',
+    passos: [
+      'Os atalhos coloridos levam direto a cada área: agenda, fichas, escalas, pagamentos e as demais.',
+      <><strong>Hoje</strong> e <strong>Próximos 7 dias</strong> mostram os eventos e quantas vagas já estão preenchidas (ex.: 4/4).</>,
+      <>A <strong>busca</strong>, no alto, encontra eventos e pessoas e entende perguntas como "quem está escalado sábado?".</>,
+      'O sininho mostra os avisos. No celular, o menu completo fica no botão Menu, embaixo.',
+    ],
+    prints: [{ arquivo: 'inicio', legenda: 'Início da gestão', formato: 'pc' }],
   },
   {
     id: 'agenda', titulo: 'Agenda e eventos', icone: CalendarDays, publico: 'gestao',
@@ -148,6 +110,7 @@ const SECOES: Secao[] = [
       'Para cancelar um evento ou uma sessão, use Cancelar e informe o motivo: quem estava escalado é avisado.',
       <><strong>Agenda → Imprimir</strong>: modelo legado (um dia por linha, dias com evento em cinza) ou atualizado.</>,
     ],
+    prints: [{ arquivo: 'agenda', legenda: 'Agenda', formato: 'pc' }],
     dicas: ['Na agenda, atividades de apoio aparecem em itálico, com borda tracejada.'],
   },
   {
@@ -161,21 +124,11 @@ const SECOES: Secao[] = [
       <><strong>Lançar montagem e desmontagem na agenda do CC</strong> cria as atividades de apoio do evento a partir da ficha.</>,
       <><strong>Imprimir resumo</strong>: dados da ficha e o mapa das poltronas reservadas, para a equipe.</>,
     ],
-    ilustracao: (
-      <Tela titulo="Evento · Ficha técnica">
-        <div className="linha">
-          <Etiqueta tom="sucesso">Enviada</Etiqueta>
-          <Etiqueta>Aberta até 10/12/2026</Etiqueta>
-        </div>
-        <div className="linha" style={{ marginTop: 8 }}>
-          <Botao tamanho="pequeno">Copiar mensagem para o produtor</Botao>
-          <Botao tamanho="pequeno">Imprimir resumo</Botao>
-          <Botao tamanho="pequeno" variante="primario">
-            Lançar na agenda do CC
-          </Botao>
-        </div>
-      </Tela>
-    ),
+    prints: [
+      { arquivo: 'ficha-evento', legenda: 'No evento: o link e as ações da ficha', formato: 'recorte' },
+      { arquivo: 'fichas', legenda: 'Menu Fichas técnicas', formato: 'pc' },
+      { arquivo: 'ficha-produtor', legenda: 'O que o produtor vê, no celular', formato: 'cel' },
+    ],
     dicas: ['Evento de um dia: a montagem e a desmontagem devem ser no mesmo dia; a ficha avisa e não deixa passar.'],
   },
   {
@@ -187,16 +140,10 @@ const SECOES: Secao[] = [
       'O destino lança nome e matrícula de quem vai receber, até o dia anterior ao evento.',
       <><strong>Imprimir lista</strong> no dia do evento: ordem alfabética, com a coluna para marcar a retirada.</>,
     ],
-    ilustracao: (
-      <Tela titulo="Link do destino">
-        <p style={{ margin: '0 0 8px' }}>
-          Você recebeu <strong>30 cortesias</strong> para distribuir à <strong>Casa do Estudante</strong>.
-        </p>
-        <div className="cortesias-contador">
-          <span>22 de 30</span>
-        </div>
-      </Tela>
-    ),
+    prints: [
+      { arquivo: 'cortesias-evento', legenda: 'No evento: os destinos e seus links', formato: 'recorte' },
+      { arquivo: 'cortesias-destino', legenda: 'O que o destino vê, no celular', formato: 'cel' },
+    ],
   },
   {
     id: 'escalas', titulo: 'Escalas: rodada, montar e publicar', icone: ClipboardList, publico: 'gestao',
@@ -210,35 +157,10 @@ const SECOES: Secao[] = [
       <>Trocas (inclusive depois do evento) em <strong>Publicadas → Trocar</strong>, com justificativa.</>,
       <><strong>Presença</strong>: depois do evento, confirme quem compareceu (isso libera o pagamento).</>,
     ],
-    ilustracao: (
-      <Tela titulo="Montar · evento a evento">
-        <div className="vagas">
-          <ul className="vagas-lista">
-            <li>
-              <span className="bloco-pessoa" data-experiente>
-                <span className="bloco-nome">ANA</span>
-              </span>
-            </li>
-          </ul>
-          <span className="vaga-vazia">+</span>
-          <span className="vaga-vazia">+</span>
-        </div>
-        <div className="blocos" style={{ marginTop: 8 }}>
-          <span className="bloco-pessoa">
-            <span className="bloco-nome">BRUNO</span>
-            <span className="contagem" data-nivel={1}>
-              1x
-            </span>
-          </span>
-          <span className="bloco-pessoa">
-            <span className="bloco-nome">CARLA</span>
-            <span className="contagem" data-nivel={0}>
-              0x
-            </span>
-          </span>
-        </div>
-      </Tela>
-    ),
+    prints: [
+      { arquivo: 'escalas-montar', legenda: 'Montar · evento a evento', formato: 'pc' },
+      { arquivo: 'escalas-ver', legenda: 'Ver escala', formato: 'pc' },
+    ],
     dicas: ['Os números (1x, 2x…) mostram quantas vezes a pessoa já foi escalada no mês: comece pelos menores.'],
   },
   {
@@ -258,6 +180,7 @@ const SECOES: Secao[] = [
       'Copie ou baixe a ficha de indicação do lote e envie ao setor de pagamento.',
       'Quando o pagamento sair, marque o lote como pago.',
     ],
+    prints: [{ arquivo: 'pagamentos', legenda: 'Pagamentos', formato: 'pc' }],
   },
   {
     id: 'contratos', titulo: 'Contratos', icone: FileSignature, publico: 'gestao',
@@ -267,11 +190,7 @@ const SECOES: Secao[] = [
       'Clique num número do resumo no topo para ver só os contratos com aquela etapa pendente.',
       <>Documentos são gerados a partir dos modelos do Google Docs; o pedido à FUNDEP sai como texto para copiar.</>,
     ],
-    ilustracao: (
-      <Tela titulo="Contratos">
-        <Trilha etapas={etapasDoContrato(contratoExemplo, ['faturaVencendo'])} />
-      </Tela>
-    ),
+    prints: [{ arquivo: 'contratos', legenda: 'Contratos, com a trilha de etapas', formato: 'pc' }],
   },
   {
     id: 'almox', titulo: 'Almoxarifado', icone: Package, publico: 'gestao',
@@ -282,6 +201,7 @@ const SECOES: Secao[] = [
       <><strong>Quem pode retirar</strong>: inclua, renomeie ou desative as pessoas de fora da equipe.</>,
       'O painel mostra os itens no mínimo; os pedidos acompanham as compras até o recebimento.',
     ],
+    prints: [{ arquivo: 'almox-saida', legenda: 'Saída de itens', formato: 'pc' }],
   },
   {
     id: 'infra', titulo: 'Infraestrutura (prédio)', icone: Wrench, publico: 'gestao',
@@ -290,6 +210,7 @@ const SECOES: Secao[] = [
       'Os relatos chegam pelo app e pelo formulário de problemas.',
       'Mude a situação (análise, chamado aberto, em atendimento, resolvida) e registre o número do chamado.',
     ],
+    prints: [{ arquivo: 'infra', legenda: 'Infraestrutura', formato: 'pc' }],
   },
   {
     id: 'relatorio', titulo: 'Relatório mensal', icone: BarChart3, publico: 'gestao',
@@ -298,20 +219,7 @@ const SECOES: Secao[] = [
       <>Abra <strong>Relatório mensal</strong>, escolha o mês e clique em <strong>Imprimir</strong>.</>,
       'Traz: números do mês e ocupação do espaço, eventos por tipo, equipe e diárias (em totais), contratos, ECAD, ISS e cortesias por evento, fichas técnicas, almoxarifado e prédio.',
     ],
-    ilustracao: (
-      <Tela titulo="Relatório mensal">
-        <div className="rel-numeros">
-          <div className="rel-numero" data-tom="info">
-            <strong>12</strong>
-            <span>eventos · 15 sessões</span>
-          </div>
-          <div className="rel-numero" data-tom="sucesso">
-            <strong>R$ 3.840,00</strong>
-            <span>em diárias (UFSM)</span>
-          </div>
-        </div>
-      </Tela>
-    ),
+    prints: [{ arquivo: 'relatorio', legenda: 'Relatório mensal', formato: 'pc' }],
   },
   {
     id: 'pessoas', titulo: 'Pessoas e configurações', icone: Users, publico: 'gestao',
@@ -321,6 +229,7 @@ const SECOES: Secao[] = [
       'A senha inicial é a matrícula. Para quem esqueceu: Redefinir senha para a matrícula.',
       <><strong>Configurações</strong>: diária padrão, vagas padrão, feriados, edital/iniciativa, FUNDEP, links (ex.: folder do CC).</>,
     ],
+    prints: [{ arquivo: 'pessoas', legenda: 'Pessoas', formato: 'pc' }],
   },
 ];
 
@@ -347,6 +256,7 @@ export function Manual() {
               <BookOpen size={22} aria-hidden /> Manual do GestorCC
             </h2>
             <p>Agenda, escalas, fichas técnicas, cortesias, pagamentos, contratos, almoxarifado e prédio num lugar só.</p>
+            <p className="manual-capa-nota">As imagens são telas reais do sistema, com dados fictícios.</p>
           </div>
         </header>
 
@@ -370,13 +280,23 @@ export function Manual() {
               {s.publico === 'gestao' && <Etiqueta tom="info">Gestão</Etiqueta>}
             </h3>
             <p className="manual-serve">{s.serve}</p>
-            <div className="manual-conteudo">
+            {/* só prints de celular: ficam ao lado dos passos; os de computador vão embaixo, maiores */}
+            <div className="manual-conteudo" data-lado={s.prints?.every((p) => p.formato === 'cel') ? '' : undefined}>
               <ol className="manual-passos">
                 {s.passos.map((p, k) => (
                   <li key={k}>{p}</li>
                 ))}
               </ol>
-              {s.ilustracao}
+              {s.prints && (
+                <div className="manual-prints">
+                  {s.prints.map((p) => (
+                    <figure key={p.arquivo} className="manual-print" data-formato={p.formato}>
+                      <img src={`/manual/${p.arquivo}.jpg`} alt={p.legenda} />
+                      <figcaption>{p.legenda}</figcaption>
+                    </figure>
+                  ))}
+                </div>
+              )}
             </div>
             {s.dicas?.map((d, k) => (
               <p key={k} className="manual-dica">
