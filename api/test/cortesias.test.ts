@@ -118,3 +118,15 @@ describe('cortesias: lista pelo link do destino', () => {
     expect(amb.chamar('cortesia.abrir', { token: d.token })).toMatchObject({ ok: false, erro: { codigo: 'LINK', mensagem: 'Este evento foi cancelado.' } });
   });
 });
+
+describe('cortesias: resumo para o relatório', () => {
+  it('devolve só as quantidades por evento, sem nomes nem matrículas', () => {
+    const amb = ambiente();
+    const d = (amb.destino({ quantidade: 5 }) as Ok<DestinoCortesias>).dados;
+    amb.destino({ nome: 'PRE', quantidade: 2 });
+    amb.chamar('cortesia.salvar', { token: d.token, pessoas: [ana, bia] });
+    const r = amb.chamar('cortesias.resumo', { eventoIds: ['e1', 'outro'] }, { token: amb.gestor }) as Ok<unknown>;
+    expect(r.dados).toEqual([{ eventoId: 'e1', destinos: [{ nome: 'Casa do Estudante', quantidade: 5, lancados: 2 }, { nome: 'PRE', quantidade: 2, lancados: 0 }] }]);
+    expect(JSON.stringify(r.dados)).not.toContain('Ana');
+  });
+});

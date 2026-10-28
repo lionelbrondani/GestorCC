@@ -82,6 +82,7 @@ export const ACOES_FASE: Partial<Record<Acao, { regra: Regra; escrita: boolean }
   'fichas.listar': { regra: ['eventos', 'editar'], escrita: false },
   // cortesias: o destino lança os nomes pelo link (token), sem login
   'cortesias.listar': { regra: ['eventos', 'editar'], escrita: false },
+  'cortesias.resumo': { regra: ['eventos', 'editar'], escrita: false },
   'cortesias.salvarDestino': { regra: ['eventos', 'editar'], escrita: true },
   'cortesias.removerDestino': { regra: ['eventos', 'editar'], escrita: true },
   'cortesias.novoLink': { regra: ['eventos', 'editar'], escrita: true },

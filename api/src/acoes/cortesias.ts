@@ -115,6 +115,18 @@ export const handlersCortesias: Handlers = {
     };
   },
 
+  'cortesias.resumo': ({ eventoIds }, ctx) => {
+    const pedidos = new Set(Array.isArray(eventoIds) ? eventoIds.slice(0, 500) : []);
+    const sigilos = new Map(linhasSigilo(ctx).map((s) => [s.id, s]));
+    const porEvento = new Map<string, { nome: string; quantidade: number; lancados: number }[]>();
+    for (const d of linhasDestinos(ctx)) {
+      if (!pedidos.has(d.eventoId)) continue;
+      const lancados = (sigilos.get(d.id)?.pessoas ?? []).length;
+      porEvento.set(d.eventoId, [...(porEvento.get(d.eventoId) ?? []), { nome: d.nome, quantidade: Number(d.quantidade), lancados }]);
+    }
+    return [...porEvento].map(([eventoId, destinos]) => ({ eventoId, destinos }));
+  },
+
   'cortesias.salvarDestino': ({ id, eventoId, nome, quantidade, pedirMatricula }, ctx) => {
     const n = Math.round(Number(quantidade));
     if (!String(nome ?? '').trim()) throw new ErroApi('VALIDACAO', 'Informe o nome do destino.');

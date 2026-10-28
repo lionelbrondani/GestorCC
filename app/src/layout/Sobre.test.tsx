@@ -21,3 +21,12 @@ describe('Sobre o GestorCC', () => {
     expect(await screen.findByRole('dialog', { name: 'Sobre o GestorCC' })).toBeInTheDocument();
   });
 });
+
+describe('Sobre: código aberto', () => {
+  it('tem o link do repositório no GitHub', async () => {
+    localStorage.clear();
+    await renderizar({ pessoa: 'gestor', rota: '/' });
+    const janela = await screen.findByRole('dialog', { name: 'Sobre o GestorCC' });
+    expect(within(janela).getByRole('link', { name: 'github.com/lionelbrondani/GestorCC' })).toHaveAttribute('href', 'https://github.com/lionelbrondani/GestorCC');
+  });
+});

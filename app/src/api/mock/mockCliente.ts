@@ -216,6 +216,7 @@ const REGRAS: Record<Acao, Regra> = {
   'ficha.anexar': 'publica',
   'fichas.listar': ['eventos', 'editar'],
   'cortesias.listar': ['eventos', 'editar'],
+  'cortesias.resumo': ['eventos', 'editar'],
   'cortesias.salvarDestino': ['eventos', 'editar'],
   'cortesias.removerDestino': ['eventos', 'editar'],
   'cortesias.novoLink': ['eventos', 'editar'],
@@ -719,6 +720,13 @@ const handlers: Handlers = {
   },
   'infra.foto': ({ id }, ctx) => ctx.banco.ocorrencias.find((o) => o.id === id)?.foto ?? null,
   'busca.interpretar': ({ pergunta }, ctx) => ({ consulta: interpretarSimulado(pergunta, ctx.hoje), ajuda: null, motivo: null }),
+  'cortesias.resumo': ({ eventoIds }) =>
+    eventoIds
+      .map((eventoId) => ({
+        eventoId,
+        destinos: [...CORTESIAS_PROTOTIPO.values()].filter((d) => d.eventoId === eventoId).map((d) => ({ nome: d.nome, quantidade: d.quantidade, lancados: d.pessoas.length })),
+      }))
+      .filter((x) => x.destinos.length),
   'cortesias.listar': ({ eventoId }, ctx) => {
     const contratos = ctx.banco.contratos.filter((c) => c.eventoId === eventoId && c.statusContrato !== 'Cancelado');
     return {

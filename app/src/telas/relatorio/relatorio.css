@@ -89,3 +89,31 @@
     box-shadow: none;
   }
 }
+.rel-total {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: var(--esp-3);
+  padding: 6px 0;
+  border-bottom: 1px dotted var(--cor-borda-forte);
+}
+.rel-total[data-destaque] strong {
+  font-size: 1.1rem;
+  color: var(--cor-sucesso);
+}
+.relatorio-mensal .cc-cartao > .cc-tabela-caixa + .cc-tabela-caixa {
+  margin-top: var(--esp-3);
+}
+.rel-faixa {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--esp-2) var(--esp-5);
+  padding: var(--esp-3);
+  margin-bottom: var(--esp-3);
+  border-radius: var(--raio-2);
+  background: var(--cor-destaque-suave);
+}
+.rel-faixa strong {
+  font-size: 1.15rem;
+  margin-left: 4px;
+}

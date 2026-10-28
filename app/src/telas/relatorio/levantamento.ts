@@ -33,6 +33,8 @@ export interface BaseLevantamento {
   movimentos: AlmoxMovimento[];
   itensAlmox: AlmoxItem[];
   ocorrencias: Ocorrencia[];
+  /** Destinos de cortesias por evento (só quantidades). */
+  cortesias?: { eventoId: string; destinos: { nome: string; quantidade: number; lancados: number }[] }[];
 }
 
 export interface DireitoPessoa {
@@ -45,6 +47,8 @@ export interface DireitoPessoa {
   valorInterno: Centavos;
   /** Já num lote enviado ou pago. */
   valorEmLote: Centavos;
+  /** Já num lote pago. */
+  valorPago: Centavos;
   /** Sessões de eventos pagos por terceiros (pagador externo). */
   diariasExternas: number;
 }
@@ -84,6 +88,7 @@ export function levantamentoMensal(b: BaseLevantamento) {
         diariasInternas: internas.length,
         valorInterno: valor(internas),
         valorEmLote: valor(internas.filter((e) => emLoteAtivo(e, b.lotes))),
+        valorPago: valor(internas.filter((e) => b.lotes.some((l) => l.id === e.loteId && l.status === 'pago'))),
         diariasExternas: pessoa.tipo === 'bolsista' ? realizadas.length - internas.length : 0,
       };
     })
@@ -113,14 +118,83 @@ export function levantamentoMensal(b: BaseLevantamento) {
   }
   const almox = [...saidas.values()].sort((x, y) => y.valor - x.valor);
 
+  const sessoesEvento = sessoes.filter((s) => !ehApoio(s));
+  const diasNoMes = new Date(Number(b.mes.slice(0, 4)), Number(b.mes.slice(5, 7)), 0).getDate();
+  const diasComUso = new Set(sessoes.map((s) => s.data)).size;
+  const tipos = new Map<string, { tipo: string; eventos: number; sessoes: number; publico: number }>();
+  for (const e of eventos) {
+    const t = tipos.get(e.evento.tipo) ?? { tipo: e.evento.tipo, eventos: 0, sessoes: 0, publico: 0 };
+    t.eventos += 1;
+    t.sessoes += sessoesEvento.filter((s) => s.eventoId === e.evento.id).length;
+    t.publico += e.evento.publicoReal ?? e.evento.publicoEstimado ?? 0;
+    tipos.set(e.evento.tipo, t);
+  }
+  const ativosContratos = contratos.filter((c) => c.contrato.statusContrato !== 'Cancelado');
+  const pendente = (v: string) => !['Pago', 'Paga', 'Isento'].includes(v);
+  const contratosResumo = {
+    quantidade: ativosContratos.length,
+    valorTotal: ativosContratos.reduce((n, c) => n + c.valor, 0),
+    valorPago: ativosContratos.filter((c) => c.contrato.statusFatura === 'Paga').reduce((n, c) => n + c.valor, 0),
+    semAssinatura: ativosContratos.filter((c) => c.contrato.statusContrato !== 'Assinado').length,
+    faturaPendente: ativosContratos.filter((c) => pendente(c.contrato.statusFatura)).length,
+    ecadIssPendente: ativosContratos.filter((c) => pendente(c.contrato.statusEcad) || pendente(c.contrato.statusIss)).length,
+  };
+  // ECAD, ISS e cortesias de cada evento do mês (contrato + destinos das cortesias)
+  const eventosAdmin = eventos.map((x) => {
+    const ct = b.contratos.find((c) => c.eventoId === x.evento.id && c.statusContrato !== 'Cancelado');
+    const destinos = b.cortesias?.find((c) => c.eventoId === x.evento.id)?.destinos ?? [];
+    return {
+      evento: x.evento,
+      datas: x.datas,
+      ecad: ct?.statusEcad ?? '—',
+      iss: ct?.statusIss ?? '—',
+      cortesiasContrato: ct ? Number(ct.cortesiasQtd || 0) : 0,
+      statusCortesias: ct?.statusCortesias ?? '—',
+      distribuidas: destinos.reduce((n, d) => n + d.quantidade, 0),
+      lancados: destinos.reduce((n, d) => n + d.lancados, 0),
+      destinos: destinos.map((d) => `${d.nome} (${d.lancados}/${d.quantidade})`).join(', '),
+    };
+  });
+  const cortesiasTotais = {
+    recebidas: eventosAdmin.reduce((n, x) => n + x.cortesiasContrato, 0),
+    distribuidas: eventosAdmin.reduce((n, x) => n + x.distribuidas, 0),
+    lancados: eventosAdmin.reduce((n, x) => n + x.lancados, 0),
+    destinos: (b.cortesias ?? []).filter((c) => eventos.some((x) => x.evento.id === c.eventoId)).reduce((n, c) => n + c.destinos.length, 0),
+  };
   const criadas = b.ocorrencias.filter((o) => doMes(o.criadaEm, b.mes));
   const resolvidas = b.ocorrencias.filter((o) => doMes(o.resolvidaEm, b.mes));
   const abertas = b.ocorrencias.filter((o) => o.status !== 'resolvida' && o.status !== 'naoProcede');
 
+  const categorias = new Map<string, { categoria: string; abertas: number; resolvidas: number }>();
+  const contar = (o: Ocorrencia, campo: 'abertas' | 'resolvidas') => {
+    const c = categorias.get(o.categoria) ?? { categoria: o.categoria, abertas: 0, resolvidas: 0 };
+    c[campo] += 1;
+    categorias.set(o.categoria, c);
+  };
+  abertas.forEach((o) => contar(o, 'abertas'));
+  resolvidas.forEach((o) => contar(o, 'resolvidas'));
+
   return {
+    ocupacao: { diasComUso, diasNoMes, percentual: Math.round((diasComUso / diasNoMes) * 100) },
+    porTipo: [...tipos.values()].sort((x, y) => y.eventos - x.eventos || x.tipo.localeCompare(y.tipo, 'pt-BR')),
+    equipe: {
+      pessoas: direitos.length,
+      realizadas: direitos.reduce((n, d) => n + d.realizadas, 0),
+      faltas: direitos.reduce((n, d) => n + d.faltas, 0),
+      diarias: direitos.reduce((n, d) => n + d.diariasInternas, 0),
+      valorDiarias: direitos.reduce((n, d) => n + d.valorInterno, 0),
+      valorEmLote: direitos.reduce((n, d) => n + d.valorEmLote, 0),
+      valorPago: direitos.reduce((n, d) => n + d.valorPago, 0),
+    },
+    contratosResumo,
+    eventosAdmin,
+    cortesiasTotais,
+    itensCriticos: b.itensAlmox.filter((i) => i.status === 'Ativo' && i.saldo <= i.qtdMinima),
+    ocorrenciasPorCategoria: [...categorias.values()].sort((x, y) => y.abertas + y.resolvidas - (x.abertas + x.resolvidas) || x.categoria.localeCompare(y.categoria, 'pt-BR')),
     resumo: {
       eventos: eventos.length,
-      sessoes: sessoes.length,
+      sessoes: sessoesEvento.length,
+      apoio: sessoes.length - sessoesEvento.length,
       publicoEstimado: eventos.reduce((n, e) => n + (e.evento.publicoEstimado ?? 0), 0),
       publicoReal: eventos.reduce((n, e) => n + (e.evento.publicoReal ?? 0), 0),
       pessoas: direitos.length,

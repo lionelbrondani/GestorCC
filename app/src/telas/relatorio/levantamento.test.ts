@@ -62,3 +62,64 @@ describe('levantamento mensal', () => {
     expect(r.resumo.saidasAlmox).toBe(1500);
   });
 });
+
+describe('levantamento mensal: visão administrativa do setor', () => {
+  it('ocupação do espaço, eventos por tipo e atividades de apoio à parte', () => {
+    const r = levantamentoMensal(base({
+      eventos: [evento('e1', 'interno', { tipo: 'Formatura', publicoEstimado: 300 }), evento('e2', 'externo', { tipo: 'Formatura', publicoEstimado: 100 }), evento('e3', 'interno', { tipo: 'Congresso' })],
+      sessoes: [sessao('s1', 'e1', '2026-11-05'), sessao('s2', 'e1', '2026-11-06'), sessao('s3', 'e2', '2026-11-06'), { ...sessao('m1', 'e3', '2026-11-20'), atividade: 'montagem' }],
+    }));
+    expect(r.ocupacao).toEqual({ diasComUso: 3, diasNoMes: 30, percentual: 10 });
+    expect(r.porTipo).toEqual([
+      { tipo: 'Formatura', eventos: 2, sessoes: 3, publico: 400 },
+      { tipo: 'Congresso', eventos: 1, sessoes: 0, publico: 0 },
+    ]);
+    expect(r.resumo).toMatchObject({ sessoes: 3, apoio: 1 });
+  });
+
+  it('equipe só em totais: diárias previstas, já em lote e já pagas', () => {
+    const r = levantamentoMensal(base());
+    expect(r.equipe).toEqual({ pessoas: 3, realizadas: 4, faltas: 1, diarias: 2, valorDiarias: 18000, valorEmLote: 8000, valorPago: 0 });
+  });
+
+  it('contratos: contratado, pago e quantos têm cada pendência', () => {
+    const c = (id: string, eventoId: string, p: Record<string, string>) => ({ id, numero: `${id}/2026`, eventoId, valorBase: 100000, statusContrato: 'Assinado', statusFatura: 'Paga', statusEcad: 'Pago', statusIss: 'Isento', statusFundep: 'Ok', statusCortesias: 'Distribuídas', ...p });
+    const r = levantamentoMensal(base({ contratos: [c('1', 'e1', {}), c('2', 'e2', { statusContrato: 'Enviado', statusFatura: 'Não paga', statusEcad: 'Não enviado' })] as never }));
+    expect(r.contratosResumo).toEqual({ quantidade: 2, valorTotal: 200000, valorPago: 100000, semAssinatura: 1, faturaPendente: 1, ecadIssPendente: 1 });
+  });
+
+  it('almoxarifado: itens no mínimo; prédio: ocorrências por categoria', () => {
+    const r = levantamentoMensal(base({
+      itensAlmox: [
+        { cod: '1', nomeAlmox: 'A', nomeComum: 'A', unidade: 'UN', valor: 1, categoria: '', qtdMinima: 5, sala: '', status: 'Ativo', saldo: 5 },
+        { cod: '2', nomeAlmox: 'B', nomeComum: 'B', unidade: 'UN', valor: 1, categoria: '', qtdMinima: 5, sala: '', status: 'Ativo', saldo: 9 },
+      ],
+      ocorrencias: [
+        { id: 'o1', categoria: 'Elétrica', status: 'nova', criadaEm: '2026-11-02T10:00', resolvidaEm: null },
+        { id: 'o2', categoria: 'Elétrica', status: 'resolvida', criadaEm: '2026-11-03T10:00', resolvidaEm: '2026-11-04T10:00' },
+        { id: 'o3', categoria: 'Hidráulica', status: 'nova', criadaEm: '2026-11-05T10:00', resolvidaEm: null },
+      ] as never,
+    }));
+    expect(r.itensCriticos.map((i) => i.cod)).toEqual(['1']);
+    expect(r.ocorrenciasPorCategoria).toEqual([
+      { categoria: 'Elétrica', abertas: 1, resolvidas: 1 },
+      { categoria: 'Hidráulica', abertas: 1, resolvidas: 0 },
+    ]);
+  });
+});
+
+describe('levantamento mensal: ECAD, ISS e cortesias por evento', () => {
+  it('cruza contrato e destinos de cortesias de cada evento do mês, com os totais', () => {
+    const contrato = { id: 'c1', numero: '1/2026', eventoId: 'e1', valorBase: 100000, statusContrato: 'Assinado', statusFatura: 'Paga', statusEcad: 'Não pago', statusIss: 'Pago', statusFundep: 'Ok', statusCortesias: 'Recebidas', cortesiasQtd: 40 };
+    const r = levantamentoMensal(base({
+      contratos: [contrato] as never,
+      cortesias: [{ eventoId: 'e1', destinos: [{ nome: 'Casa do Estudante', quantidade: 30, lancados: 25 }, { nome: 'PRE', quantidade: 5, lancados: 5 }] }],
+    }));
+    expect(r.eventosAdmin.find((x) => x.evento.id === 'e1')).toMatchObject({
+      ecad: 'Não pago', iss: 'Pago', cortesiasContrato: 40, statusCortesias: 'Recebidas', distribuidas: 35, lancados: 30,
+      destinos: 'Casa do Estudante (25/30), PRE (5/5)',
+    });
+    expect(r.eventosAdmin.find((x) => x.evento.id === 'e2')).toMatchObject({ ecad: '—', iss: '—', cortesiasContrato: 0, distribuidas: 0 });
+    expect(r.cortesiasTotais).toEqual({ recebidas: 40, distribuidas: 35, lancados: 30, destinos: 2 });
+  });
+});

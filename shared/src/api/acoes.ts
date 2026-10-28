@@ -174,6 +174,8 @@ export interface Acoes {
   /** O gestor corrige a lista de um destino. */
   'cortesias.salvarPessoas': A<{ id: Id; pessoas: PessoaCortesia[] }, DestinoCortesias>;
   /** Página do destino, pelo link (sem login). */
+  /** Só as quantidades por evento (relatório): destinos, cortesias de cada um e nomes já lançados — sem nomes. */
+  'cortesias.resumo': A<{ eventoIds: Id[] }, { eventoId: Id; destinos: { nome: string; quantidade: number; lancados: number }[] }[]>;
   'cortesia.abrir': A<{ token: string }, CortesiasPublica>;
   'cortesia.salvar': A<{ token: string; pessoas: PessoaCortesia[] }, CortesiasPublica>;
   'busca.interpretar': A<{ pergunta: string }, { consulta: Consulta | null; ajuda: string | null; motivo: 'limite' | 'indisponivel' | null }>;

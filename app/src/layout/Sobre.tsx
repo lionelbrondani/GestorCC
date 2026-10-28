@@ -4,6 +4,7 @@ import { Botao, Losango, Modal } from '../componentes';
 import './sobre.css';
 
 export const EMAIL_DESENVOLVEDOR = 'lionel.brondani@acad.ufsm.br';
+export const REPOSITORIO = 'https://github.com/lionelbrondani/GestorCC';
 const CHAVE_VISTO = 'gestorcc-sobre-visto-v1';
 
 /** Texto do "Sobre": quem fez, por quê, código aberto e para onde mandar sugestões e erros. */
@@ -20,7 +21,11 @@ export function ConteudoSobre() {
       </p>
       <p>
         O objetivo é <strong>diminuir a sobrecarga de trabalho do setor</strong>: agenda, escalas, pagamentos, contratos, fichas técnicas, almoxarifado e
-        prédio num lugar só. O <strong>código é aberto</strong>.
+        prédio num lugar só. O <strong>código é aberto</strong>:{' '}
+        <a href={REPOSITORIO} target="_blank" rel="noreferrer">
+          github.com/lionelbrondani/GestorCC
+        </a>
+        .
       </p>
       <ul className="sobre-cartoes">
         <li>

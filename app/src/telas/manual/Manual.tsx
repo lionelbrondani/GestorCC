@@ -387,7 +387,7 @@ export function Manual() {
         ))}
 
         <p className="manual-fim">
-          Dúvidas, sugestões ou erros: lionel.brondani@acad.ufsm.br · GestorCC, desenvolvido pelo bolsista Lionel Brondani.
+          Dúvidas, sugestões ou erros: lionel.brondani@acad.ufsm.br · GestorCC, desenvolvido pelo bolsista Lionel Brondani · código aberto em github.com/lionelbrondani/GestorCC
         </p>
       </div>
     </Pagina>
