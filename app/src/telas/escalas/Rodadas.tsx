@@ -6,6 +6,7 @@ import { Alerta, Botao, Campo, Carregando, Cartao, EstadoVazio, Etiqueta, Modal 
 import { agora } from '../../util/hoje';
 import { dataLonga, tituloSessao } from '../../util/sessoes';
 import { copiarTexto, INVALIDAR_ESCALAS, useDadosEscalas } from './dadosEscalas';
+import { TEXTO_ESTADO, useMarcacoes } from './useMarcacoes';
 
 type Dados = ReturnType<typeof useDadosEscalas>;
 
@@ -79,11 +80,31 @@ function NovaRodada({ mes, dados, aoFechar }: { mes: string; dados: Dados; aoFec
 
 function MarcarPorAlguem({ rodada, dados, aoFechar }: { rodada: Rodada; dados: Dados; aoFechar: () => void }) {
   const [pessoaId, setPessoaId] = useState('');
-  const marcar = useMutacao('disponibilidades.marcar', ['disponibilidades.listar']);
+  const marcacoes = useMarcacoes(pessoaId || undefined);
   const sessoes = dados.sessoes.filter((s) => rodada.sessaoIds.includes(s.id));
-  const valor = (sessaoId: string) => dados.disponibilidades.find((d) => d.pessoaId === pessoaId && d.sessaoId === sessaoId)?.disponivel;
+  const valor = (sessaoId: string) =>
+    marcacoes.valor(sessaoId, dados.disponibilidades.find((d) => d.pessoaId === pessoaId && d.sessaoId === sessaoId)?.disponivel);
+  const marcar = (sessaoId: string, disponivel: boolean) => marcacoes.marcar([{ sessaoId, disponivel }]);
+  const concluir = async () => {
+    await marcacoes.enviar();
+    aoFechar();
+  };
   return (
-    <Modal aberto titulo="Marcar disponibilidade por alguém" aoFechar={aoFechar} rodape={<Botao onClick={aoFechar}>Concluir</Botao>}>
+    <Modal
+      aberto
+      titulo="Marcar disponibilidade por alguém"
+      aoFechar={concluir}
+      rodape={
+        <>
+          <span className="pequeno texto-2" role="status">
+            {TEXTO_ESTADO[marcacoes.estado]}
+          </span>
+          <Botao variante="primario" carregando={marcacoes.estado === 'salvando'} onClick={concluir}>
+            Concluir
+          </Botao>
+        </>
+      }
+    >
       <div className="pilha">
         <p className="pequeno texto-2">Use quando a pessoa avisou por outro meio (ex.: WhatsApp). Fica registrado no histórico.</p>
         <Campo rotulo="Pessoa">
@@ -98,6 +119,17 @@ function MarcarPorAlguem({ rodada, dados, aoFechar }: { rodada: Rodada; dados: D
             </select>
           )}
         </Campo>
+        {pessoaId && (
+          <div className="linha">
+            <Botao tamanho="pequeno" onClick={() => marcacoes.marcar(sessoes.map((s) => ({ sessaoId: s.id, disponivel: true })))}>
+              Sim em todas
+            </Botao>
+            <Botao tamanho="pequeno" onClick={() => marcacoes.marcar(sessoes.map((s) => ({ sessaoId: s.id, disponivel: false })))}>
+              Não em todas
+            </Botao>
+          </div>
+        )}
+        {marcacoes.erro && <Alerta tom="erro">{marcacoes.erro}</Alerta>}
         {pessoaId &&
           sessoes.map((s) => (
             <div key={s.id} className="linha-entre">
@@ -105,10 +137,10 @@ function MarcarPorAlguem({ rodada, dados, aoFechar }: { rodada: Rodada; dados: D
                 {dataLonga(s.data)} · {tituloSessao(dados.periodo.evento.get(s.eventoId), s)}
               </span>
               <span className="sim-nao">
-                <button data-valor="sim" aria-pressed={valor(s.id) === true} onClick={() => marcar.mutate({ sessaoId: s.id, disponivel: true, pessoaId })}>
+                <button data-valor="sim" aria-pressed={valor(s.id) === true} aria-label={`Sim: ${dataLonga(s.data)}`} onClick={() => marcar(s.id, true)}>
                   Sim
                 </button>
-                <button data-valor="nao" aria-pressed={valor(s.id) === false} onClick={() => marcar.mutate({ sessaoId: s.id, disponivel: false, pessoaId })}>
+                <button data-valor="nao" aria-pressed={valor(s.id) === false} aria-label={`Não: ${dataLonga(s.data)}`} onClick={() => marcar(s.id, false)}>
                   Não
                 </button>
               </span>

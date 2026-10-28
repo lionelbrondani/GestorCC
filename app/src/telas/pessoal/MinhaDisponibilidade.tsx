@@ -1,7 +1,8 @@
 import { formatarDataHora, type Sessao } from '@shared';
 import { useState } from 'react';
 import { usePeriodo } from '../../api/consultas';
-import { useConsulta, useMutacao } from '../../api/hooks';
+import { useConsulta } from '../../api/hooks';
+import { TEXTO_ESTADO, useMarcacoes } from '../escalas/useMarcacoes';
 import { useEu } from '../../auth/SessaoContexto';
 import { Alerta, Carregando, Cartao, EstadoVazio, Etiqueta, Pagina } from '../../componentes';
 import { agora, janela } from '../../util/hoje';
@@ -48,17 +49,14 @@ export function MinhaDisponibilidade() {
   const escalas = useConsulta('escalas.listar', { de, ate });
   const idsPeriodo = periodo.sessoes.map((s) => s.id);
   const disp = useConsulta('disponibilidades.listar', { sessaoIds: idsPeriodo });
-  const marcar = useMutacao('disponibilidades.marcar', ['disponibilidades.listar']);
-  const [otimista, setOtimista] = useState<Map<string, boolean>>(new Map());
+  const marcacoes = useMarcacoes();
   const [diaSelecionado, setDiaSelecionado] = useState<string | null>(null);
-  const [status, setStatus] = useState<'salvando' | 'salvo' | null>(null);
-  const [erro, setErro] = useState<string | null>(null);
 
   if (periodo.isLoading || rodadas.isLoading || disp.isLoading) return <Carregando />;
 
   const momento = agora();
   const doServidor = new Map((disp.data ?? []).filter((d) => d.pessoaId === eu.id).map((d) => [d.sessaoId, d.disponivel]));
-  const resposta = (id: string): Resposta => (otimista.has(id) ? otimista.get(id) : doServidor.get(id));
+  const resposta = (id: string): Resposta => marcacoes.valor(id, doServidor.get(id));
   const jaEscalado = new Set((escalas.data ?? []).filter((e) => e.pessoaId === eu.id && e.status !== 'cancelado').map((e) => e.sessaoId));
   const titulo = (s: Sessao) => tituloSessao(periodo.evento.get(s.eventoId), s);
 
@@ -70,23 +68,8 @@ export function MinhaDisponibilidade() {
   const novasDaRodada = (r: (typeof abertas)[number], sessoes: Sessao[]) =>
     sessoes.filter((s) => r.sessoesNovas?.includes(s.id) && s.status !== 'cancelada');
 
-  async function aoMarcar(s: Sessao, v: boolean) {
-    setErro(null);
-    setOtimista((m) => new Map(m).set(s.id, v));
-    setStatus('salvando');
-    try {
-      await marcar.mutateAsync({ sessaoId: s.id, disponivel: v });
-      setStatus('salvo');
-    } catch (e) {
-      setOtimista((m) => {
-        const n = new Map(m);
-        n.delete(s.id);
-        return n;
-      });
-      setStatus(null);
-      setErro((e as Error).message);
-    }
-  }
+  /** Marca na hora; as marcações vão juntas para o servidor logo depois do último toque. */
+  const aoMarcar = (s: Sessao, v: boolean) => marcacoes.marcar([{ sessaoId: s.id, disponivel: v }]);
 
   const linhaSessao = (s: Sessao, encerrada: boolean) => (
     <div key={s.id} className="disp-sessao">
@@ -103,7 +86,7 @@ export function MinhaDisponibilidade() {
 
   return (
     <Pagina titulo="Minha disponibilidade" subtitulo="Marque nos dias em que você pode trabalhar. Tudo é salvo na hora.">
-      {erro && <Alerta tom="erro">{erro}</Alerta>}
+      {marcacoes.erro && <Alerta tom="erro">{marcacoes.erro}</Alerta>}
 
       {convocacoes.length > 0 && (
         <Cartao destaque titulo="Precisamos de mais gente">
@@ -138,7 +121,7 @@ export function MinhaDisponibilidade() {
             titulo={`Rodada ${r.nome}`}
             acoes={
               <>
-                {status && <span className="salvo">{status === 'salvando' ? 'Salvando…' : 'Salvo'}</span>}
+                {TEXTO_ESTADO[marcacoes.estado] && <span className="salvo">{TEXTO_ESTADO[marcacoes.estado]}</span>}
                 <Etiqueta tom={encerrada ? 'neutro' : 'destaque'}>{encerrada ? 'Encerrada' : `Até ${formatarDataHora(r.prazo)}`}</Etiqueta>
               </>
             }

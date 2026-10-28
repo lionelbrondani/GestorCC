@@ -100,14 +100,36 @@ export const handlersRodadas: Handlers = {
   },
 
   'disponibilidades.marcar': ({ sessaoId, disponivel, pessoaId }, ctx) => {
-    const eu = ctx.eu!;
-    const alvo = pessoaId ?? eu.id;
-    let origem: Disponibilidade['origem'];
-    if (alvo !== eu.id) {
-      if (!pode(eu.permissoes, 'escalas', 'editar')) throw new ErroApi('SEM_PERMISSAO', 'Você não tem permissão para esta ação.');
-      if (!linhasPessoas(ctx).some((p) => p.id === alvo && p.ativo)) throw new ErroApi('NAO_ENCONTRADO', 'Pessoa não encontrada ou inativa.');
-      if (!linhasSessoes(ctx).some((s) => s.id === sessaoId)) throw new ErroApi('NAO_ENCONTRADO', 'Sessão não encontrada.');
-      origem = 'gestor';
+    const [d] = marcarVarias(ctx, pessoaId, [{ sessaoId, disponivel }]);
+    if (d.origem === 'gestor') registrar(ctx, 'sessao', sessaoId, `marcou disponibilidade por outra pessoa (${disponivel ? 'Sim' : 'Não'})`, null, { pessoaId: d.pessoaId });
+    return d;
+  },
+
+  /** Várias marcações numa ida só (a tela junta os cliques): confere todas antes de gravar qualquer uma. */
+  'disponibilidades.marcarVarios': ({ pessoaId, itens }, ctx) => {
+    if (!Array.isArray(itens) || !itens.length || itens.length > 200) throw new ErroApi('VALIDACAO', 'Mande de 1 a 200 marcações.');
+    const feitas = marcarVarias(ctx, pessoaId, itens);
+    if (feitas[0].origem === 'gestor') {
+      registrar(ctx, 'sessao', itens.map((i) => i.sessaoId).join(','), `marcou disponibilidade por outra pessoa em ${feitas.length} sessão(ões)`, null, { pessoaId: feitas[0].pessoaId, itens });
+    }
+    return feitas;
+  },
+};
+
+/** Confere cada marcação (permissão, prazo, já escalado) e só então grava todas. */
+function marcarVarias(ctx: Contexto, pessoaId: string | undefined, itens: { sessaoId: string; disponivel: boolean }[]): Disponibilidade[] {
+  const eu = ctx.eu!;
+  const alvo = pessoaId ?? eu.id;
+  const porOutro = alvo !== eu.id;
+  if (porOutro) {
+    if (!pode(eu.permissoes, 'escalas', 'editar')) throw new ErroApi('SEM_PERMISSAO', 'Você não tem permissão para esta ação.');
+    if (!linhasPessoas(ctx).some((p) => p.id === alvo && p.ativo)) throw new ErroApi('NAO_ENCONTRADO', 'Pessoa não encontrada ou inativa.');
+  }
+  const sessoes = new Set(linhasSessoes(ctx).map((s) => s.id));
+  const conferidas = itens.map(({ sessaoId, disponivel }) => {
+    let origem: Disponibilidade['origem'] = 'gestor';
+    if (porOutro) {
+      if (!sessoes.has(sessaoId)) throw new ErroApi('NAO_ENCONTRADO', 'Sessão não encontrada.');
     } else {
       const aberta = sessaoAbertaPara(ctx, sessaoId);
       if (!aberta) throw new ErroApi('PRAZO', 'O prazo para marcar disponibilidade nesta sessão terminou.');
@@ -116,12 +138,15 @@ export const handlersRodadas: Handlers = {
       }
       origem = aberta === 'convocacao' ? 'convocacao' : 'proprio';
     }
-
-    const id = `${alvo}:${sessaoId}`;
-    const linha: LinhaDisponibilidade = { id, pessoaId: alvo, sessaoId, disponivel: !!disponivel, origem, respondidoEm: ctx.portas.relogio.agora() };
-    if (linhasDisponibilidades(ctx).some((d) => d.id === id)) ctx.portas.repo.atualizar('disponibilidades', linha);
-    else ctx.portas.repo.inserir('disponibilidades', linha);
-    if (origem === 'gestor') registrar(ctx, 'sessao', sessaoId, `marcou disponibilidade por outra pessoa (${disponivel ? 'Sim' : 'Não'})`, null, { pessoaId: alvo });
     return { pessoaId: alvo, sessaoId, disponivel: !!disponivel, origem };
-  },
-};
+  });
+  const existentes = new Set(linhasDisponibilidades(ctx).map((d) => d.id));
+  const novas: LinhaDisponibilidade[] = [];
+  for (const d of conferidas) {
+    const linha: LinhaDisponibilidade = { id: `${alvo}:${d.sessaoId}`, ...d, respondidoEm: ctx.portas.relogio.agora() };
+    if (existentes.has(linha.id)) ctx.portas.repo.atualizar('disponibilidades', linha);
+    else if (!novas.some((n) => n.id === linha.id)) novas.push(linha);
+  }
+  ctx.portas.repo.inserirVarios('disponibilidades', novas);
+  return conferidas;
+}

@@ -171,6 +171,7 @@ const REGRAS: Record<Acao, Regra> = {
   'rodadas.salvar': ['escalas', 'editar'],
   'disponibilidades.listar': 'logado',
   'disponibilidades.marcar': 'logado',
+  'disponibilidades.marcarVarios': 'logado',
   'escalas.listar': 'logado',
   'escalas.salvarRascunho': ['escalas', 'editar'],
   'escalas.publicar': ['escalas', 'editar'],
@@ -382,6 +383,12 @@ const handlers: Handlers = {
     ctx.banco.disponibilidades.filter(
       (d) => sessaoIds.includes(d.sessaoId) && (pode(ctx.eu!.permissoes, 'escalas', 'ver') || d.pessoaId === ctx.eu!.id),
     ),
+  'disponibilidades.marcarVarios': ({ pessoaId, itens }, ctx) => {
+    const alvo = pessoaId ?? ctx.eu!.id;
+    if (alvo !== ctx.eu!.id) exigir(ctx, 'escalas', 'editar');
+    else if (itens.some((i) => !sessaoAbertaParaMim(ctx, i.sessaoId))) throw erro('PRAZO', 'O prazo para marcar disponibilidade nesta sessão terminou.');
+    return itens.map((i) => (handlers['disponibilidades.marcar'] as Handler<'disponibilidades.marcar'>)({ ...i, pessoaId }, ctx));
+  },
   'disponibilidades.marcar': ({ sessaoId, disponivel, pessoaId }, ctx) => {
     const alvo = pessoaId ?? ctx.eu!.id;
     const porOutro = alvo !== ctx.eu!.id;

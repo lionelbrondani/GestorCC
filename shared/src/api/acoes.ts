@@ -60,6 +60,8 @@ export interface Acoes {
   'rodadas.salvar': A<Rodada, Rodada>;
   'disponibilidades.listar': A<{ sessaoIds: Id[] }, Disponibilidade[]>;
   'disponibilidades.marcar': A<{ sessaoId: Id; disponivel: boolean; pessoaId?: Id }, Disponibilidade>;
+  /** Várias marcações numa ida só (a tela junta os cliques); todas ou nenhuma. */
+  'disponibilidades.marcarVarios': A<{ pessoaId?: Id; itens: { sessaoId: Id; disponivel: boolean }[] }, Disponibilidade[]>;
 
   'escalas.listar': A<{ de: DataISO; ate: DataISO }, Escala[]>;
   'escalas.salvarRascunho': A<

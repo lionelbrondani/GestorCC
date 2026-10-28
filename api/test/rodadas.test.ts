@@ -108,3 +108,33 @@ describe('disponibilidade', () => {
     });
   });
 });
+
+describe('marcar várias disponibilidades de uma vez', () => {
+  it('o gestor marca por alguém várias sessões numa chamada só, com um registro no histórico', () => {
+    const amb = ambiente();
+    amb.abrir();
+    const r = amb.chamar('disponibilidades.marcarVarios', { pessoaId: 'p02', itens: [{ sessaoId: 's1', disponivel: true }, { sessaoId: 's2', disponivel: false }] }, { token: amb.gestor }) as Ok<Disponibilidade[]>;
+    expect(r.dados).toEqual([
+      { pessoaId: 'p02', sessaoId: 's1', disponivel: true, origem: 'gestor' },
+      { pessoaId: 'p02', sessaoId: 's2', disponivel: false, origem: 'gestor' },
+    ]);
+    expect(amb.disponibilidades().filter((d) => d.pessoaId === 'p02')).toHaveLength(2);
+    expect(amb.repo.listar<{ id: string; acao: string }>('historico').filter((h) => h.acao.startsWith('marcou disponibilidade'))).toHaveLength(1);
+  });
+
+  it('o bolsista marca as próprias; se uma sessão já fechou, nada é gravado', () => {
+    const amb = ambiente();
+    amb.abrir({ sessaoIds: ['s1'] });
+    const ok = amb.chamar('disponibilidades.marcarVarios', { itens: [{ sessaoId: 's1', disponivel: true }] }, { token: amb.bolsista });
+    expect(ok.ok).toBe(true);
+    const r = amb.chamar('disponibilidades.marcarVarios', { itens: [{ sessaoId: 's1', disponivel: false }, { sessaoId: 's2', disponivel: true }] }, { token: amb.bolsista });
+    expect(r).toMatchObject({ ok: false, erro: { codigo: 'PRAZO' } });
+    expect(amb.disponibilidades().find((d) => d.pessoaId === 'p02' && d.sessaoId === 's1')?.disponivel).toBe(true);
+  });
+
+  it('bolsista não marca por outra pessoa', () => {
+    const amb = ambiente();
+    amb.abrir();
+    expect(amb.chamar('disponibilidades.marcarVarios', { pessoaId: 'p01', itens: [{ sessaoId: 's1', disponivel: true }] }, { token: amb.bolsista })).toMatchObject({ ok: false, erro: { codigo: 'SEM_PERMISSAO' } });
+  });
+});

@@ -1,5 +1,6 @@
 import { screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { vi, type MockInstance } from 'vitest';
 import { renderizar } from '../../teste/renderizar';
 
 describe('Minha disponibilidade (calendário)', () => {
@@ -13,7 +14,19 @@ describe('Minha disponibilidade (calendário)', () => {
     const chip = await screen.findByRole('button', { name: /Formatura CCSH – Tarde: sem resposta/ });
     await userEvent.click(chip);
     expect(await screen.findByRole('button', { name: /Formatura CCSH – Tarde: disponível/ })).toBeInTheDocument();
-    expect(await screen.findByText('Salvo')).toBeInTheDocument();
+    expect(await screen.findByText('Salvo ✓', {}, { timeout: 3000 })).toBeInTheDocument();
+  });
+
+  it('vários toques seguidos vão para o servidor numa chamada só', async () => {
+    let chamar!: MockInstance;
+    await renderizar({ pessoa: 'bolsista', rota: '/disponibilidade', aoCriarApi: (api) => (chamar = vi.spyOn(api, 'chamar')) });
+    await userEvent.click(await screen.findByRole('button', { name: /Formatura CCSH – Tarde: sem resposta/ }));
+    await userEvent.click(await screen.findByRole('button', { name: /Formatura CCSH – Tarde: disponível/ }));
+    await userEvent.click(await screen.findByRole('button', { name: /Formatura CCSH – Tarde: indisponível/ }));
+    await screen.findByText('Salvo ✓', {}, { timeout: 3000 });
+    const envios = chamar.mock.calls.filter((c) => String(c[0]).startsWith('disponibilidades.marcar'));
+    expect(envios).toHaveLength(1);
+    expect(envios[0][0]).toBe('disponibilidades.marcarVarios');
   });
 
   it('o painel do dia tem Sim/Não grandes para o celular', async () => {
