@@ -181,6 +181,18 @@ describe('ficha técnica: lançar na agenda do CC', () => {
   }
   const comPassagem = (): FichaTecnicaDados => ({ ...completa(), passagemSom: true, passagemInicio: '2026-11-18T16:00', passagemFim: '2026-11-18T17:30' });
 
+  it('cria as atividades de apoio no evento (sem diária, fora da rodada) e elas vão para a agenda', () => {
+    const amb = comAgenda();
+    amb.salvar(amb.token, comPassagem());
+    amb.lancar();
+    const apoio = amb.repo.listar<{ id: string; atividade: string; data: string; inicio: string; fim: string; vagasBolsistas: number }>('sessoes').filter((x) => x.atividade && x.atividade !== 'evento');
+    expect(apoio.map((x) => [x.atividade, x.data, x.inicio, x.fim, x.vagasBolsistas])).toEqual([
+      ['montagem', '2026-11-18', '08:30', '18:00', 1],
+      ['passagemSom', '2026-11-18', '16:00', '17:30', 1],
+      ['desmontagem', '2026-11-18', '22:00', '22:30', 1],
+    ]);
+  });
+
   it('cria montagem, passagem de som e desmontagem na agenda, sem convidados', () => {
     const amb = comAgenda();
     amb.salvar(amb.token, comPassagem());

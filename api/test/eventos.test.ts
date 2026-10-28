@@ -226,3 +226,16 @@ describe('cancelamentos e horário definido com escalas (fase 3)', () => {
     expect(avisosDe(amb, 'p01')).toEqual([]);
   });
 });
+
+describe('atividades de apoio', () => {
+  it('a sessão guarda a atividade; sessão comum continua sem atividade', () => {
+    const amb = ambiente();
+    const r = amb.criar(evNovo(), [sesNova(), sesNova({ data: '2026-12-04', rotulo: '', atividade: 'montagem', vagasBolsistas: 1, vagasServidores: 0, minimoExperientes: 0 })]);
+    expect(r.sessoes.map((s) => [s.data, s.atividade])).toEqual([['2026-12-04', 'montagem'], ['2026-12-05', undefined]]);
+  });
+
+  it('atividade desconhecida é recusada', () => {
+    const amb = ambiente();
+    expect(amb.salvar(evNovo(), [sesNova({ atividade: 'festa' as never })])).toMatchObject({ ok: false, erro: { codigo: 'VALIDACAO' } });
+  });
+});

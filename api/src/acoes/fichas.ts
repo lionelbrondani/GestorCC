@@ -17,7 +17,10 @@ import {
   type TravaFicha,
 } from '@shared';
 import { paraBase64Url } from '../auth/bytes';
-import { exigirVersao, registrar, type Contexto, type Handlers } from '../nucleo/roteador';
+import { sincronizarAgenda } from '../agenda/sincronizar';
+import { linhasEscalas } from '../escalas/comum';
+import { exigirVersao, novoId, registrar, type Contexto, type Handlers } from '../nucleo/roteador';
+import { marcarRelatorios } from '../relatorios/pendentes';
 import { linhasEventos, linhasSessoes, type LinhaEvento, type LinhaSessao } from './eventos';
 import { configAtual } from './sistema';
 
@@ -46,6 +49,16 @@ interface LinhaSigilo {
 const SEM_LINK = () => new ErroApi('LINK', 'Este link não vale mais. Peça um novo ao Centro de Convenções.');
 const TRAVAS: TravaFicha[] = ['auto', 'travada', 'destravada'];
 const ORDEM_AGENDA: ItemAgendaFicha['chave'][] = ['montagem', 'passagem', 'desmontagem'];
+const ATIVIDADE_DO_ITEM = { montagem: 'montagem', passagem: 'passagemSom', desmontagem: 'desmontagem' } as const;
+
+function tentarRemoverDaAgenda(ctx: Contexto, googleId: string) {
+  if (!ctx.portas.agenda.ligada()) return;
+  try {
+    ctx.portas.agenda.remover(googleId);
+  } catch {
+    // já apagado no Google
+  }
+}
 /** PDF, imagem ou Word, até ~10 MB (o arquivo chega em base64, que ocupa 4/3 do tamanho). */
 const TIPOS_ANEXO = /^data:(application\/pdf|image\/(png|jpeg|webp)|application\/msword|application\/vnd\.openxmlformats-officedocument\.wordprocessingml\.document);base64,/;
 const MAX_ANEXO_BASE64 = 14_000_000;
@@ -56,9 +69,10 @@ const novoToken = (ctx: Contexto) => paraBase64Url(ctx.portas.cripto.aleatorio(3
 const nomeDe = (ctx: Contexto) => (id: string) =>
   ctx.portas.repo.listar<{ id: string; nome: string }>('pessoas').find((p) => p.id === id)?.nome ?? 'Outra pessoa';
 
+/** Sessões ativas do evento em si (as atividades de apoio, como a montagem, ficam de fora). */
 export function sessoesAtivas(ctx: Contexto, eventoId: string): LinhaSessao[] {
   return linhasSessoes(ctx)
-    .filter((s) => s.eventoId === eventoId && s.status === 'ativa')
+    .filter((s) => s.eventoId === eventoId && s.status === 'ativa' && (!s.atividade || s.atividade === 'evento'))
     .sort((a, b) => a.data.localeCompare(b.data) || (a.inicio ?? '').localeCompare(b.inicio ?? ''));
 }
 
@@ -182,33 +196,46 @@ export const handlersFichas: Handlers = {
 
   'fichas.lancarAgenda': ({ eventoId }, ctx) => {
     const f = doEventoOuErro(ctx, eventoId);
-    if (!ctx.portas.agenda.ligada()) throw new ErroApi('AGENDA', 'A agenda do setor ainda não está ligada (rode o instalar).');
     const dados = montar(ctx, f).dados;
     const itens = itensDaAgenda(dados, f.sessoes);
     if (!itens.length) throw new ErroApi('VALIDACAO', 'Preencha a montagem ou a desmontagem na ficha antes de lançar na agenda.');
     const anteriores = f.linha.agenda?.ids ?? {};
     const ids: Partial<Record<ItemAgendaFicha['chave'], string>> = {};
-    const descricao = [
-      'Lançado a partir da ficha técnica do GestorCC.',
-      dados.responsavel.nome && `Responsável: ${dados.responsavel.nome}.`,
-      dados.descricaoMontagem && `Montagem: ${dados.descricaoMontagem}`,
-    ]
-      .filter(Boolean)
-      .join('\n');
+    const todas = linhasSessoes(ctx);
+    const mudadas: string[] = [];
+    // cada item vira uma sessão de apoio do evento: entra na agenda do CC e na escala de apoio (sem rodada e sem diária)
     for (const item of itens) {
-      ids[item.chave] = ctx.portas.agenda.salvar(anteriores[item.chave] ?? null, {
-        titulo: `${item.titulo} · ${f.evento.nome}`, descricao, quando: { diaInteiro: false, inicio: item.inicio, fim: item.fim }, convidados: [],
-      });
+      const existente = todas.find((s) => s.id === anteriores[item.chave] && s.eventoId === eventoId);
+      const data = item.inicio.slice(0, 10);
+      const linha: LinhaSessao = {
+        id: existente?.id ?? novoId(ctx.portas, 's'), eventoId, data, rotulo: '', chegada: item.inicio.slice(11), inicio: item.inicio.slice(11),
+        fim: item.fim.slice(0, 10) === data ? item.fim.slice(11) : '23:59', horarioADefinir: false,
+        vagasBolsistas: existente?.vagasBolsistas ?? 1, vagasServidores: existente?.vagasServidores ?? 0, diaria: null, minimoExperientes: 0,
+        status: 'ativa', publicadaEm: existente?.publicadaEm ?? '', convocacaoAbertaAte: '', convocacaoVagas: 0,
+        googleEventoId: existente?.googleEventoId ?? '', agendaPendente: existente?.agendaPendente ?? false, atividade: ATIVIDADE_DO_ITEM[item.chave],
+      };
+      if (existente) ctx.portas.repo.atualizar('sessoes', linha);
+      else ctx.portas.repo.inserir('sessoes', linha);
+      ids[item.chave] = linha.id;
+      mudadas.push(linha.id);
     }
     for (const chave of ORDEM_AGENDA) {
       const antigo = anteriores[chave];
       if (!antigo || ids[chave]) continue;
-      try {
-        ctx.portas.agenda.remover(antigo); // o item saiu da ficha (ex.: não há mais passagem de som)
-      } catch {
-        // já apagado no Google
+      // o item saiu da ficha (ex.: não há mais passagem de som)
+      const sessao = todas.find((s) => s.id === antigo);
+      if (!sessao) {
+        tentarRemoverDaAgenda(ctx, antigo); // lançamento antigo, direto no Google
+      } else if (linhasEscalas(ctx).some((e) => e.sessaoId === sessao.id && e.status !== 'cancelado')) {
+        ctx.portas.repo.atualizar('sessoes', { ...sessao, status: 'cancelada' }); // já tem gente escalada: cancela e avisa pela agenda
+        mudadas.push(sessao.id);
+      } else {
+        if (sessao.googleEventoId) tentarRemoverDaAgenda(ctx, sessao.googleEventoId);
+        ctx.portas.repo.remover('sessoes', sessao.id);
       }
     }
+    if (ctx.portas.agenda.ligada()) sincronizarAgenda(ctx.portas, mudadas);
+    marcarRelatorios(ctx.portas.props, [...new Set(itens.map((i) => `agenda:${i.inicio.slice(0, 7)}`))]);
     const { atualizadoPor: _p, ...linha } = f.linha;
     ctx.portas.repo.atualizar('fichas', { ...linha, agenda: { lancadoEm: ctx.portas.relogio.agora(), ids } });
     registrar(ctx, 'evento', eventoId, `lançou na agenda do CC: ${itens.map((i) => i.titulo.toLowerCase()).join(', ')}`, null, null);

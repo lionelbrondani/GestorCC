@@ -156,6 +156,16 @@ export function criarDadosFicticios(portas: Portas): Record<string, number> {
   });
   repo.inserirVarios('eventos', eventos);
   repo.inserirVarios('sessoes', sessoes);
+  // atividades de apoio da Formatura de Direito (escala dos bolsistas fixos, sem rodada e sem diária)
+  const apoio = [
+    { id: 'demo-e05-montagem', atividade: 'montagem', inicio: '09:00', fim: '17:00' },
+    { id: 'demo-e05-desmontagem', atividade: 'desmontagem', inicio: '23:00', fim: '23:59' },
+  ].map((a) => ({
+    id: a.id, eventoId: 'demo-e05', data: dia(6), rotulo: '', chegada: a.inicio, inicio: a.inicio, fim: a.fim, horarioADefinir: false, vagasBolsistas: 1,
+    vagasServidores: 0, diaria: null, minimoExperientes: 0, status: 'ativa', publicadaEm: a.atividade === 'montagem' ? `${dia(-1)}T10:00` : '', convocacaoAbertaAte: '',
+    convocacaoVagas: 0, googleEventoId: '', agendaPendente: false, atividade: a.atividade,
+  }));
+  repo.inserirVarios('sessoes', apoio);
   const ativas = sessoes.filter((s) => s.status === 'ativa');
   const passadas = ativas.filter((s) => s.data < hoje);
   const publicadas = ativas.filter((s) => s.publicadaEm && s.data >= hoje);
@@ -199,6 +209,11 @@ export function criarDadosFicticios(portas: Portas): Record<string, number> {
   // um lote de pagamento enviado com a primeira formatura
   const doLote = escalas.filter((e) => e.sessaoId === passadas[0]?.id && e.papel === 'bolsista' && e.status === 'realizado');
   doLote.forEach((e) => (e.loteId = 'demo-l1'));
+  const fixos = bolsistas.filter((p) => p.vinculo === 'fixo');
+  escalas.push(
+    { id: 'demo-x-apoio-1', sessaoId: 'demo-e05-montagem', pessoaId: fixos[0].id, papel: 'bolsista', status: 'publicado', adicaoDireta: false, loteId: '' },
+    { id: 'demo-x-apoio-2', sessaoId: 'demo-e05-desmontagem', pessoaId: fixos[1].id, papel: 'bolsista', status: 'rascunho', adicaoDireta: false, loteId: '' },
+  );
   repo.inserirVarios('escalas', escalas);
   repo.inserirVarios('lotes', [{ id: 'demo-l1', titulo: 'TESTE · Lote da Formatura de Enfermagem', periodoReferencia: passadas[0]?.data.slice(0, 7) ?? '', edital: 'Edital fictício', iniciativa: 'Bolsas do CC (teste)', incluirZerados: false, status: 'enviado', pagoEm: '' }]);
   repo.inserirVarios('loteItens', doLote.map((e) => ({ id: `demo-li-${e.id}`, loteId: 'demo-l1', escalaId: e.id, pessoaId: e.pessoaId, valor: 8000 })));

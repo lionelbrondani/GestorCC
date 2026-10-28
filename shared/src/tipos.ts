@@ -59,6 +59,9 @@ export interface Evento {
   atualizadoEm?: string;
 }
 
+/** O que acontece na sessão: o evento em si ou uma atividade de apoio. */
+export type AtividadeSessao = 'evento' | 'montagem' | 'passagemSom' | 'desmontagem' | 'ensaio';
+
 export interface Sessao {
   id: Id;
   eventoId: Id;
@@ -75,6 +78,8 @@ export interface Sessao {
   status: 'ativa' | 'cancelada';
   publicadaEm: string | null;
   convocacao: { abertaAte: string; vagas: number } | null;
+  /** Atividade de apoio (montagem, passagem de som…); sem valor = sessão do evento. */
+  atividade?: AtividadeSessao;
 }
 
 export interface Rodada {

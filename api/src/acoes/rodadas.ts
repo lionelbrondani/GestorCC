@@ -67,6 +67,8 @@ export const handlersRodadas: Handlers = {
     if (!r.sessaoIds?.length) throw validacao('Escolha ao menos uma sessão.');
     const ativas = new Set(linhasSessoes(ctx).filter((s) => s.status === 'ativa').map((s) => s.id));
     if (r.sessaoIds.some((id) => !ativas.has(id))) throw validacao('Sessão não encontrada ou cancelada.');
+    const apoio = new Set(linhasSessoes(ctx).filter((s) => s.atividade && s.atividade !== 'evento').map((s) => s.id));
+    if (r.sessaoIds.some((id) => apoio.has(id))) throw validacao('Atividades de apoio (montagem, passagem de som…) não entram na rodada de disponibilidade.');
 
     const anterior = r.id ? linhasRodadas(ctx).find((x) => x.id === r.id) : undefined;
     if (r.id && !anterior) throw new ErroApi('NAO_ENCONTRADO', 'Rodada não encontrada.');

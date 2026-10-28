@@ -43,6 +43,8 @@ export interface LinhaSessao {
   convocacaoVagas: number;
   googleEventoId: string;
   agendaPendente: boolean;
+  /** '' ou 'evento' = sessão do evento; senão, atividade de apoio. */
+  atividade?: string;
 }
 
 const vazio = (v: unknown) => v === '' || v === null || v === undefined;
@@ -73,6 +75,7 @@ export function paraSessao(l: LinhaSessao): Sessao {
     convocacao: vazio(l.convocacaoAbertaAte) ? null : { abertaAte: l.convocacaoAbertaAte, vagas: Number(l.convocacaoVagas) || 0 },
   };
   if (!vazio(l.rotulo)) s.rotulo = l.rotulo;
+  if (l.atividade && l.atividade !== 'evento') s.atividade = l.atividade as Sessao['atividade'];
   return s;
 }
 
@@ -94,6 +97,7 @@ function linhaSessao(s: Sessao, id: string, eventoId: string, anterior?: LinhaSe
     minimoExperientes: s.minimoExperientes, status: anterior?.status ?? 'ativa', publicadaEm: anterior?.publicadaEm ?? '',
     convocacaoAbertaAte: anterior?.convocacaoAbertaAte ?? '', convocacaoVagas: anterior?.convocacaoVagas ?? 0,
     googleEventoId: anterior?.googleEventoId ?? '', agendaPendente: anterior?.agendaPendente ?? false,
+    atividade: s.atividade && s.atividade !== 'evento' ? s.atividade : '',
   };
 }
 

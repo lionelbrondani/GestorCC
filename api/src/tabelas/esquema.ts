@@ -40,7 +40,7 @@ export const ESQUEMA: Record<NomeTabela, { planilha: Planilha; colunas: Coluna[]
     planilha: 'dados',
     colunas: [t('eventoId'), t('data'), t('rotulo'), t('chegada'), t('inicio'), t('fim'), b('horarioADefinir'), n('vagasBolsistas'),
       n('vagasServidores'), o('diaria'), n('minimoExperientes'), t('status'), t('publicadaEm'), t('convocacaoAbertaAte'), n('convocacaoVagas'),
-      t('googleEventoId'), b('agendaPendente')],
+      t('googleEventoId'), b('agendaPendente'), t('atividade')],
   },
   rodadas: { planilha: 'dados', colunas: [t('nome'), t('prazo'), t('status')] },
   rodadaSessoes: { planilha: 'dados', colunas: [t('rodadaId'), t('sessaoId'), b('nova')] },

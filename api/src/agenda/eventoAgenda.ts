@@ -1,4 +1,4 @@
-import { somarDias, type Evento, type Sessao } from '@shared';
+import { somarDias, tituloComAtividade, type Evento, type Sessao } from '@shared';
 import type { EventoAgenda, QuandoAgenda } from '../nucleo/portas';
 
 const DIA_MIN = 24 * 60;
@@ -27,7 +27,7 @@ export function eventoDaAgenda(
   const inicio = sessao.inicio ?? sessao.chegada;
   const diaInteiro = sessao.horarioADefinir || !inicio;
 
-  let titulo = sessao.rotulo ? `${evento.nome} – ${sessao.rotulo}` : evento.nome;
+  let titulo = tituloComAtividade(evento.nome, sessao);
   if (cancelado) titulo = `CANCELADO – ${titulo}`;
   if (diaInteiro) titulo += ' (horário a definir)';
 

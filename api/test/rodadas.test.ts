@@ -138,3 +138,12 @@ describe('marcar várias disponibilidades de uma vez', () => {
     expect(amb.chamar('disponibilidades.marcarVarios', { pessoaId: 'p01', itens: [{ sessaoId: 's1', disponivel: true }] }, { token: amb.bolsista })).toMatchObject({ ok: false, erro: { codigo: 'SEM_PERMISSAO' } });
   });
 });
+
+describe('rodada e atividades de apoio', () => {
+  it('sessão de apoio não entra na rodada', () => {
+    const amb = ambiente();
+    const [s1] = amb.repo.listar<{ id: string }>('sessoes');
+    amb.repo.atualizar('sessoes', { ...s1, atividade: 'montagem' });
+    expect(amb.abrir()).toMatchObject({ ok: false, erro: { codigo: 'VALIDACAO', mensagem: 'Atividades de apoio (montagem, passagem de som…) não entram na rodada de disponibilidade.' } });
+  });
+});

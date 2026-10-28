@@ -1,3 +1,4 @@
+import { ATIVIDADES } from './atividades';
 import { TIPOS_EVENTO, type Evento, type Sessao } from './tipos';
 
 const HORA = /^([01]\d|2[0-3]):[0-5]\d$/;
@@ -14,6 +15,7 @@ export function validarEvento(evento: Evento, sessoes: Sessao[]): string | null 
   if (sessoes.some((s) => !DATA.test(s.data ?? ''))) return 'Todas as sessões precisam de data.';
   if (evento.pagamento === 'externo' && !evento.pagadorExterno?.trim()) return 'Informe quem paga os bolsistas neste evento externo.';
   for (const s of sessoes) {
+    if (s.atividade !== undefined && !ATIVIDADES.includes(s.atividade)) return `Atividade inválida na sessão de ${diaMes(s.data)}.`;
     if ([s.chegada, s.inicio, s.fim].some((h) => h !== null && h !== undefined && h !== '' && !HORA.test(h))) {
       return `Horário inválido na sessão de ${diaMes(s.data)}. Use HH:MM.`;
     }

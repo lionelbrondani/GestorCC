@@ -1,4 +1,5 @@
 import { formatarData, mesExtenso } from '../datas';
+import { ehApoio } from '../atividades';
 import type { Centavos, DataISO, Escala, Evento, Id, Lote, Sessao } from '../tipos';
 
 export interface BasePagamentos {
@@ -21,7 +22,7 @@ export function emLoteAtivo(e: Escala, lotes: Lote[]): boolean {
 /** Sessão ativa de evento ativo com o tipo de pagamento pedido. */
 export function sessaoPagavel(sessaoId: Id, b: BasePagamentos, pagamento: Evento['pagamento']): Sessao | null {
   const s = b.sessoes.find((x) => x.id === sessaoId);
-  if (!s || s.status !== 'ativa') return null;
+  if (!s || s.status !== 'ativa' || ehApoio(s)) return null; // apoio não paga diária
   const ev = b.eventos.find((x) => x.id === s.eventoId);
   if (!ev || ev.status !== 'ativo' || ev.pagamento !== pagamento) return null;
   return s;
