@@ -2,6 +2,7 @@
 // Portas reais, com os serviços do Apps Script. Não é testado em Node; a lógica fica nos módulos puros.
 import { ErroApi } from '@shared';
 import { eventoSumiuNoGoogle, recursoDoEvento } from '../agenda/recursoGoogle';
+import { chamarComReserva } from '../busca/modelos';
 import type { AgendaGoogle, Arquivos, Cache, Cripto, Documentos, Email, Formulario, IA, IdentidadeGoogle, NomeTabela, Planilha, Portas, Propriedades, Relogio, Repositorio, Trava } from '../nucleo/portas';
 import { ESQUEMA } from '../tabelas/esquema';
 import { criarLeitorAbas } from '../tabelas/leitorAbas';
@@ -304,21 +305,21 @@ export const formularioGas: Formulario = {
   },
 };
 
-/** Gemini pelo nível gratuito do Google AI Studio: chave em GEMINI_API_KEY, modelo em GEMINI_MODELO. */
+/** Gemini pelo nível gratuito do Google AI Studio: chave em GEMINI_API_KEY; GEMINI_MODELO troca o modelo, e o leve é a reserva. */
 export const iaGas: IA = {
   gerar(corpo) {
     const chave = propriedadesGas.obter('GEMINI_API_KEY');
     if (!chave) return null;
-    const modelo = propriedadesGas.obter('GEMINI_MODELO') || 'gemini-3.8-flash';
-    const r = UrlFetchApp.fetch(`https://generativelanguage.googleapis.com/v1beta/models/${modelo}:generateContent`, {
-      method: 'post',
-      contentType: 'application/json',
-      headers: { 'x-goog-api-key': chave },
-      payload: JSON.stringify(corpo),
-      muteHttpExceptions: true,
+    return chamarComReserva(propriedadesGas.obter('GEMINI_MODELO'), (modelo) => {
+      const r = UrlFetchApp.fetch(`https://generativelanguage.googleapis.com/v1beta/models/${modelo}:generateContent`, {
+        method: 'post',
+        contentType: 'application/json',
+        headers: { 'x-goog-api-key': chave },
+        payload: JSON.stringify(corpo),
+        muteHttpExceptions: true,
+      });
+      return { codigo: r.getResponseCode(), corpo: r.getContentText() };
     });
-    if (r.getResponseCode() !== 200) throw new Error(`Gemini respondeu ${r.getResponseCode()}`);
-    return JSON.parse(r.getContentText());
   },
 };
 

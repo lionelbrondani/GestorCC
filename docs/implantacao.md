@@ -362,7 +362,7 @@ Para ligar:
 
 1. Com a conta **gestorcc.webapp@gmail.com** (a do sistema; a do setor também serve), abra <https://aistudio.google.com/apikey> e crie uma chave de API, no plano gratuito, num projeto novo. Não cadastre faturamento: com ele, o uso passa a ser cobrado.
 2. Nas **Propriedades do script**, crie `GEMINI_API_KEY` com a chave.
-3. Opcional: crie `GEMINI_MODELO` para trocar o modelo. O padrão é `gemini-3.8-flash` (desde a versão 0.16.0; o `gemini-2.5-flash` não é mais liberado para chaves novas).
+3. Opcional: crie `GEMINI_MODELO` para trocar o modelo. O padrão é `gemini-3.8-flash`, porque o `gemini-2.5-flash` não é mais liberado para chaves novas. Se o modelo estiver sobrecarregado, o sistema tenta o `gemini-3.5-flash-lite` (desde a versão 0.15.1).
 4. Cole o `Code.js` novo, crie uma **Nova versão** e publique o site com o `VITE_RECURSOS` da fase 7.
 
 O limite de perguntas por pessoa por dia fica em **Configurações**. Sem a chave, com o limite atingido ou com o Gemini fora do ar, a barra continua funcionando: ela interpreta perguntas simples por palavras-chave e sempre mostra os resultados da busca comum.
@@ -545,4 +545,12 @@ Nada disso vai para a agenda Google sozinho. Para tirar tudo, rode `resetarDados
 5. No site, ponha o mesmo ID em `VITE_GOOGLE_CLIENT_ID`, no `app/.env.producao`, e publique. O ID não é segredo.
 
 A pessoa entra com a conta Google cujo e-mail está cadastrado em Pessoas, no campo "E-mail acadêmico".
+
+## 27. Reserva do Gemini (versão 0.15.1)
+
+**Novidade:** quando o modelo principal da busca está sobrecarregado ("high demand", comum no plano gratuito), o sistema tenta o `gemini-3.5-flash-lite`. Chave inválida não troca de modelo: o erro aparece na Saúde do sistema.
+
+**Para publicar:**
+1. Cole o `Code.js` novo e salve.
+2. Crie uma **Nova versão** e confira se o `/exec` mostra `"versao":"0.15.1"`. Não precisa rodar o `instalar`.
 
