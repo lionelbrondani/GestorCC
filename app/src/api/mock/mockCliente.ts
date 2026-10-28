@@ -20,6 +20,10 @@ import {
   pode,
   MODULO_DO_EMAIL,
   errosDoPedido,
+  erroDaSaida,
+  erroDoAchado,
+  limparAchado,
+  type Achado,
   eventoDoPedido,
   limparPedido,
   type PedidoDatas,
@@ -253,6 +257,10 @@ const REGRAS: Record<Acao, Regra> = {
   'pedidos.listar': ['eventos', 'editar'],
   'pedidos.aprovar': ['eventos', 'editar'],
   'pedidos.recusar': ['eventos', 'editar'],
+  'achados.listar': ['achados', 'ver'],
+  'achados.salvar': ['achados', 'editar'],
+  'achados.foto': ['achados', 'ver'],
+  'achados.situacao': ['achados', 'editar'],
   'emails.cota': 'logado',
   'emails.enviar': 'logado',
 };
@@ -833,6 +841,49 @@ const handlers: Handlers = {
     return o;
   },
   'infra.foto': ({ id }, ctx) => ctx.banco.ocorrencias.find((o) => o.id === id)?.foto ?? null,
+  'achados.listar': (_d, ctx) => {
+    const edita = pode(ctx.eu!.permissoes, 'achados', 'editar');
+    return [...ctx.banco.achados]
+      .sort((a, b) => a.achadoEm.localeCompare(b.achadoEm) || a.numero - b.numero)
+      .map((a) => (edita ? { ...a } : { ...a, retiradoPor: '', contatoRetirada: '' }));
+  },
+  'achados.salvar': ({ id, dados, foto }, ctx) => {
+    const d = limparAchado(dados);
+    const problema = erroDoAchado(d, ctx.hoje);
+    if (problema) throw erro('VALIDACAO', problema);
+    const anterior = id ? ctx.banco.achados.find((a) => a.id === id) : undefined;
+    if (id && !anterior) throw erro('NAO_ENCONTRADO', 'Item não encontrado.');
+    const achado: Achado = anterior
+      ? { ...anterior, ...d }
+      : {
+          ...d, id: novoId('ac'), numero: Math.max(0, ...ctx.banco.achados.map((a) => a.numero)) + 1, status: 'guardado', temFoto: false,
+          registradoPorId: ctx.eu!.id, saidaEm: null, retiradoPor: '', contatoRetirada: '', destino: '', dadosApagadosEm: '',
+        };
+    if (foto !== undefined) {
+      if (foto) ctx.banco.fotosAchados[achado.id] = foto;
+      else delete ctx.banco.fotosAchados[achado.id];
+      achado.temFoto = !!foto;
+    }
+    if (anterior) Object.assign(anterior, achado);
+    else ctx.banco.achados.push(achado);
+    registrar(ctx, 'achado', achado.id, anterior ? `editou o achado #${achado.numero}` : `registrou o achado #${achado.numero}: ${achado.descricao}`);
+    return { ...achado };
+  },
+  'achados.foto': ({ id }, ctx) => ctx.banco.fotosAchados[id] ?? null,
+  'achados.situacao': ({ id, status, data, retiradoPor, contatoRetirada, destino }, ctx) => {
+    const a = ctx.banco.achados.find((x) => x.id === id);
+    if (!a) throw erro('NAO_ENCONTRADO', 'Item não encontrado.');
+    const s = { status, data: (data ?? '').trim(), retiradoPor: (retiradoPor ?? '').trim(), contatoRetirada: (contatoRetirada ?? '').trim(), destino: (destino ?? '').trim() };
+    const problema = erroDaSaida(s, a, ctx.hoje);
+    if (problema) throw erro('VALIDACAO', problema);
+    const devolvido = status === 'devolvido';
+    Object.assign(a, {
+      status, saidaEm: status === 'guardado' ? null : s.data, destino: status === 'descartado' ? s.destino : '',
+      retiradoPor: devolvido ? s.retiradoPor : '', contatoRetirada: devolvido ? s.contatoRetirada : '',
+    });
+    registrar(ctx, 'achado', a.id, `${status === 'guardado' ? 'voltou para os guardados' : devolvido ? 'devolveu ao dono' : 'descartou'}: achado #${a.numero}`);
+    return { ...a };
+  },
   'busca.interpretar': ({ pergunta }, ctx) => {
     const consulta = interpretarSimulado(pergunta, ctx.hoje);
     return { consulta, consultas: consulta ? [consulta] : [], ajuda: null, motivo: null };

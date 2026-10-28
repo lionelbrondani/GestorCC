@@ -292,6 +292,13 @@ export const arquivosGas: Arquivos = {
       return null;
     }
   },
+  apagarImagem(id) {
+    try {
+      DriveApp.getFileById(id).setTrashed(true);
+    } catch {
+      // já apagado à mão no Drive
+    }
+  },
 };
 
 /** Respostas do Google Form de problemas: a primeira aba da planilha FORMULARIO_INFRA_ID. */

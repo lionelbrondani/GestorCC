@@ -1,4 +1,4 @@
-import { DIAS_GUARDAR_CORTESIAS, DIAS_GUARDAR_FICHA, ehGestor, ErroApi, type Config, type Feriado, type RegistroHistorico } from '@shared';
+import { DIAS_ACHADOS, DIAS_GUARDAR_ACHADOS, DIAS_GUARDAR_CORTESIAS, DIAS_GUARDAR_FICHA, ehGestor, ErroApi, type Config, type Feriado, type RegistroHistorico } from '@shared';
 import { exigirVersao, registrar, type Contexto, type Handlers } from '../nucleo/roteador';
 import { marcarAgendaPendente } from '../relatorios/pendentes';
 import { lerErros } from '../nucleo/erros';
@@ -19,6 +19,8 @@ export const CONFIG_PADRAO: Config = {
   informacoesSetor: '',
   diasGuardarCortesias: DIAS_GUARDAR_CORTESIAS,
   diasGuardarFicha: DIAS_GUARDAR_FICHA,
+  diasAchados: DIAS_ACHADOS,
+  diasGuardarAchados: DIAS_GUARDAR_ACHADOS,
   linksFormularios: [],
   agendaSetor: { nome: 'Centro de Convenções UFSM', conta: '', link: '', conectada: false },
 };

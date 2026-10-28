@@ -133,7 +133,7 @@ Use a conta escolhida para o site no passo 1. Se for uma conta diferente da do s
      | 4 | `VITE_RECURSOS=pessoas,dadosPessoais,mural,formularios,configuracoes,eventos,escalas,escalasPessoais,pagamentos` |
      | 5 | `VITE_RECURSOS=pessoas,dadosPessoais,mural,formularios,configuracoes,eventos,escalas,escalasPessoais,pagamentos,almoxEstoque,almoxSaidas,infraestrutura,relatar` |
      | 6 | `VITE_RECURSOS=pessoas,dadosPessoais,mural,formularios,configuracoes,eventos,escalas,escalasPessoais,pagamentos,almoxEstoque,almoxSaidas,infraestrutura,relatar,contratos` |
-     | 7 | `VITE_RECURSOS=pessoas,dadosPessoais,mural,formularios,configuracoes,eventos,escalas,escalasPessoais,pagamentos,almoxEstoque,almoxSaidas,infraestrutura,relatar,contratos,busca` |
+     | 7 | `VITE_RECURSOS=pessoas,dadosPessoais,mural,formularios,configuracoes,eventos,escalas,escalasPessoais,pagamentos,almoxEstoque,almoxSaidas,infraestrutura,relatar,contratos,busca,achados` |
 3. Publique:
 
    ```
@@ -595,3 +595,27 @@ A pessoa entra com a conta Google cujo e-mail está cadastrado em Pessoas, no ca
 3. A **Site Key** (pública) vai no `VITE_TURNSTILE_SITE_KEY` do `app/.env.producao`. **Publique o site antes do passo 4.**
 4. A **Secret Key** (segredo) vai nas Propriedades do script, em `TURNSTILE_SECRET`.
 5. Se fizer na ordem contrária, a API passa a exigir a verificação antes de a página mostrá-la, e nenhum pedido entra.
+
+## 29. Achados e perdidos (versão 0.17.0)
+
+**Novidades:**
+- **Menu Achados e perdidos.** Cada item esquecido no prédio é registrado com descrição, data, local, onde está guardado e foto.
+  - A foto vai para o Drive da conta do setor, na pasta `GestorCC/Achados e perdidos`, sem link público.
+  - A lista mostra há quantos dias o item está guardado e quanto falta para poder descartar.
+  - **Devolver ao dono** guarda quem retirou e um documento ou telefone, na planilha Sigiloso. **Descartar** guarda o destino.
+- **Prazo para descartar:** 90 dias, em **Configurações → Achados e perdidos**. Os itens com o prazo vencido entram em "O que precisa de você". Nada é descartado sozinho.
+- **LGPD:** 90 dias depois da devolução ou do descarte (**Configurações → Dados pessoais**), a limpeza diária manda a foto para a lixeira do Drive e apaga quem retirou.
+- **Permissões:** módulo novo, "Achados e perdidos". O `instalar` dá a cada pessoa o mesmo nível que ela tem em Eventos (gestão e operação editam). Ajuste em **Pessoas e acessos**.
+- **Busca:** a barra do alto também encontra os achados.
+
+**Para publicar** (se a 0.16.0 ainda não foi publicada, estes passos publicam as duas):
+1. Cole o `Code.js` novo e salve. O `appsscript.json` não mudou.
+2. Rode o **`instalar`**. Ele:
+   - cria as abas `achados` (Dados) e `achadosSigilo` (Sigiloso), e as da 0.16.0 que faltarem;
+   - dá as permissões do módulo novo.
+3. Crie uma **Nova versão** e confira se o `/exec` mostra `"versao":"0.17.0"`.
+4. Publique o site com `achados` no fim do `VITE_RECURSOS` do `app/.env.producao`:
+
+   ```
+   VITE_RECURSOS=pessoas,dadosPessoais,mural,formularios,configuracoes,eventos,escalas,escalasPessoais,pagamentos,almoxEstoque,almoxSaidas,infraestrutura,relatar,contratos,busca,achados
+   ```

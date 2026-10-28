@@ -9,6 +9,8 @@ type LinhaFicha = { id: string; dados: { responsavel?: Record<string, unknown> }
 type LinhaSigiloFicha = { id: string; documento: string; email: string; telefone: string };
 type LinhaPedido = { id: string; status: string; decididoEm: string; dadosApagadosEm?: string; atualizadoPor?: string };
 type LinhaSigiloPedido = { id: string; solicitante: Record<string, string>; responsavel: Record<string, string> };
+type LinhaAchado = { id: string; numero: number; status: string; saidaEm: string; fotoId: string; dadosApagadosEm?: string; atualizadoPor?: string };
+type LinhaSigiloAchado = { id: string; retiradoPor: string; contatoRetirada: string };
 
 const semCarimbo = <T extends { atualizadoPor?: string }>({ atualizadoPor: _p, ...l }: T) => l;
 
@@ -30,15 +32,16 @@ function fimDosEventos(sessoes: LinhaSessao[]): Map<string, DataISO> {
  * - Cortesias: os nomes e as matrículas; o destino guarda quantos eram, para o relatório continuar certo.
  * - Ficha técnica: documento, matrícula/SIAPE, e-mail e telefone do responsável; o nome fica.
  * - Pedido de datas recusado: documento, endereço, CPF, e-mail e telefone, contados da recusa (prazo da ficha); os nomes ficam.
+ * - Achados e perdidos devolvidos ou descartados: a foto (para a lixeira do Drive) e quem retirou, contados da saída.
  * Roda depois do backup diário; cada limpeza entra no histórico uma vez só.
  */
-export function limparDadosPessoais(ctx: Contexto): { cortesias: number; fichas: number; pedidos: number } {
+export function limparDadosPessoais(ctx: Contexto): { cortesias: number; fichas: number; pedidos: number; achados: number } {
   const { repo, relogio } = ctx.portas;
   const hoje = relogio.hoje();
-  const { diasGuardarCortesias, diasGuardarFicha } = configAtual(ctx);
+  const { diasGuardarCortesias, diasGuardarFicha, diasGuardarAchados } = configAtual(ctx);
   const fim = fimDosEventos(repo.listar<LinhaSessao>('sessoes'));
   const venceu = (eventoId: string, dias: number) => dias > 0 && fim.has(eventoId) && somarDias(fim.get(eventoId)!, dias) < hoje;
-  const feito = { cortesias: 0, fichas: 0, pedidos: 0 };
+  const feito = { cortesias: 0, fichas: 0, pedidos: 0, achados: 0 };
 
   const sigiloCortesias = new Map(repo.listar<LinhaSigiloCortesias>('cortesiasSigilo').map((s) => [s.id, s]));
   for (const d of repo.listar<LinhaDestino>('cortesiasDestinos')) {
@@ -75,6 +78,18 @@ export function limparDadosPessoais(ctx: Contexto): { cortesias: number; fichas:
     repo.atualizar('pedidos', { ...semCarimbo(p), dadosApagadosEm: hoje });
     registrar(ctx, 'pedido', p.id, `apagou os dados pessoais do pedido recusado (LGPD, ${diasGuardarFicha} dias depois da recusa)`, null, null);
     feito.pedidos++;
+  }
+
+  const sigiloAchados = new Map(repo.listar<LinhaSigiloAchado>('achadosSigilo').map((s) => [s.id, s]));
+  for (const a of repo.listar<LinhaAchado>('achados')) {
+    if (a.status === 'guardado' || a.dadosApagadosEm || diasGuardarAchados <= 0 || !a.saidaEm) continue;
+    if (somarDias(a.saidaEm, diasGuardarAchados) >= hoje) continue;
+    if (a.fotoId) ctx.portas.arquivos.apagarImagem(a.fotoId);
+    const sigilo = sigiloAchados.get(a.id);
+    if (sigilo) repo.atualizar('achadosSigilo', { ...sigilo, retiradoPor: '', contatoRetirada: '' });
+    repo.atualizar('achados', { ...semCarimbo(a), fotoId: '', dadosApagadosEm: hoje });
+    registrar(ctx, 'achado', a.id, `apagou a foto e quem retirou o achado #${a.numero} (LGPD, ${diasGuardarAchados} dias depois da saída)`, null, null);
+    feito.achados++;
   }
   return feito;
 }

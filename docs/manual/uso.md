@@ -96,6 +96,13 @@ Manual resumido, sem dados reais. Ele serve de contexto para as perguntas sobre 
 - **Privacidade:** antes de a pergunta ir ao Gemini, os nomes das pessoas viram códigos. Nenhum dado das planilhas vai junto: as contas são feitas no GestorCC, com as permissões de quem perguntou.
 - **Informações do setor:** em **Configurações → Busca inteligente**, a gestão escreve o que a busca pode responder sobre o Centro de Convenções (capacidade, endereço, horários). Não ponha dados pessoais.
 
+## Achados e perdidos
+
+- **Registrar:** em **Achados e perdidos → Registrar achado**, com descrição, data, local, onde ficou guardado e foto. Cada item ganha um número (ex.: #12) para a etiqueta.
+- **Prazo:** a lista mostra há quantos dias o item está guardado e quanto falta para poder descartar. O padrão é 90 dias, em **Configurações**. Com o prazo vencido, o item entra em "O que precisa de você"; nada é descartado sozinho.
+- **Saída:** **Devolver ao dono** pede quem retirou e um documento ou telefone; **Descartar** pede o destino. Para desfazer, abra o item e use **Voltar para os guardados**.
+- **Privacidade:** a foto fica no Drive do setor, sem link público. Depois da devolução ou do descarte, a foto e os dados de quem retirou são apagados no prazo da LGPD (padrão 90 dias).
+
 ## Pedidos de data
 
 - **Pedir data:** quem quer usar o Centro de Convenções preenche a página pública `/pedido-de-data` (o link fica em **Pedidos de data → Copiar link do formulário**) e recebe um protocolo.

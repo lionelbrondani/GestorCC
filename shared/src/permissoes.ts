@@ -6,6 +6,7 @@ export type Modulo =
   | 'almoxEstoque'
   | 'almoxSaidas'
   | 'infraestrutura'
+  | 'achados'
   | 'mural'
   | 'busca'
   | 'formularios'
@@ -25,6 +26,7 @@ export const MODULOS: { id: Modulo; nome: string }[] = [
   { id: 'almoxEstoque', nome: 'Almoxarifado — estoque' },
   { id: 'almoxSaidas', nome: 'Almoxarifado — saídas' },
   { id: 'infraestrutura', nome: 'Infraestrutura (ocorrências)' },
+  { id: 'achados', nome: 'Achados e perdidos' },
   { id: 'mural', nome: 'Mural de avisos' },
   { id: 'busca', nome: 'Busca inteligente' },
   { id: 'formularios', nome: 'Formulários (links)' },
@@ -42,6 +44,7 @@ export const MODELOS: Record<ModeloPermissao, Permissoes> = {
     almoxEstoque: 'editar',
     almoxSaidas: 'editar',
     infraestrutura: 'editar',
+    achados: 'editar',
     mural: 'editar',
     busca: 'editar',
     formularios: 'ver',
@@ -57,6 +60,7 @@ export const MODELOS: Record<ModeloPermissao, Permissoes> = {
     almoxEstoque: 'editar',
     almoxSaidas: 'editar',
     infraestrutura: 'ver',
+    achados: 'editar',
     mural: 'editar',
     busca: 'editar',
     formularios: 'ver',
@@ -72,6 +76,7 @@ export const MODELOS: Record<ModeloPermissao, Permissoes> = {
     almoxEstoque: 'nenhum',
     almoxSaidas: 'nenhum',
     infraestrutura: 'nenhum',
+    achados: 'nenhum',
     mural: 'ver',
     busca: 'nenhum',
     formularios: 'nenhum',

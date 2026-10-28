@@ -97,6 +97,12 @@ export const ESQUEMA: Record<NomeTabela, { planilha: Planilha; colunas: Coluna[]
     colunas: [t('protocolo'), t('status'), j('dados'), t('recebidoEm'), t('decididoEm'), t('decididoPor'), t('motivoRecusa'), t('eventoId'), t('dadosApagadosEm')],
   },
   pedidosSigilo: { planilha: 'sigiloso', colunas: [j('solicitante'), j('responsavel')] },
+  achados: {
+    planilha: 'dados',
+    colunas: [n('numero'), t('descricao'), t('achadoEm'), t('local'), t('eventoId'), t('guardadoEm'), t('observacoes'), t('status'), t('fotoId'),
+      t('registradoPorId'), t('saidaEm'), t('destino'), t('dadosApagadosEm')],
+  },
+  achadosSigilo: { planilha: 'sigiloso', colunas: [t('retiradoPor'), t('contatoRetirada')] },
   credenciais: {
     planilha: 'sigiloso',
     colunas: [t('hash'), t('sal'), n('iteracoes'), b('senhaInicial'), n('versaoToken'), n('falhas'), t('bloqueadoAte')],

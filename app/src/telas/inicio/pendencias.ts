@@ -2,14 +2,17 @@ import {
   alertasContrato,
   chamadosAtrasados,
   contaNaEscala,
+  DIAS_ACHADOS,
   diferencaDias,
   ehApoio,
   elegiveisParaLote,
   estoqueCritico,
   formatarData,
   pode,
+  prazoDoAchado,
   somarDias,
   tituloComAtividade,
+  type Achado,
   type AlertaContrato,
   type AlmoxItem,
   type Contrato,
@@ -27,7 +30,7 @@ import {
   type Sessao,
 } from '@shared';
 
-export type TipoPendencia = 'presenca' | 'rodada' | 'vagas' | 'publicar' | 'apoio' | 'ficha' | 'pagamento' | 'estoque' | 'contrato' | 'infra' | 'pedido';
+export type TipoPendencia = 'presenca' | 'rodada' | 'vagas' | 'publicar' | 'apoio' | 'ficha' | 'pagamento' | 'estoque' | 'contrato' | 'infra' | 'pedido' | 'achados';
 
 /** Algo que precisa de alguém da gestão; `quando` é o prazo ou o dia do evento (vem primeiro o que vence antes). */
 export type Pendencia = { tipo: TipoPendencia; texto: string; link: string; quando?: DataISO };
@@ -55,6 +58,9 @@ export function calcularPendencias(dados: {
   ocorrencias?: Ocorrencia[];
   fichas?: FichaResumo[];
   pedidos?: PedidoDatas[];
+  achados?: Achado[];
+  /** Configurações: dias até um achado poder ser descartado. */
+  prazoAchados?: number;
   /** Sem os lotes, não dá para saber o que falta pagar: a pendência de pagamento fica de fora. */
   lotes?: Lote[];
   hoje: DataISO;
@@ -152,6 +158,20 @@ export function calcularPendencias(dados: {
     if (novas.length) lista.push({ tipo: 'infra', texto: `${novas.length} ocorrência(s) de infraestrutura para analisar`, link: '/infra' });
     for (const o of chamadosAtrasados(ocorrencias, hoje)) {
       lista.push({ tipo: 'infra', texto: `Chamado ${o.chamadoNumero} (#${o.numero} ${o.titulo}) aberto há mais de 7 dias`, link: `/infra/${o.id}` });
+    }
+  }
+
+  if (dados.achados && pode(permissoes, 'achados', 'editar')) {
+    const prazo = dados.prazoAchados ?? DIAS_ACHADOS;
+    const vencidos = dados.achados.filter((a) => a.status === 'guardado').map((a) => prazoDoAchado(a.achadoEm, hoje, prazo)).filter((x) => x.vencido);
+    if (vencidos.length) {
+      const n = vencidos.length;
+      lista.push({
+        tipo: 'achados',
+        texto: n === 1 ? '1 item de achados e perdidos já pode ser descartado' : `${n} itens de achados e perdidos já podem ser descartados`,
+        link: '/achados',
+        quando: vencidos.map((x) => x.descartarEm).sort()[0],
+      });
     }
   }
 

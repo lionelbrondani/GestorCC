@@ -1,4 +1,4 @@
-import { MODELOS, type AlmoxItem, type Contrato, type Evento, type Pessoa } from '@shared';
+import { MODELOS, type Achado, type AlmoxItem, type Contrato, type Evento, type Pessoa } from '@shared';
 import { buscaComum } from './buscaComum';
 
 const pessoa = (id: string, nome: string): Pessoa => ({
@@ -22,6 +22,16 @@ describe('buscaComum', () => {
     expect(buscaComum('fita', dados, MODELOS.eventual)).toEqual([]);
     expect(buscaComum('21/2026', dados, MODELOS.operacao)).toEqual([]);
     expect(buscaComum('fita', dados, MODELOS.operacao)).toHaveLength(1);
+  });
+
+  it('acha os achados e perdidos pela descrição, para quem tem o módulo', () => {
+    const achados = [{ id: 'a1', numero: 7, descricao: 'Guarda-chuva preto', achadoEm: '2026-10-20', status: 'guardado' } as Achado];
+    for (const termo of ['guarda-chuva', 'guarda chuva']) {
+      expect(buscaComum(termo, { ...dados, achados }, MODELOS.gestor)).toEqual([
+        { tipo: 'achado', titulo: '#7 Guarda-chuva preto', subtitulo: 'Guardado · achado em 20/10/2026', link: '/achados?item=a1' },
+      ]);
+    }
+    expect(buscaComum('guarda-chuva', { ...dados, achados }, MODELOS.eventual)).toEqual([]);
   });
 
   it('limita a 8 resultados', () => {

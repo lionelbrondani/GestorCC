@@ -155,11 +155,19 @@ export function Configuracoes() {
         <Cartao titulo="Dados pessoais (LGPD)">
           <div className="pilha">
             <p className="pequeno texto-2" style={{ margin: 0 }}>
-              Quantos dias depois do evento os dados pessoais são apagados (0 = nunca). A limpeza roda junto com o backup diário e fica no histórico.
+              Quantos dias depois do evento, ou da saída de um achado, os dados pessoais são apagados (0 = nunca). A limpeza roda junto com o backup diário e fica no histórico.
             </p>
             <Campo rotulo="Nomes e matrículas das cortesias (dias)">{(id) => <input id={id} className="cc-entrada" type="number" min={0} {...n('diasGuardarCortesias')} />}</Campo>
             <Campo rotulo="Dados do responsável da ficha técnica (dias)">{(id) => <input id={id} className="cc-entrada" type="number" min={0} {...n('diasGuardarFicha')} />}</Campo>
+            <Campo rotulo="Foto e quem retirou um achado (dias depois da devolução ou do descarte)">
+              {(id) => <input id={id} className="cc-entrada" type="number" min={0} {...n('diasGuardarAchados')} />}
+            </Campo>
           </div>
+        </Cartao>
+        <Cartao titulo="Achados e perdidos">
+          <Campo rotulo="Prazo para descartar (dias)" ajuda="Depois disso, o item aparece como pode descartar e entra em O que precisa de você, no Início.">
+            {(id) => <input id={id} className="cc-entrada" type="number" min={1} {...n('diasAchados')} />}
+          </Campo>
         </Cartao>
         <Cartao titulo="Links dos formulários">
           <div className="pilha-2">

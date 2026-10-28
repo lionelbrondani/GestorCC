@@ -7,9 +7,11 @@ describe('plano de instalação', () => {
   const abasDe = (p: string) => plano.find((x) => x.planilha === p)!.abas.map((a) => a.nome);
 
   it('dados sigilosos só na planilha Sigiloso, com a aba de importação', () => {
-    expect(abasDe('sigiloso')).toEqual(['contratantes', 'dadosPessoais', 'fichasSigilo', 'cortesiasSigilo', 'pedidosSigilo', 'credenciais', 'IMPORTAR_PESSOAS']);
+    expect(abasDe('sigiloso')).toEqual(['contratantes', 'dadosPessoais', 'fichasSigilo', 'cortesiasSigilo', 'pedidosSigilo', 'achadosSigilo', 'credenciais', 'IMPORTAR_PESSOAS']);
     expect(abasDe('dados')).not.toContain('fichasSigilo');
     expect(abasDe('dados')).not.toContain('pedidosSigilo');
+    expect(abasDe('dados')).not.toContain('achadosSigilo');
+    expect(abasDe('dados')).toContain('achados');
     expect(abasDe('dados')).not.toContain('credenciais');
     expect(abasDe('dados')).not.toContain('dadosPessoais');
     expect(abasDe('dados')).toEqual(expect.arrayContaining(['pessoas', 'permissoes', 'avisos', 'historico', 'config', 'feriados', 'eventos', 'sessoes', 'rodadas', 'rodadaSessoes', 'disponibilidades', 'escalas', 'avaliacoes']));

@@ -38,7 +38,7 @@ As planilhas ficam na pasta **GestorCC** do Drive da conta do setor:
 | Planilha ou pasta | O que guarda | Quem pode abrir |
 |---|---|---|
 | **GestorCC - Dados** | Pessoas, eventos, sessões, escalas, contratos, almoxarifado, fichas… | Só a conta do setor (e quem administra) |
-| **GestorCC - Sigiloso** | CPF, dados bancários, senhas (cifradas), contratantes, dados do responsável da ficha, nomes das cortesias | **Nunca compartilhar** |
+| **GestorCC - Sigiloso** | CPF, dados bancários, senhas (cifradas), contratantes, dados do responsável da ficha, nomes das cortesias, dados de quem pede data, quem retirou um achado | **Nunca compartilhar** |
 | **GestorCC - Relatórios** | Abas prontas para consulta: agenda, escala, pagamentos, estoque, contratos | Pode ser compartilhada para leitura |
 | Backups/ | Cópia diária das três planilhas (guarda 30 dias) | Mesmo cuidado da Sigiloso |
 | Modelos/ | Modelos Google Docs dos contratos e termos | — |
@@ -118,7 +118,7 @@ Nenhuma rotina automática manda e-mail.
 
    ```
    VITE_API_URL=<endereço /exec da API: Apps Script → Implantar → Gerenciar implantações>
-   VITE_RECURSOS=pessoas,dadosPessoais,mural,formularios,configuracoes,eventos,escalas,escalasPessoais,pagamentos,almoxEstoque,almoxSaidas,infraestrutura,relatar,contratos,busca
+   VITE_RECURSOS=pessoas,dadosPessoais,mural,formularios,configuracoes,eventos,escalas,escalasPessoais,pagamentos,almoxEstoque,almoxSaidas,infraestrutura,relatar,contratos,busca,achados
    VITE_GOOGLE_CLIENT_ID=<ID do cliente OAuth, se o login com Google estiver ligado>
    VITE_TURNSTILE_SITE_KEY=<chave pública do Cloudflare Turnstile, se estiver ligado>
    ```
@@ -164,7 +164,7 @@ O histórico de cada versão e o que cada uma pediu na publicação está em `do
 
 ## 8. Dados pessoais e LGPD
 
-- **Sigilosos:** CPF, dados bancários, dados do responsável da ficha técnica e nomes e matrículas das cortesias ficam na planilha **Sigiloso**. Não compartilhe essa planilha nem a pasta Backups.
+- **Sigilosos:** CPF, dados bancários, dados do responsável da ficha técnica, nomes e matrículas das cortesias, documento e contatos de quem pede data e quem retirou um achado ficam na planilha **Sigiloso**. Não compartilhe essa planilha nem a pasta Backups.
 - **Na tela:** só quem tem permissão vê esses dados. Os bolsistas veem só os próprios.
 - **Fora do sistema:** não copie dados pessoais para planilhas, e-mails ou grupos fora do GestorCC.
 - **E-mails do sistema:** cada pessoa recebe o seu e não vê os endereços dos outros. O histórico guarda quem mandou, o assunto e quantas pessoas, sem os endereços.

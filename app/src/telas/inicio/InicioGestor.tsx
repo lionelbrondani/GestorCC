@@ -7,6 +7,7 @@ import {
   FileSignature,
   FileText,
   Package,
+  PackageSearch,
   Send,
   TriangleAlert,
   Users,
@@ -42,6 +43,7 @@ const ICONE_PENDENCIA: Record<TipoPendencia, LucideIcon> = {
   contrato: FileSignature,
   infra: TriangleAlert,
   pedido: CalendarPlus,
+  achados: PackageSearch,
 };
 
 /** Quantas pendências aparecem antes do "ver todas": o mais urgente fica à vista sem afogar a tela. */
@@ -72,6 +74,9 @@ export function InicioGestor() {
   const fichas = useConsulta('fichas.listar', null, { habilitada: pode(p, 'eventos', 'editar') });
   const lotes = useConsulta('lotes.listar', null, { habilitada: recursoAtivo('pagamentos') && pode(p, 'pagamentos', 'editar') });
   const pedidos = useConsulta('pedidos.listar', null, { habilitada: pode(p, 'eventos', 'editar') });
+  const comAchados = recursoAtivo('achados') && pode(p, 'achados', 'editar');
+  const achados = useConsulta('achados.listar', null, { habilitada: comAchados });
+  const config = useConsulta('config.obter', null, { habilitada: comAchados });
   const [todas, setTodas] = useState(false);
 
   if (periodo.isLoading || escalas.isLoading) return <Carregando />;
@@ -85,6 +90,7 @@ export function InicioGestor() {
     sessoes: periodo.sessoes, escalas: escalas.data ?? [], eventos: periodo.eventos, rodadas: rodadas.data ?? [],
     disponibilidades: disp.data ?? [], pessoas: pessoas.lista, itens: almox.data?.itens ?? [], contratos: contratos.data?.contratos ?? [],
     ocorrencias: ocorrencias.data ?? [], fichas: fichas.data, pedidos: pedidos.data, lotes: lotes.data?.lotes, hoje: h, permissoes: p,
+    achados: achados.data, prazoAchados: config.data?.diasAchados,
   });
   const urgentes = pendencias.filter((pd) => pd.quando && pd.quando <= h).length;
   const ano = h.slice(0, 4);

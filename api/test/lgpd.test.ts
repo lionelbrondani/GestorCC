@@ -33,7 +33,7 @@ function ambiente() {
 describe('LGPD: limpeza dos dados pessoais depois do evento', () => {
   it('apaga os nomes das cortesias 90 dias depois do evento, mantendo quantos foram distribuídos', () => {
     const amb = ambiente();
-    expect(limparDadosPessoais(amb.ctx)).toEqual({ cortesias: 1, fichas: 1, pedidos: 0 });
+    expect(limparDadosPessoais(amb.ctx)).toEqual({ cortesias: 1, fichas: 1, pedidos: 0, achados: 0 });
     expect(amb.linha('cortesiasSigilo', 'd-junho').pessoas).toEqual([]);
     expect(amb.linha('cortesiasDestinos', 'd-junho')).toMatchObject({ apagadoEm: '2026-10-24', nomesApagados: 3, trava: 'travada' });
     expect(amb.linha('cortesiasSigilo', 'd-recente').pessoas).toHaveLength(3);
@@ -52,7 +52,7 @@ describe('LGPD: limpeza dos dados pessoais depois do evento', () => {
   it('registra no histórico uma vez só, e prazo 0 nunca apaga', () => {
     const amb = ambiente();
     limparDadosPessoais(amb.ctx);
-    expect(limparDadosPessoais(amb.ctx)).toEqual({ cortesias: 0, fichas: 0, pedidos: 0 });
+    expect(limparDadosPessoais(amb.ctx)).toEqual({ cortesias: 0, fichas: 0, pedidos: 0, achados: 0 });
     expect(amb.repo.listar<{ id: string; acao: string }>('historico').map((h) => h.acao)).toEqual([
       'apagou os nomes das cortesias (LGPD, 90 dias depois do evento)',
       'apagou os dados pessoais do responsável (LGPD, 180 dias depois do evento)',
@@ -60,7 +60,7 @@ describe('LGPD: limpeza dos dados pessoais depois do evento', () => {
 
     const outro = ambiente();
     outro.repo.inserir('config', { id: 'geral', valor: { diasGuardarCortesias: 0, diasGuardarFicha: 0 } } as never);
-    expect(limparDadosPessoais(outro.ctx)).toEqual({ cortesias: 0, fichas: 0, pedidos: 0 });
+    expect(limparDadosPessoais(outro.ctx)).toEqual({ cortesias: 0, fichas: 0, pedidos: 0, achados: 0 });
   });
 
   it('as páginas públicas recebem o prazo de cada uma, para o aviso de privacidade', () => {

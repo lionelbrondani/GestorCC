@@ -12,6 +12,7 @@ import {
   Home,
   KeyRound,
   Package,
+  PackageSearch,
   Printer,
   TriangleAlert,
   Users,
@@ -233,6 +234,23 @@ const SECOES: Secao[] = [
       'Mude a situação (análise, chamado aberto, em atendimento, resolvida) e registre o número do chamado.',
     ],
     prints: [{ arquivo: 'infra', legenda: 'Infraestrutura', formato: 'pc' }],
+  },
+  {
+    id: 'achados', titulo: 'Achados e perdidos', icone: PackageSearch, publico: 'gestao',
+    serve: 'Guardar os itens esquecidos no prédio, com foto, até o dono buscar ou o prazo para descartar vencer.',
+    passos: [
+      <><strong>Achados e perdidos → Registrar achado</strong>: descrição, data, local, onde ficou guardado e a foto (no celular, dá para tirar na hora).</>,
+      'Cada item ganha um número (ex.: #12). Escreva o número na etiqueta do item guardado.',
+      'A lista mostra há quantos dias o item está guardado e quanto falta para poder descartar (90 dias, ou o prazo de Configurações).',
+      <><strong>Devolver ao dono</strong> pede quem retirou e um documento ou telefone. <strong>Descartar</strong> pede o destino (lixo, doação…).</>,
+      <>Marcou por engano? Abra o item e use <strong>Voltar para os guardados</strong>.</>,
+    ],
+    dicas: [
+      'Itens com o prazo vencido aparecem em "O que precisa de você", no Início. Nada é descartado sozinho.',
+      'A busca do alto também encontra os achados (ex.: "guarda-chuva").',
+      'A foto fica no Drive do setor, sem link público. 90 dias depois da devolução ou do descarte, a foto e os dados de quem retirou são apagados.',
+    ],
+    prints: [{ arquivo: 'achados', legenda: 'Achados e perdidos no celular', formato: 'cel' }],
   },
   {
     id: 'relatorio', titulo: 'Relatório mensal', icone: BarChart3, publico: 'gestao',

@@ -14,6 +14,7 @@ import { MinhasEscalas } from './telas/pessoal/MinhasEscalas';
 // Início, login e as telas do bolsista ficam no pacote principal, para abrir na hora.
 const PedidoDeData = lazy(() => import('./telas/pedido/PedidoDeData').then((m) => ({ default: m.PedidoDeData })));
 const Pedidos = lazy(() => import('./telas/pedido/Pedidos').then((m) => ({ default: m.Pedidos })));
+const Achados = lazy(() => import('./telas/achados/Achados').then((m) => ({ default: m.Achados })));
 const Agenda = lazy(() => import('./telas/agenda/Agenda').then((m) => ({ default: m.Agenda })));
 const EventoDetalhe = lazy(() => import('./telas/agenda/EventoDetalhe').then((m) => ({ default: m.EventoDetalhe })));
 const ImprimirAgenda = lazy(() => import('./telas/agenda/ImprimirAgenda').then((m) => ({ default: m.ImprimirAgenda })));
@@ -73,6 +74,7 @@ export const ROTAS: RouteObject[] = [
       { path: '/relatar', element: <ExigeRecurso recurso="relatar"><Relatar /></ExigeRecurso> },
       { path: '/infra', element: comPermissao(['infraestrutura'], <Infra />) },
       { path: '/infra/:id', element: comPermissao(['infraestrutura'], <OcorrenciaDetalhe />) },
+      { path: '/achados', element: comPermissao(['achados'], <Achados />) },
       { path: '/agenda', element: comPermissao(['eventos'], <Agenda />) },
       { path: '/agenda/imprimir', element: comPermissao(['eventos'], <ImprimirAgenda />) },
       { path: '/agenda/:eventoId', element: comPermissao(['eventos'], <EventoDetalhe />) },

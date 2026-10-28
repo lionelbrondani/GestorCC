@@ -1,10 +1,10 @@
 /// <reference types="google-apps-script" />
-import { MODELOS, MODULOS } from '@shared';
+import { MODELOS, MODULOS, type Modulo, type Nivel } from '@shared';
 import { criarCredencialInicial, handlersAuth, recuperarAcesso } from './acoes/auth';
 import { abrirPlanilha, portasGas, propriedadesGas, relogioGas } from './adaptadores/gas';
 import { paraBase64Url } from './auth/bytes';
 import { tratarRequisicao } from './nucleo/roteador';
-import type { NomeTabela, Planilha } from './nucleo/portas';
+import type { NomeTabela, Planilha, Repositorio } from './nucleo/portas';
 import { cabecalhos, ESQUEMA } from './tabelas/esquema';
 import { novaEpocaCache } from './tabelas/leitorAbas';
 
@@ -56,6 +56,24 @@ function pastaDoSistema(): GoogleAppsScript.Drive.Folder {
   const pasta = DriveApp.createFolder('GestorCC');
   propriedadesGas.definir('PASTA_ID', pasta.getId());
   return pasta;
+}
+
+/** Módulo novo começa com a permissão de um parecido: quem edita eventos passa a editar os achados. */
+const HERDA: Partial<Record<Modulo, Modulo>> = { achados: 'eventos' };
+
+/** Dá a cada pessoa a permissão dos módulos novos que ela ainda não tem; devolve quantas criou. Rodar de novo não muda nada. */
+export function concederModulosNovos(repo: Repositorio): number {
+  const linhas = repo.listar<{ id: string; pessoaId: string; modulo: string; nivel: Nivel }>('permissoes');
+  let criadas = 0;
+  for (const p of repo.listar<{ id: string }>('pessoas')) {
+    const dela = linhas.filter((l) => l.pessoaId === p.id);
+    for (const [novo, base] of Object.entries(HERDA) as [Modulo, Modulo][]) {
+      if (dela.some((l) => l.modulo === novo)) continue;
+      repo.inserir('permissoes', { id: `${p.id}:${novo}`, pessoaId: p.id, modulo: novo, nivel: dela.find((l) => l.modulo === base)?.nivel ?? 'nenhum' });
+      criadas++;
+    }
+  }
+  return criadas;
 }
 
 function garantirGatilho(funcao: string, criar: () => void) {
@@ -124,6 +142,8 @@ export function instalar(): void {
     for (const m of MODULOS) portas.repo.inserir('permissoes', { id: `${id}:${m.id}`, pessoaId: id, modulo: m.id, nivel: MODELOS.gestor[m.id] });
     portas.repo.inserir('credenciais', criarCredencialInicial(portas.cripto, id, matricula));
   }
+  const permissoesNovas = concederModulosNovos(portas.repo);
+  if (permissoesNovas) console.log(`Permissões dos módulos novos: ${permissoesNovas} linha(s) criada(s).`);
   novaEpocaCache(propriedadesGas, relogioGas.agoraMs); // abas e colunas novas: começa o cache do zero
   console.log(`GestorCC instalado na pasta "${pasta.getName()}" (${pasta.getUrl()}).`);
 }

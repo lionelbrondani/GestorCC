@@ -27,12 +27,13 @@ function Painel({ termo, aoFechar }: { termo: string; aoFechar: () => void }) {
   const periodo = usePeriodo(de, ate);
   const almox = useConsulta('almox.listar', null, { habilitada: pode(p, 'almoxEstoque', 'ver') || pode(p, 'almoxSaidas', 'ver') });
   const contratos = useConsulta('contratos.listar', null, { habilitada: pode(p, 'contratos', 'ver') });
+  const achados = useConsulta('achados.listar', null, { habilitada: recursoAtivo('achados') && pode(p, 'achados', 'ver') });
   const resultados = buscaComum(
     termo,
-    { pessoas: pessoas.lista, eventos: periodo.eventos, itens: almox.data?.itens ?? [], contratos: contratos.data?.contratos ?? [] },
+    { pessoas: pessoas.lista, eventos: periodo.eventos, itens: almox.data?.itens ?? [], contratos: contratos.data?.contratos ?? [], achados: achados.data ?? [] },
     p,
   );
-  const ROTULO = { pessoa: 'Pessoa', evento: 'Evento', item: 'Item', contrato: 'Contrato' } as const;
+  const ROTULO = { pessoa: 'Pessoa', evento: 'Evento', item: 'Item', contrato: 'Contrato', achado: 'Achado' } as const;
   if (!resultados.length) return termo.trim().length >= 2 && !ehPergunta(termo) ? <p className="busca-vazio">Nada encontrado.</p> : null;
   return (
     <ul className="busca-lista">

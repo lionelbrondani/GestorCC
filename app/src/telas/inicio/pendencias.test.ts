@@ -1,4 +1,4 @@
-import { MODELOS, type Escala, type Evento, type FichaResumo, type PedidoDatas, type Rodada, type Sessao } from '@shared';
+import { MODELOS, type Achado, type Escala, type Evento, type FichaResumo, type PedidoDatas, type Rodada, type Sessao } from '@shared';
 import { calcularPendencias, prazoRelativo } from './pendencias';
 
 const evento: Evento = {
@@ -45,6 +45,18 @@ describe('calcularPendencias', () => {
     const pedido = { id: 'pd', status: 'novo', dias: [{ data: '2026-11-20', atividade: 'evento', inicio: '19:00', fim: '21:00' }] } as unknown as PedidoDatas;
     const p = calcularPendencias({ ...base, pedidos: [pedido, { ...pedido, id: 'x', status: 'aprovado' }], permissoes: MODELOS.gestor });
     expect(p).toContainEqual({ tipo: 'pedido', texto: '1 pedido de data para analisar', link: '/pedidos', quando: '2026-11-20' });
+  });
+
+  it('achados e perdidos com o prazo vencido viram uma pendência, desde o primeiro que venceu', () => {
+    const achado = (id: string, achadoEm: string, status = 'guardado') => ({ id, achadoEm, status }) as unknown as Achado;
+    const achados = [achado('a', '2026-07-01'), achado('b', '2026-07-20'), achado('c', '2026-10-01'), achado('d', '2026-01-01', 'devolvido')];
+    expect(calcularPendencias({ ...base, achados, prazoAchados: 90, permissoes: MODELOS.gestor })).toContainEqual({
+      tipo: 'achados', texto: '2 itens de achados e perdidos já podem ser descartados', link: '/achados', quando: '2026-09-29',
+    });
+    expect(calcularPendencias({ ...base, achados: [achados[0]], prazoAchados: 90, permissoes: MODELOS.gestor })).toContainEqual(
+      expect.objectContaining({ texto: '1 item de achados e perdidos já pode ser descartado' }),
+    );
+    expect(calcularPendencias({ ...base, achados, prazoAchados: 90, permissoes: MODELOS.eventual })).toEqual([]);
   });
 
   it('sessões realizadas fora de lote pedem um lote de pagamento', () => {

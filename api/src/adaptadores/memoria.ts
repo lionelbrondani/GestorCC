@@ -142,6 +142,7 @@ export function arquivosMemoria(): Arquivos & { arquivos: Map<string, string> } 
       return id;
     },
     lerImagem: (id) => arquivos.get(id) ?? null,
+    apagarImagem: (id) => void arquivos.delete(id),
   };
 }
 

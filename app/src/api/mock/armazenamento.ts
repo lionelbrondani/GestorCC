@@ -1,4 +1,5 @@
 import type {
+  Achado,
   Aditivo,
   AlmoxItem,
   AlmoxMovimento,
@@ -47,6 +48,9 @@ export interface Banco {
   autorizadosExternos: string[];
   pedidos: AlmoxPedido[];
   ocorrencias: Ocorrencia[];
+  achados: Achado[];
+  /** Fotos dos achados (data URLs), por id do item; na API ficam no Drive. */
+  fotosAchados: Record<Id, string>;
   /** Respostas do formulário de problemas ainda não importadas (simula a planilha do Google Form). */
   respostasFormularioInfra: Omit<Ocorrencia, 'id' | 'numero' | 'historico'>[];
   avisos: Aviso[];
@@ -56,7 +60,7 @@ export interface Banco {
 }
 
 const CHAVE = 'gestorcc-prototipo';
-const VERSAO_BANCO = 3;
+const VERSAO_BANCO = 4;
 
 export interface Armazenamento {
   banco: Banco;

@@ -22,9 +22,17 @@ describe('ehGestor', () => {
 });
 
 describe('MODULOS', () => {
-  it('lista os 13 módulos do spec com nome', () => {
-    expect(MODULOS).toHaveLength(13);
+  it('lista os 14 módulos com nome', () => {
+    expect(MODULOS).toHaveLength(14);
     expect(MODULOS.every((m) => m.nome.length > 0)).toBe(true);
+  });
+});
+
+describe('achados e perdidos', () => {
+  it('gestão e operação editam; eventual não acessa', () => {
+    expect(pode(MODELOS.gestor, 'achados', 'editar')).toBe(true);
+    expect(pode(MODELOS.operacao, 'achados', 'editar')).toBe(true);
+    expect(pode(MODELOS.eventual, 'achados', 'ver')).toBe(false);
   });
 });
 

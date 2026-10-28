@@ -5,6 +5,8 @@
 import {
   autoPreencherPeriodo,
   MODELOS,
+  somarDias,
+  type Achado,
   type AlmoxItem,
   type AlmoxMovimento,
   type Aviso,
@@ -394,6 +396,25 @@ function criarOcorrencias(): { ocorrencias: Ocorrencia[]; pendentes: Banco['resp
   return { ocorrencias, pendentes };
 }
 
+/** Achados e perdidos fictícios: um com o prazo vencido, dois guardados, um devolvido e um descartado. */
+function criarAchados(hoje: string): Achado[] {
+  const item = (numero: number, diasAtras: number, extra: Partial<Achado>): Achado => ({
+    id: `ac-exemplo-${numero}`, numero, descricao: '', achadoEm: somarDias(hoje, -diasAtras), local: '', eventoId: null, guardadoEm: '', observacoes: '',
+    status: 'guardado', temFoto: false, registradoPorId: 'p01', saidaEm: null, retiradoPor: '', contatoRetirada: '', destino: '', dadosApagadosEm: '',
+    ...extra,
+  });
+  return [
+    item(1, 175, { descricao: 'Óculos de sol com armação preta', local: 'Banheiros', guardadoEm: 'Armário da secretaria', status: 'descartado', saidaEm: somarDias(hoje, -80), destino: 'Doação' }),
+    item(2, 104, { descricao: 'Guarda-chuva preto', local: 'Plateia', guardadoEm: 'Armário da secretaria' }),
+    item(3, 48, { descricao: 'Casaco de lã cinza', local: 'Hall de entrada', guardadoEm: 'Cabideiro da secretaria' }),
+    item(4, 14, {
+      descricao: 'Garrafa térmica azul', local: 'Camarins', guardadoEm: 'Armário da secretaria', status: 'devolvido', saidaEm: somarDias(hoje, -9),
+      retiradoPor: 'Pessoa Exemplo', contatoRetirada: '(55) 90000-0000',
+    }),
+    item(5, 6, { descricao: 'Fone de ouvido sem fio branco', local: 'Plateia', guardadoEm: 'Gaveta da recepção', observacoes: 'Estojo com um adesivo de estrela.' }),
+  ];
+}
+
 export function criarFixtures(hoje: string): Banco {
   const { pessoas, dados } = criarPessoas();
   const bolsistas = pessoas.filter((p) => p.tipo === 'bolsista');
@@ -510,6 +531,8 @@ export function criarFixtures(hoje: string): Banco {
     informacoesSetor: 'Teatro com 1.170 lugares (plateia baixa, alta e mezanino). Fica na Avenida Roraima, 1000, Camobi, Santa Maria.',
     diasGuardarCortesias: 90,
     diasGuardarFicha: 180,
+    diasAchados: 90,
+    diasGuardarAchados: 90,
     agendaSetor: {
       nome: 'Centro de Convenções UFSM',
       conta: 'centrodeconvencoes@ufsm.br',
@@ -541,6 +564,8 @@ export function criarFixtures(hoje: string): Banco {
     autorizadosExternos: ['Equipe de limpeza terceirizada', 'Técnico de som (produção)'],
     pedidos: [],
     ocorrencias,
+    achados: criarAchados(hoje),
+    fotosAchados: {},
     respostasFormularioInfra: pendentes,
     avisos,
     notificacoes: [

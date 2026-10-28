@@ -1,3 +1,4 @@
+import type { Achado, AchadoDados, SaidaAchado } from '../achados';
 import type { Consulta } from '../busca';
 import type { CortesiasPublica, DestinoCortesias, PessoaCortesia } from '../cortesias';
 import type { TipoEmail } from '../email';
@@ -151,6 +152,13 @@ export interface Acoes {
   'infra.importarFormulario': A<null, { importadas: number }>;
   /** Foto da ocorrência como data URL (fica no Drive, sem link público). */
   'infra.foto': A<{ id: Id }, string | null>;
+  'achados.listar': A<null, Achado[]>;
+  /** Registra (sem id) ou edita. foto: data URL nova; null tira a foto; sem o campo, fica a que está. */
+  'achados.salvar': A<{ id?: Id; dados: AchadoDados; foto?: string | null }, Achado>;
+  /** Foto do item como data URL (fica no Drive, sem link público). */
+  'achados.foto': A<{ id: Id }, string | null>;
+  /** Devolver ao dono, descartar ou voltar para os guardados. */
+  'achados.situacao': A<{ id: Id } & SaidaAchado, Achado>;
   /** Pergunta da barra de busca → consulta (ou ajuda de uso). Só a pergunta vai ao Gemini. */
   /** Ficha técnica pelo link do produtor: sem login, o token do link é a chave e só abre a ficha daquele evento. */
   'ficha.abrir': A<{ token: string }, FichaPublica>;

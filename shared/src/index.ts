@@ -28,3 +28,4 @@ export * from './email';
 export * from './saude';
 export * from './lgpd';
 export * from './pedidoDatas';
+export * from './achados';
