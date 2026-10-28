@@ -1,4 +1,4 @@
-import { ehGestor, ErroApi, type Config, type Feriado, type RegistroHistorico } from '@shared';
+import { DIAS_GUARDAR_CORTESIAS, DIAS_GUARDAR_FICHA, ehGestor, ErroApi, type Config, type Feriado, type RegistroHistorico } from '@shared';
 import { exigirVersao, registrar, type Contexto, type Handlers } from '../nucleo/roteador';
 import { marcarAgendaPendente } from '../relatorios/pendentes';
 import { lerErros } from '../nucleo/erros';
@@ -16,6 +16,8 @@ export const CONFIG_PADRAO: Config = {
   destinatariosFundep: [],
   assinaturaEmail: 'Centro de Convenções - UFSM\nCoordenadoria de Cultura e Arte\nPró-Reitoria de Extensão - UFSM',
   limitePerguntasDia: 30,
+  diasGuardarCortesias: DIAS_GUARDAR_CORTESIAS,
+  diasGuardarFicha: DIAS_GUARDAR_FICHA,
   linksFormularios: [],
   agendaSetor: { nome: 'Centro de Convenções UFSM', conta: '', link: '', conectada: false },
 };

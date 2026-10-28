@@ -101,6 +101,7 @@ function publica(ctx: Contexto, f: Contexto_): FichaPublica {
     evento: { nome: f.evento.nome, sessoes: f.sessoes.map((s) => ({ id: s.id, data: s.data, rotulo: s.rotulo ?? '', inicio: s.inicio || null, fim: s.fim || null })) },
     status: m.status, travada: m.travada, prazo: m.prazo, enviadaEm: m.enviadaEm, dados: m.dados,
     linkFolder: configAtual(ctx).linksFormularios.find((l) => /folder/i.test(l.nome))?.url ?? '',
+    diasGuardarDados: configAtual(ctx).diasGuardarFicha,
   };
 }
 

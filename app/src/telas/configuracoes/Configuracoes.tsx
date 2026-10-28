@@ -117,6 +117,15 @@ export function Configuracoes() {
             <Campo rotulo="Limite de perguntas por pessoa/dia (busca)">{(id) => <input id={id} className="cc-entrada" type="number" {...n('limitePerguntasDia')} />}</Campo>
           </div>
         </Cartao>
+        <Cartao titulo="Dados pessoais (LGPD)">
+          <div className="pilha">
+            <p className="pequeno texto-2" style={{ margin: 0 }}>
+              Quantos dias depois do evento os dados pessoais são apagados (0 = nunca). A limpeza roda junto com o backup diário e fica no histórico.
+            </p>
+            <Campo rotulo="Nomes e matrículas das cortesias (dias)">{(id) => <input id={id} className="cc-entrada" type="number" min={0} {...n('diasGuardarCortesias')} />}</Campo>
+            <Campo rotulo="Dados do responsável da ficha técnica (dias)">{(id) => <input id={id} className="cc-entrada" type="number" min={0} {...n('diasGuardarFicha')} />}</Campo>
+          </div>
+        </Cartao>
         <Cartao titulo="Links dos formulários">
           <div className="pilha-2">
             {c.linksFormularios.map((l, i) => (

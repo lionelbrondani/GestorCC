@@ -309,6 +309,9 @@ export interface Config {
   destinatariosFundep: string[];
   assinaturaEmail: string;
   limitePerguntasDia: number;
+  /** LGPD: dias depois do evento para apagar os nomes das cortesias e os dados do responsável da ficha (0 = nunca). */
+  diasGuardarCortesias: number;
+  diasGuardarFicha: number;
   linksFormularios: { nome: string; url: string }[];
   /** Agenda Google do setor, mantida pela conta do sistema. */
   agendaSetor: { nome: string; conta: string; link: string; conectada: boolean };

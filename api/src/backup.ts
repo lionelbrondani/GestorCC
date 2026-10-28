@@ -1,6 +1,9 @@
 /// <reference types="google-apps-script" />
 import { diferencaDias } from '@shared';
-import { propriedadesGas, relogioGas } from './adaptadores/gas';
+import { portasGas, propriedadesGas, relogioGas, travaGas } from './adaptadores/gas';
+import { limparDadosPessoais } from './lgpd';
+import { registrarErro } from './nucleo/erros';
+import { garantirEpocaCache } from './tabelas/leitorAbas';
 
 export const DIAS_DE_BACKUP = 30;
 
@@ -36,4 +39,23 @@ export function backupDiario(): void {
   const apagar = new Set(pastasParaApagar(todas, hoje, DIAS_DE_BACKUP));
   for (const p of todas) if (apagar.has(p.nome)) p.pasta.setTrashed(true);
   propriedadesGas.definir('ULTIMO_BACKUP', relogioGas.agora()); // aparece na Saúde do sistema
+  limparDepoisDoBackup();
+}
+
+/** LGPD: com o backup do dia feito, apaga os dados pessoais que já passaram do prazo; uma falha aqui não desfaz o backup. */
+function limparDepoisDoBackup(): void {
+  try {
+    travaGas.executar(() => {
+      garantirEpocaCache(propriedadesGas, relogioGas.agoraMs);
+      const portas = portasGas();
+      try {
+        limparDadosPessoais({ portas, eu: null, idRequisicao: '' });
+      } finally {
+        portas.repo.concluirEscrita();
+      }
+    }, 30_000);
+  } catch (e) {
+    console.error(e);
+    registrarErro({ props: propriedadesGas, relogio: relogioGas }, 'limpeza LGPD', e);
+  }
 }

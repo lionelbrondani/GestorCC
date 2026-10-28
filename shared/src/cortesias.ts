@@ -38,6 +38,8 @@ export interface CortesiasPublica {
   travada: boolean;
   prazo: DataISO | '';
   pessoas: PessoaCortesia[];
+  /** LGPD: dias depois do evento em que os nomes são apagados (0 = nunca), para o aviso da página. */
+  diasGuardarDados: number;
 }
 
 export interface ErroCortesia {

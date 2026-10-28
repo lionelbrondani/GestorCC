@@ -105,7 +105,7 @@ function destinoPorToken(ctx: Contexto, token: string) {
     publica: {
       evento: { nome: ev.nome, datas: sessoesDaFicha(ctx, ev.id).map((s) => s.data) },
       destino: { nome: c.nome, quantidade: c.quantidade, pedirMatricula: c.pedirMatricula },
-      travada: c.travada, prazo: c.prazo, pessoas: c.pessoas,
+      travada: c.travada, prazo: c.prazo, pessoas: c.pessoas, diasGuardarDados: ctx.banco.config.diasGuardarCortesias,
     },
   };
 }
@@ -145,6 +145,7 @@ function fichaPublica(ctx: Contexto, token: string): FichaPublica {
     evento: { nome: ev.nome, sessoes: sessoesDaFicha(ctx, ev.id).map((s) => ({ id: s.id, data: s.data, rotulo: s.rotulo ?? '', inicio: s.inicio, fim: s.fim })) },
     status: f.status, travada: f.travada, prazo: f.prazo, enviadaEm: f.enviadaEm, dados: f.dados,
     linkFolder: ctx.banco.config.linksFormularios.find((l) => /folder/i.test(l.nome))?.url ?? '',
+    diasGuardarDados: ctx.banco.config.diasGuardarFicha,
   };
 }
 

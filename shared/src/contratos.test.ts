@@ -20,7 +20,7 @@ const contratante: Contratante = {
 };
 
 const config: Config = {
-  diariaPadrao: 8000, vagasBolsistasPadrao: 8, vagasServidoresPadrao: 1, minimoExperientesPadrao: 1,
+  diariaPadrao: 8000, vagasBolsistasPadrao: 8, vagasServidoresPadrao: 1, minimoExperientesPadrao: 1, diasGuardarCortesias: 90, diasGuardarFicha: 180,
   edital: '', iniciativa: '', projetoFundep: '30055', destinatariosFundep: ['fundep@exemplo.com'],
   assinaturaEmail: 'Centro de Convenções - UFSM', limitePerguntasDia: 30, linksFormularios: [],
   agendaSetor: { nome: '', conta: '', link: '', conectada: false },

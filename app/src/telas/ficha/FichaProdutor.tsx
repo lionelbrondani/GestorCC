@@ -1,4 +1,5 @@
-import { formatarData, formatarDataHora, type FichaPublica } from '@shared';
+import { formatarData, formatarDataHora, textoPrivacidade, type FichaPublica } from '@shared';
+import { AvisoPrivacidade } from './AvisoPrivacidade';
 import { useQueryClient } from '@tanstack/react-query';
 import { CheckCircle2 } from 'lucide-react';
 import { useState } from 'react';
@@ -94,6 +95,7 @@ export function FichaProdutor() {
       <main className="ficha-conteudo">
         {ficha.data && <h1>{ficha.data.evento.nome}</h1>}
         {conteudo}
+        {ficha.data && <AvisoPrivacidade texto={textoPrivacidade('ficha', ficha.data.diasGuardarDados)} />}
       </main>
     </div>
   );

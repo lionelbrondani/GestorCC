@@ -353,6 +353,8 @@ export interface FichaPublica {
   dados: FichaTecnicaDados;
   /** Link do folder (Configurações → links com "Folder" no nome); '' sem link. */
   linkFolder: string;
+  /** LGPD: dias depois do evento em que os dados do responsável são apagados (0 = nunca), para o aviso da página. */
+  diasGuardarDados: number;
 }
 
 /** Linha da lista de fichas (menu Fichas técnicas), sem dados sigilosos do responsável. */

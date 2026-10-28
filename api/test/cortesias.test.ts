@@ -64,7 +64,7 @@ describe('cortesias: lista pelo link do destino', () => {
     expect(r.dados).toEqual({
       evento: { nome: 'Show Teste', datas: ['2026-12-12'] },
       destino: { nome: 'Casa do Estudante', quantidade: 3, pedirMatricula: true },
-      travada: false, prazo: '2026-12-11', pessoas: [],
+      travada: false, prazo: '2026-12-11', pessoas: [], diasGuardarDados: 90,
     });
   });
 

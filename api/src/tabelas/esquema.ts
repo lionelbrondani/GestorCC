@@ -88,9 +88,9 @@ export const ESQUEMA: Record<NomeTabela, { planilha: Planilha; colunas: Coluna[]
       t('contatoFaturaNome'), t('contatoFaturaEmail'), t('contatoFaturaTelefone')],
   },
   dadosPessoais: { planilha: 'sigiloso', colunas: [t('cpf'), t('banco'), t('agencia'), t('conta'), t('nascimento'), t('camiseta')] },
-  fichas: { planilha: 'dados', colunas: [t('status'), t('trava'), j('dados'), t('enviadaEm'), j('agenda')] },
+  fichas: { planilha: 'dados', colunas: [t('status'), t('trava'), j('dados'), t('enviadaEm'), j('agenda'), t('dadosApagadosEm')] },
   fichasSigilo: { planilha: 'sigiloso', colunas: [t('token'), t('documento'), t('email'), t('telefone')] },
-  cortesiasDestinos: { planilha: 'dados', colunas: [t('eventoId'), t('nome'), n('quantidade'), b('pedirMatricula'), t('trava'), t('atualizadoPeloDestinoEm')] },
+  cortesiasDestinos: { planilha: 'dados', colunas: [t('eventoId'), t('nome'), n('quantidade'), b('pedirMatricula'), t('trava'), t('atualizadoPeloDestinoEm'), t('apagadoEm'), n('nomesApagados')] },
   cortesiasSigilo: { planilha: 'sigiloso', colunas: [t('token'), j('pessoas')] },
   credenciais: {
     planilha: 'sigiloso',

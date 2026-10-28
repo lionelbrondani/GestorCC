@@ -14,6 +14,7 @@ import {
 import { paraBase64Url } from '../auth/bytes';
 import { novoId, registrar, type Contexto, type Handlers } from '../nucleo/roteador';
 import { linhasEventos, type LinhaEvento } from './eventos';
+import { configAtual } from './sistema';
 import { sessoesAtivas } from './fichas';
 
 /** Destino das cortesias de um evento (sem os nomes, que ficam em `cortesiasSigilo`). */
@@ -25,6 +26,9 @@ interface LinhaDestino {
   pedirMatricula: boolean;
   trava: TravaFicha;
   atualizadoPeloDestinoEm: string;
+  /** LGPD: dia em que os nomes foram apagados e quantos eram (o relatório continua contando). */
+  apagadoEm?: string;
+  nomesApagados?: number;
   atualizadoEm?: string;
   atualizadoPor?: string;
 }
@@ -90,6 +94,7 @@ function publica(ctx: Contexto, d: Destino): CortesiasPublica {
     evento: { nome: d.evento.nome, datas: d.datas },
     destino: { nome: m.nome, quantidade: m.quantidade, pedirMatricula: m.pedirMatricula },
     travada: m.travada, prazo: m.prazo, pessoas: m.pessoas,
+    diasGuardarDados: configAtual(ctx).diasGuardarCortesias,
   };
 }
 
@@ -121,7 +126,7 @@ export const handlersCortesias: Handlers = {
     const porEvento = new Map<string, { nome: string; quantidade: number; lancados: number }[]>();
     for (const d of linhasDestinos(ctx)) {
       if (!pedidos.has(d.eventoId)) continue;
-      const lancados = (sigilos.get(d.id)?.pessoas ?? []).length;
+      const lancados = (sigilos.get(d.id)?.pessoas ?? []).length || Number(d.nomesApagados || 0);
       porEvento.set(d.eventoId, [...(porEvento.get(d.eventoId) ?? []), { nome: d.nome, quantidade: Number(d.quantidade), lancados }]);
     }
     return [...porEvento].map(([eventoId, destinos]) => ({ eventoId, destinos }));

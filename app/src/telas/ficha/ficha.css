@@ -436,3 +436,23 @@
   font-weight: 400;
   columns: 2;
 }
+
+/* LGPD: aviso no pé das páginas públicas */
+.aviso-privacidade {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  margin: var(--esp-4) 0 0;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--cor-texto-2);
+}
+.aviso-privacidade svg {
+  flex: none;
+  margin-top: 2px;
+}
+@media print {
+  .aviso-privacidade {
+    display: none;
+  }
+}

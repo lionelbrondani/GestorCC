@@ -1,4 +1,5 @@
-import { formatarData, type CortesiasPublica, type PessoaCortesia } from '@shared';
+import { formatarData, textoPrivacidade, type CortesiasPublica, type PessoaCortesia } from '@shared';
+import { AvisoPrivacidade } from '../ficha/AvisoPrivacidade';
 import { useQueryClient } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
@@ -93,6 +94,7 @@ export function CortesiasDestino() {
       </header>
       <main className="ficha-conteudo" style={{ maxWidth: 760 }}>
         {conteudo}
+        {dados.data && <AvisoPrivacidade texto={textoPrivacidade('cortesias', dados.data.diasGuardarDados)} />}
       </main>
     </div>
   );
