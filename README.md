@@ -14,7 +14,7 @@ Sistema de gestão do Centro de Convenções da UFSM: agenda, escalas dos bolsis
 | `shared/` | Regras e tipos usados pelos dois lados (escalas, pagamentos, contratos, ficha técnica…) |
 | `docs/` | Guia de passagem, implantação versão a versão, manual de uso e especificação |
 
-Os dados nunca ficam neste repositório: ficam nas planilhas da conta Google do setor. A pasta `referencias/` (material com dados reais) e os arquivos `.env` ficam fora do git.
+Os dados nunca ficam neste repositório: ficam nas planilhas da conta Google do setor. A pasta `referencias/` (material com dados reais), os arquivos `.env` e o `.firebaserc` ficam fora do git.
 
 ## Rodar no computador
 
@@ -23,6 +23,8 @@ npm install
 npm test        # testes de shared, api e app
 npm run dev     # site no modo protótipo, com dados fictícios
 ```
+
+Para publicar, crie o `app/.env.producao` e o `.firebaserc` a partir dos arquivos `.exemplo`, como explica o guia de passagem.
 
 Sem `VITE_API_URL`, o site roda como protótipo, com dados fictícios na memória do navegador. Contas do protótipo: `gestor@ufsm.br` (senha `1000000001`) e `bolsista@acad.ufsm.br` (senha `2026000001`).
 

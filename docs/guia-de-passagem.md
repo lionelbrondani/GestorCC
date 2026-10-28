@@ -119,7 +119,8 @@ Nenhuma rotina automática manda e-mail.
    VITE_RECURSOS=pessoas,dadosPessoais,mural,formularios,configuracoes,eventos,escalas,escalasPessoais,pagamentos,almoxEstoque,almoxSaidas,infraestrutura,relatar,contratos,busca
    ```
 
-4. Entre no Firebase com a conta do site: `npm run firebase -- login`, com **gestorcc.webapp@gmail.com**.
+4. Copie o `.firebaserc.exemplo` para `.firebaserc` (também fica fora do GitHub) e troque os campos: projeto e site de produção `gestorcc-ae6f8`, site de teste `gestorcc-teste`.
+5. Entre no Firebase com a conta do site: `npm run firebase -- login`, com **gestorcc.webapp@gmail.com**.
 
 ### 6.2 Testar a mudança
 - `npm test` roda todos os testes; precisam passar.
