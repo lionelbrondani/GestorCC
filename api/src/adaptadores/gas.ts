@@ -3,7 +3,7 @@
 import { ErroApi } from '@shared';
 import { eventoSumiuNoGoogle, recursoDoEvento } from '../agenda/recursoGoogle';
 import { chamarComReserva } from '../busca/modelos';
-import type { AgendaGoogle, Arquivos, Cache, Cripto, Documentos, Email, Formulario, IA, IdentidadeGoogle, NomeTabela, Planilha, Portas, Propriedades, Relogio, Repositorio, Trava } from '../nucleo/portas';
+import type { AgendaGoogle, AntiRobo, Arquivos, Cache, Cripto, Documentos, Email, Formulario, IA, IdentidadeGoogle, NomeTabela, Planilha, Portas, Propriedades, Relogio, Repositorio, Trava } from '../nucleo/portas';
 import { ESQUEMA } from '../tabelas/esquema';
 import { criarLeitorAbas } from '../tabelas/leitorAbas';
 import { objetoParaLinha, paraCelula } from '../tabelas/serializacao';
@@ -354,6 +354,18 @@ export const identidadeGas: IdentidadeGoogle = {
   },
 };
 
+/** Cloudflare Turnstile: a Cloudflare confere o token que o navegador recebeu (chave secreta em TURNSTILE_SECRET). */
+export const antiRoboGas: AntiRobo = {
+  verificar(token, segredo) {
+    const r = UrlFetchApp.fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
+      method: 'post',
+      payload: { secret: segredo, response: token },
+      muteHttpExceptions: true,
+    });
+    return r.getResponseCode() === 200 && (JSON.parse(r.getContentText()) as { success?: boolean }).success === true;
+  },
+};
+
 export function portasGas(): Portas {
   return {
     repo: repositorioGas(relogioGas),
@@ -369,5 +381,6 @@ export function portasGas(): Portas {
     ia: iaGas,
     email: emailGas,
     identidade: identidadeGas,
+    antiRobo: antiRoboGas,
   };
 }

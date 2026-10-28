@@ -39,7 +39,9 @@ export type NomeTabela =
   | 'fichas'
   | 'fichasSigilo'
   | 'cortesiasDestinos'
-  | 'cortesiasSigilo';
+  | 'cortesiasSigilo'
+  | 'pedidos'
+  | 'pedidosSigilo';
 
 /** Linhas (a partir de 0) em negrito e com fundo de destaque numa aba de relatório. */
 export interface FormatoAba {
@@ -163,6 +165,11 @@ export interface IdentidadeGoogle {
   verificar(credencial: string): ContaGoogle | null;
 }
 
+/** Cloudflare Turnstile: confere, com a chave secreta, que quem enviou a página pública não é um robô. */
+export interface AntiRobo {
+  verificar(token: string, segredo: string): boolean;
+}
+
 export interface MensagemEmail {
   /** Todos estes endereços vão no Para do mesmo e-mail. */
   para: string[];
@@ -197,4 +204,5 @@ export interface Portas {
   ia: IA;
   email: Email;
   identidade: IdentidadeGoogle;
+  antiRobo: AntiRobo;
 }

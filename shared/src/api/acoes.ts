@@ -1,6 +1,7 @@
 import type { Consulta } from '../busca';
 import type { CortesiasPublica, DestinoCortesias, PessoaCortesia } from '../cortesias';
 import type { TipoEmail } from '../email';
+import type { PedidoDatas, PedidoDatasDados } from '../pedidoDatas';
 import type { SaudeSistema } from '../saude';
 import type { AnexoFicha, FichaPublica, FichaResumo, FichaTecnica, FichaTecnicaDados, TravaFicha } from '../fichaTecnica';
 import type { MeusGanhos } from '../pagamentos/ganhos';
@@ -186,6 +187,14 @@ export interface Acoes {
   'cortesia.salvar': A<{ token: string; pessoas: PessoaCortesia[] }, CortesiasPublica>;
   /** Backup, rotina de 5 minutos, agenda, e-mails, erros recentes e tamanho das abas (Configurações → Saúde do sistema). */
   'sistema.saude': A<null, SaudeSistema>;
+  /** Página pública do pedido de datas: o prazo da LGPD para o aviso de privacidade. */
+  'pedido.abrir': A<null, { diasGuardarDados: number }>;
+  /** Pedido da página pública; antiRobo = token do Cloudflare Turnstile; site = campo escondido (só robô preenche). */
+  'pedido.enviar': A<{ dados: PedidoDatasDados; antiRobo?: string; site?: string }, { protocolo: string }>;
+  'pedidos.listar': A<null, PedidoDatas[]>;
+  /** Cria o evento com uma sessão por dia e cadastra o contratante (se ainda não houver com o mesmo documento). */
+  'pedidos.aprovar': A<{ id: Id }, { pedido: PedidoDatas; eventoId: Id }>;
+  'pedidos.recusar': A<{ id: Id; motivo: string }, PedidoDatas>;
   /** Quantos destinatários ainda cabem hoje na cota de e-mails do Google. */
   'emails.cota': A<null, { restante: number }>;
   /**

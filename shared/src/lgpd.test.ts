@@ -9,6 +9,13 @@ describe('aviso de privacidade das páginas públicas', () => {
     );
   });
 
+  it('pedido de datas: dados do solicitante e do responsável para a análise e o contrato; recusado, apagados no prazo', () => {
+    expect(textoPrivacidade('pedido', 180)).toBe(
+      'Os dados do solicitante e do responsável (CNPJ, CPF, endereço, e-mail e telefone) servem só para analisar este pedido e, se ele for aprovado, para o contrato, e ficam com acesso restrito. ' +
+        'Se o pedido for recusado, eles são apagados 180 dias depois. Dúvidas sobre os seus dados: centrodeconvencoes@ufsm.br.',
+    );
+  });
+
   it('cortesias: nomes e matrículas só para a retirada; sem prazo, não promete apagar', () => {
     expect(textoPrivacidade('cortesias', 0)).toBe(
       'Os nomes e as matrículas servem só para a retirada das cortesias deste evento e ficam com acesso restrito. Dúvidas sobre os seus dados: centrodeconvencoes@ufsm.br.',

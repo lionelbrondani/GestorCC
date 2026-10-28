@@ -4,6 +4,7 @@ import {
   BookOpen,
   CalendarCheck,
   CalendarDays,
+  CalendarPlus,
   ClipboardCheck,
   ClipboardList,
   FileSignature,
@@ -114,6 +115,18 @@ const SECOES: Secao[] = [
     ],
     prints: [{ arquivo: 'agenda', legenda: 'Agenda', formato: 'pc' }],
     dicas: ['Na agenda, atividades de apoio aparecem em itálico, com borda tracejada.'],
+  },
+  {
+    id: 'pedidos', titulo: 'Pedidos de data', icone: CalendarPlus, publico: 'gestao',
+    serve: 'Receber os pedidos de data pela página pública (substitui o formulário do Google) e decidir cada um.',
+    passos: [
+      <><strong>Pedidos de data → Copiar link do formulário</strong> e use esse link no site, no Instagram e nas respostas.</>,
+      'Quem pede preenche o evento, os dias (montagem, ensaio, evento, desmontagem) com os horários, os espaços e os dados da empresa e do responsável. Recebe um protocolo.',
+      'Cada pedido aparece com a agenda dos dias pedidos: livre, outro evento no mesmo dia ou conflito de horário.',
+      <><strong>Aprovar e criar evento</strong>: o pedido vira evento com uma sessão por dia, e a empresa entra como contratante.</>,
+      <><strong>Recusar</strong> pede o motivo. Responda a pessoa pelo botão <strong>E-mail</strong> (você confere antes de enviar).</>,
+    ],
+    dicas: ['Pedido novo avisa no sininho e aparece em "O que precisa de você", no Início.'],
   },
   {
     id: 'fichas', titulo: 'Ficha técnica', icone: ClipboardCheck, publico: 'gestao',

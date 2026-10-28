@@ -1,0 +1,75 @@
+/* Página pública do pedido de data e tela de gestão dos pedidos */
+.pedido-pagina {
+  max-width: 820px;
+}
+.pedido-dia {
+  display: grid;
+  grid-template-columns: minmax(140px, 1.3fr) minmax(130px, 1.2fr) minmax(96px, 1fr) minmax(96px, 1fr) auto;
+  gap: var(--esp-2);
+  align-items: center;
+}
+.pedido-dia-erro {
+  grid-column: 1 / -1;
+}
+@media (max-width: 640px) {
+  .pedido-dia {
+    grid-template-columns: 1fr 1fr;
+    padding-bottom: var(--esp-2);
+    border-bottom: 1px solid var(--cor-borda);
+  }
+}
+.pedido-espacos {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+  gap: var(--esp-2);
+}
+/* armadilha para robôs: fora da tela, sem ocupar espaço */
+.pedido-armadilha {
+  position: absolute;
+  left: -10000px;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+.pedido-anti-robo {
+  min-height: 65px;
+}
+.pedido-enviado {
+  display: grid;
+  justify-items: center;
+  gap: var(--esp-2);
+  text-align: center;
+  padding: var(--esp-4) 0;
+}
+.pedido-enviado svg {
+  color: var(--cor-sucesso);
+}
+.pedido-enviado h1 {
+  margin: 0;
+}
+.pedido-enviado p {
+  margin: 0;
+}
+.pedido-dias,
+.pedido-conflitos {
+  margin: 0;
+  padding-left: 18px;
+  display: grid;
+  gap: 4px;
+}
+.pedido-dados {
+  margin: 0;
+  display: grid;
+  gap: var(--esp-2);
+}
+.pedido-dados h4 {
+  margin: 0;
+}
+.pedido-dados dt {
+  font-size: 13px;
+  color: var(--cor-texto-3);
+}
+.pedido-dados dd {
+  margin: 0;
+  white-space: pre-line;
+}

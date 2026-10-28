@@ -34,7 +34,7 @@ const ESCRITA_MAX_MS = 6 * 60_000;
 const PEDACO = 40_000;
 const MAX_PEDACOS = 25;
 /** Dados sigilosos nunca vão para o cache. */
-const SEM_CACHE = new Set<NomeTabela>(['dadosPessoais', 'contratantes', 'fichasSigilo', 'cortesiasSigilo']);
+const SEM_CACHE = new Set<NomeTabela>(['dadosPessoais', 'contratantes', 'fichasSigilo', 'cortesiasSigilo', 'pedidosSigilo']);
 /** Cresce a cada gravação e quase não é lido: só vem quando pedido. */
 const SO_QUANDO_PEDIDA = new Set<NomeTabela>(['historico']);
 

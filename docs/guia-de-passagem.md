@@ -76,6 +76,7 @@ O passo a passo de cada tela está no **Manual**, dentro do site. Em resumo:
   3. **Presença:** depois do evento, confirmar quem foi.
   4. **Apoio:** escalar os bolsistas fixos nas atividades de apoio.
 - **Pagamentos:** lote das diárias e ficha de indicação.
+- **Pedidos de data:** chegam pela página pública `/pedido-de-data`. Em **Pedidos de data**, aprove (vira evento) ou recuse.
 - **Ficha técnica e cortesias:** gerar os links no evento e mandar ao produtor e aos destinos.
 - **Relatório mensal:** panorama do setor para imprimir.
 
@@ -119,6 +120,7 @@ Nenhuma rotina automática manda e-mail.
    VITE_API_URL=<endereço /exec da API: Apps Script → Implantar → Gerenciar implantações>
    VITE_RECURSOS=pessoas,dadosPessoais,mural,formularios,configuracoes,eventos,escalas,escalasPessoais,pagamentos,almoxEstoque,almoxSaidas,infraestrutura,relatar,contratos,busca
    VITE_GOOGLE_CLIENT_ID=<ID do cliente OAuth, se o login com Google estiver ligado>
+   VITE_TURNSTILE_SITE_KEY=<chave pública do Cloudflare Turnstile, se estiver ligado>
    ```
 
 4. Copie o `.firebaserc.exemplo` para `.firebaserc` (também fica fora do GitHub) e troque os campos: projeto e site de produção `gestorcc-ae6f8`, site de teste `gestorcc-teste`.

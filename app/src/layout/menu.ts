@@ -6,6 +6,7 @@ import {
   Bell,
   BookOpen,
   CalendarCheck,
+  CalendarPlus,
   CalendarDays,
   ClipboardCheck,
   ClipboardList,
@@ -38,6 +39,7 @@ export interface ItemMenu {
 export const ITENS_GESTAO: ItemMenu[] = [
   { rota: '/agenda', rotulo: 'Agenda', icone: CalendarDays, modulo: 'eventos' },
   { rota: '/fichas', rotulo: 'Fichas técnicas', icone: ClipboardCheck, modulo: 'eventos', nivel: 'editar' },
+  { rota: '/pedidos', rotulo: 'Pedidos de data', icone: CalendarPlus, modulo: 'eventos', nivel: 'editar' },
   { rota: '/escalas', rotulo: 'Escalas', icone: ClipboardList, modulo: 'escalas' },
   { rota: '/pagamentos', rotulo: 'Pagamentos', icone: Banknote, modulo: 'pagamentos' },
   { rota: '/relatorio-mensal', rotulo: 'Relatório mensal', icone: BarChart3, modulo: 'escalas', nivel: 'editar' },

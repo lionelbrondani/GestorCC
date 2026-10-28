@@ -1,6 +1,6 @@
 // Portas em memória, usadas nos testes da API.
 import { ErroApi } from '@shared';
-import type { AgendaGoogle, Arquivos, Cache, ContaGoogle, Documentos, Email, IdentidadeGoogle, EventoAgenda, FormatoAba, Formulario, IA, MensagemEmail, NomeTabela, Planilha, Propriedades, Relogio, Repositorio, Trava } from '../nucleo/portas';
+import type { AgendaGoogle, AntiRobo, Arquivos, Cache, ContaGoogle, Documentos, Email, IdentidadeGoogle, EventoAgenda, FormatoAba, Formulario, IA, MensagemEmail, NomeTabela, Planilha, Propriedades, Relogio, Repositorio, Trava } from '../nucleo/portas';
 
 type Registro = { id: string } & Record<string, unknown>;
 
@@ -192,4 +192,9 @@ export function emailMemoria(cota = 100): Email & { enviados: MensagemEmail[] } 
 /** Google de mentira: só reconhece os comprovantes cadastrados no teste. */
 export function identidadeMemoria(contas: Record<string, ContaGoogle> = {}): IdentidadeGoogle {
   return { verificar: (credencial) => contas[credencial] ?? null };
+}
+
+/** Cloudflare de mentira: aceita (ou recusa) qualquer token. */
+export function antiRoboMemoria(aceita = true): AntiRobo {
+  return { verificar: () => aceita };
 }

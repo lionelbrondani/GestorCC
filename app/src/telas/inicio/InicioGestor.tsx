@@ -1,5 +1,6 @@
 import { diaDaSemanaCurto, ehGestor, formatarReais, pode, somarDias, valorTotalContrato } from '@shared';
 import {
+  CalendarPlus,
   ChevronRight,
   ClipboardCheck,
   ClipboardList,
@@ -40,6 +41,7 @@ const ICONE_PENDENCIA: Record<TipoPendencia, LucideIcon> = {
   estoque: Package,
   contrato: FileSignature,
   infra: TriangleAlert,
+  pedido: CalendarPlus,
 };
 
 /** Quantas pendências aparecem antes do "ver todas": o mais urgente fica à vista sem afogar a tela. */
@@ -69,6 +71,7 @@ export function InicioGestor() {
   const ocorrencias = useConsulta('infra.listar', null, { habilitada: recursoAtivo('infraestrutura') && pode(p, 'infraestrutura', 'ver') });
   const fichas = useConsulta('fichas.listar', null, { habilitada: pode(p, 'eventos', 'editar') });
   const lotes = useConsulta('lotes.listar', null, { habilitada: recursoAtivo('pagamentos') && pode(p, 'pagamentos', 'editar') });
+  const pedidos = useConsulta('pedidos.listar', null, { habilitada: pode(p, 'eventos', 'editar') });
   const [todas, setTodas] = useState(false);
 
   if (periodo.isLoading || escalas.isLoading) return <Carregando />;
@@ -81,7 +84,7 @@ export function InicioGestor() {
   const pendencias = calcularPendencias({
     sessoes: periodo.sessoes, escalas: escalas.data ?? [], eventos: periodo.eventos, rodadas: rodadas.data ?? [],
     disponibilidades: disp.data ?? [], pessoas: pessoas.lista, itens: almox.data?.itens ?? [], contratos: contratos.data?.contratos ?? [],
-    ocorrencias: ocorrencias.data ?? [], fichas: fichas.data, lotes: lotes.data?.lotes, hoje: h, permissoes: p,
+    ocorrencias: ocorrencias.data ?? [], fichas: fichas.data, pedidos: pedidos.data, lotes: lotes.data?.lotes, hoje: h, permissoes: p,
   });
   const urgentes = pendencias.filter((pd) => pd.quando && pd.quando <= h).length;
   const ano = h.slice(0, 4);

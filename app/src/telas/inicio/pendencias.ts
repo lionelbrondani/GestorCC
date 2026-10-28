@@ -20,13 +20,14 @@ import {
   type FichaResumo,
   type Lote,
   type Ocorrencia,
+  type PedidoDatas,
   type Permissoes,
   type Pessoa,
   type Rodada,
   type Sessao,
 } from '@shared';
 
-export type TipoPendencia = 'presenca' | 'rodada' | 'vagas' | 'publicar' | 'apoio' | 'ficha' | 'pagamento' | 'estoque' | 'contrato' | 'infra';
+export type TipoPendencia = 'presenca' | 'rodada' | 'vagas' | 'publicar' | 'apoio' | 'ficha' | 'pagamento' | 'estoque' | 'contrato' | 'infra' | 'pedido';
 
 /** Algo que precisa de alguém da gestão; `quando` é o prazo ou o dia do evento (vem primeiro o que vence antes). */
 export type Pendencia = { tipo: TipoPendencia; texto: string; link: string; quando?: DataISO };
@@ -53,6 +54,7 @@ export function calcularPendencias(dados: {
   contratos: Contrato[];
   ocorrencias?: Ocorrencia[];
   fichas?: FichaResumo[];
+  pedidos?: PedidoDatas[];
   /** Sem os lotes, não dá para saber o que falta pagar: a pendência de pagamento fica de fora. */
   lotes?: Lote[];
   hoje: DataISO;
@@ -104,6 +106,14 @@ export function calcularPendencias(dados: {
       const primeira = f.datas[0];
       if (f.status === 'enviada' || f.eventoCancelado || !primeira || primeira < hoje || primeira > limite) continue;
       lista.push({ tipo: 'ficha', texto: `Ficha técnica de ${f.evento} ainda não enviada pelo produtor`, link: `/agenda/${f.eventoId}`, quando: f.prazo || primeira });
+    }
+  }
+
+  if (pode(permissoes, 'eventos', 'editar')) {
+    const novos = (dados.pedidos ?? []).filter((p) => p.status === 'novo');
+    const primeira = novos.flatMap((p) => p.dias.map((d) => d.data)).sort()[0];
+    if (novos.length) {
+      lista.push({ tipo: 'pedido', texto: `${novos.length} ${novos.length === 1 ? 'pedido de data' : 'pedidos de data'} para analisar`, link: '/pedidos', ...(primeira ? { quando: primeira } : {}) });
     }
   }
 

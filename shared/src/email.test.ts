@@ -16,7 +16,7 @@ describe('e-mail', () => {
   });
 
   it('cada tipo de e-mail exige editar o módulo da tela que o monta', () => {
-    expect(MODULO_DO_EMAIL).toEqual({ ficha: 'eventos', cortesias: 'eventos', fundep: 'contratos', escala: 'escalas', rodada: 'escalas', acesso: 'pessoas' });
+    expect(MODULO_DO_EMAIL).toEqual({ ficha: 'eventos', cortesias: 'eventos', fundep: 'contratos', escala: 'escalas', rodada: 'escalas', acesso: 'pessoas', pedido: 'eventos' });
   });
 
   it('só o pedido à FUNDEP vai junto para todos; os demais, um para cada (ninguém vê os outros endereços)', () => {

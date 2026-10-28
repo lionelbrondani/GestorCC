@@ -6,7 +6,7 @@ import type { Rodada } from './tipos';
  * E-mails que o GestorCC manda, sempre quando alguém clica em "Enviar e-mail" depois de ver e poder editar
  * destinatários, assunto e texto. Nada sai sozinho.
  */
-export type TipoEmail = 'ficha' | 'cortesias' | 'fundep' | 'escala' | 'rodada' | 'acesso';
+export type TipoEmail = 'ficha' | 'cortesias' | 'fundep' | 'escala' | 'rodada' | 'acesso' | 'pedido';
 
 /** Quem pode mandar: quem edita o módulo da tela que monta o e-mail. */
 export const MODULO_DO_EMAIL: Record<TipoEmail, Modulo> = {
@@ -16,6 +16,7 @@ export const MODULO_DO_EMAIL: Record<TipoEmail, Modulo> = {
   escala: 'escalas',
   rodada: 'escalas',
   acesso: 'pessoas',
+  pedido: 'eventos',
 };
 
 /** Um e-mail só, com todos no Para (só a FUNDEP); nos demais cada pessoa recebe o seu e ninguém vê os outros endereços. */
@@ -26,6 +27,7 @@ export const EMAIL_JUNTO: Record<TipoEmail, boolean> = {
   escala: false,
   rodada: false,
   acesso: false,
+  pedido: false,
 };
 
 /** Por envio. O Google conta cada destinatário na cota do dia (cerca de 100 numa conta gratuita). */

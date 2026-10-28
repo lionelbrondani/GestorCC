@@ -70,7 +70,7 @@ describe('histórico e ping', () => {
 
   it('ping responde sem login', () => {
     const amb = ambiente();
-    expect(amb.chamar('sistema.ping', null)).toEqual({ ok: true, dados: { versao: '0.15.1' } });
+    expect(amb.chamar('sistema.ping', null)).toEqual({ ok: true, dados: { versao: '0.16.0' } });
   });
 
   it('saúde do sistema: backup, rotina, agenda, e-mails, erros e tamanho das abas, só para quem administra', () => {
@@ -80,7 +80,7 @@ describe('histórico e ping', () => {
     amb.repo.inserir('sessoes', { id: 's1', agendaPendente: true } as never);
     const r = amb.chamar('sistema.saude', null, { token: amb.token('p01') }) as Ok<SaudeSistema>;
     expect(r.dados).toMatchObject({
-      versao: '0.15.1', agora: '2026-10-24T10:00', ultimoBackup: '2026-10-24T03:00', ultimaRotina: '2026-10-24T09:55',
+      versao: '0.16.0', agora: '2026-10-24T10:00', ultimoBackup: '2026-10-24T03:00', ultimaRotina: '2026-10-24T09:55',
       agendaPendentes: 1, emailsRestantes: 100, erros: [],
     });
     expect(r.dados.tabelas).toContainEqual({ tabela: 'pessoas', linhas: 2 });

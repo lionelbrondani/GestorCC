@@ -554,3 +554,34 @@ A pessoa entra com a conta Google cujo e-mail está cadastrado em Pessoas, no ca
 1. Cole o `Code.js` novo e salve.
 2. Crie uma **Nova versão** e confira se o `/exec` mostra `"versao":"0.15.1"`. Não precisa rodar o `instalar`.
 
+## 28. Pedidos de data (versão 0.16.0)
+
+**Novidades:**
+- **Página pública `/pedido-de-data`**, sem login, com as perguntas do formulário de solicitação de datas. Ela substitui o formulário do Google.
+  - Cada dia vira uma linha com data, atividade (evento, montagem, ensaio, passagem de som, desmontagem) e horário.
+  - O CNPJ e o CEP preenchem os dados da empresa pela BrasilAPI.
+  - Quem pede recebe um protocolo (ex.: `PD-2026-0007`).
+- **Menu Pedidos de data** (quem edita eventos):
+  - os pedidos com os conflitos da agenda;
+  - **Aprovar e criar evento** cria o evento com uma sessão por dia e cadastra a empresa como contratante;
+  - **Recusar** pede o motivo, e a resposta vai pelo botão de e-mail.
+- **Avisos:** um pedido novo avisa no sininho e entra em "O que precisa de você".
+- **LGPD:** CPF, e-mail e telefone ficam na planilha Sigiloso. Os dados de pedidos recusados são apagados no prazo da ficha (180 dias depois da recusa).
+- **Proteção contra robôs:** um limite de 30 pedidos por dia e um campo-armadilha invisível. O Cloudflare Turnstile fica pronto para ligar (abaixo).
+- **Busca:** o Gemini 3.5 Flash-Lite é a reserva quando o modelo principal está sobrecarregado (seção 27).
+
+**Para publicar:**
+1. Cole o `Code.js` novo e salve (o `appsscript.json` não mudou).
+2. Rode o **`instalar`**. Ele cria as abas `pedidos` (Dados) e `pedidosSigilo` (Sigiloso).
+3. Crie uma **Nova versão** e confira se o `/exec` mostra `"versao":"0.16.0"`.
+4. Depois disso, publique o site e troque, no site do CC e no Instagram, o link do formulário do Google pelo `https://gestorcc-ae6f8.web.app/pedido-de-data`.
+
+**Para ligar o Cloudflare Turnstile (opcional):**
+1. Crie uma conta gratuita em <https://dash.cloudflare.com>, com a conta **gestorcc.webapp@gmail.com**.
+2. Em **Turnstile → Add widget**:
+   - nome **GestorCC**;
+   - domínios `gestorcc-ae6f8.web.app` e `gestorcc-ae6f8.firebaseapp.com`;
+   - modo **Managed**.
+3. A **Site Key** (pública) vai no `VITE_TURNSTILE_SITE_KEY` do `app/.env.producao`. **Publique o site antes do passo 4.**
+4. A **Secret Key** (segredo) vai nas Propriedades do script, em `TURNSTILE_SECRET`.
+5. Se fizer na ordem contrária, a API passa a exigir a verificação antes de a página mostrá-la, e nenhum pedido entra.

@@ -19,6 +19,10 @@ import {
   normalizarMatricula,
   pode,
   MODULO_DO_EMAIL,
+  errosDoPedido,
+  eventoDoPedido,
+  limparPedido,
+  type PedidoDatas,
   separarEmails,
   validarRetirada,
   validarTransicao,
@@ -244,9 +248,30 @@ const REGRAS: Record<Acao, Regra> = {
   'config.salvar': ['configuracoes', 'editar'],
   'sistema.saude': ['configuracoes', 'editar'],
   'auth.entrarGoogle': 'publica',
+  'pedido.abrir': 'publica',
+  'pedido.enviar': 'publica',
+  'pedidos.listar': ['eventos', 'editar'],
+  'pedidos.aprovar': ['eventos', 'editar'],
+  'pedidos.recusar': ['eventos', 'editar'],
   'emails.cota': 'logado',
   'emails.enviar': 'logado',
 };
+
+/** Protótipo: os pedidos de data ficam só na memória da página; um de exemplo (fictício) cai no dia do Concerto de Natal. */
+const PEDIDOS_PROTOTIPO: PedidoDatas[] = [
+  {
+    id: 'pd-exemplo', protocolo: 'PD-2026-0001', status: 'novo', recebidoEm: '2026-10-23T14:20', decididoEm: '', motivoRecusa: '', eventoId: null,
+    evento: 'Mostra de Dança Exemplo', categoria: 'Show musical', categoriaOutra: '',
+    dias: [
+      { data: '2026-12-11', atividade: 'montagem', inicio: '08:00', fim: '17:00' },
+      { data: '2026-12-12', atividade: 'evento', inicio: '19:00', fim: '21:00' },
+    ],
+    observacoesHorarios: 'Passagem de som no próprio dia, à tarde.', programacao: 'Apresentações de escolas de dança da região.', indicacao: 'Livre',
+    pessoasEnvolvidas: 60, espacos: ['Palco', 'Plateia', 'Camarins'], espacoOutro: '', publico: 900, informacoes: '',
+    solicitante: { razaoSocial: 'Produtora Exemplo Ltda', documento: '11.222.333/0001-81', endereco: 'Rua do Teste, 10 - Centro, Santa Maria/RS', cep: '97010-000', inscricaoEstadual: 'Isento', inscricaoMunicipal: '123' },
+    responsavel: { nome: 'Pessoa Exemplo', cpf: '529.982.247-25', email: 'contato@produtora.exemplo', telefone: '(55) 99999-0000' },
+  },
+];
 
 /** Protótipo: nenhum e-mail sai de verdade; só confere como a API e desconta da cota do dia. */
 const COTA_EMAILS_PROTOTIPO = 100;
@@ -266,6 +291,41 @@ const handlers: Handlers = {
     throw erro('NAO_DISPONIVEL', 'No protótipo, entre com e-mail e senha.');
   },
   'emails.cota': () => ({ restante: COTA_EMAILS_PROTOTIPO - emailsMandados }),
+  'pedido.abrir': (_d, ctx) => ({ diasGuardarDados: ctx.banco.config.diasGuardarFicha }),
+  'pedido.enviar': ({ dados, site }, ctx) => {
+    if (site) return { protocolo: 'PD-0000-0000' };
+    const d = limparPedido(dados);
+    const [falha] = errosDoPedido(d, ctx.hoje);
+    if (falha) throw erro('VALIDACAO', falha.mensagem);
+    const ano = ctx.hoje.slice(0, 4);
+    const doAno = PEDIDOS_PROTOTIPO.filter((p) => p.protocolo.startsWith(`PD-${ano}-`)).length;
+    const protocolo = `PD-${ano}-${String(doAno + 1).padStart(4, '0')}`;
+    PEDIDOS_PROTOTIPO.push({ ...d, id: novoId('pd'), protocolo, status: 'novo', recebidoEm: ctx.agora, decididoEm: '', motivoRecusa: '', eventoId: null });
+    const gestores = ctx.banco.pessoas.filter((p) => p.ativo && pode(p.permissoes, 'eventos', 'editar')).map((p) => p.id);
+    notificar(ctx, gestores, `Novo pedido de data: ${d.evento}`, '/pedidos');
+    return { protocolo };
+  },
+  'pedidos.listar': () => [...PEDIDOS_PROTOTIPO.filter((p) => p.status === 'novo'), ...PEDIDOS_PROTOTIPO.filter((p) => p.status !== 'novo')],
+  'pedidos.aprovar': ({ id }, ctx) => {
+    const p = PEDIDOS_PROTOTIPO.find((x) => x.id === id);
+    if (!p) throw erro('NAO_ENCONTRADO', 'Pedido não encontrado.');
+    if (p.status !== 'novo') throw erro('DECIDIDO', 'Este pedido já foi decidido.');
+    const c = ctx.banco.config;
+    const novo = eventoDoPedido(p, { vagasBolsistas: c.vagasBolsistasPadrao, vagasServidores: c.vagasServidoresPadrao, minimoExperientes: c.minimoExperientesPadrao });
+    const criado = handlers['eventos.salvar'](novo, ctx);
+    Object.assign(p, { status: 'aprovado', eventoId: criado.evento.id, decididoEm: ctx.agora });
+    registrar(ctx, 'pedido', id, `aprovou o pedido ${p.protocolo}`);
+    return { pedido: p, eventoId: criado.evento.id };
+  },
+  'pedidos.recusar': ({ id, motivo }, ctx) => {
+    const p = PEDIDOS_PROTOTIPO.find((x) => x.id === id);
+    if (!p) throw erro('NAO_ENCONTRADO', 'Pedido não encontrado.');
+    if (!motivo.trim()) throw erro('VALIDACAO', 'Informe o motivo da recusa.');
+    if (p.status !== 'novo') throw erro('DECIDIDO', 'Este pedido já foi decidido.');
+    Object.assign(p, { status: 'recusado', motivoRecusa: motivo.trim(), decididoEm: ctx.agora });
+    registrar(ctx, 'pedido', id, `recusou o pedido ${p.protocolo}`);
+    return p;
+  },
   'sistema.saude': (_d, ctx) => ({
     versao: 'protótipo', agora: ctx.agora, ultimoBackup: `${ctx.hoje}T03:00`, ultimaRotina: ctx.agora,
     agendaLigada: true, agendaPendentes: 0, emailsRestantes: COTA_EMAILS_PROTOTIPO - emailsMandados, erros: [],

@@ -1,4 +1,4 @@
-import { MODELOS, type Escala, type Evento, type FichaResumo, type Rodada, type Sessao } from '@shared';
+import { MODELOS, type Escala, type Evento, type FichaResumo, type PedidoDatas, type Rodada, type Sessao } from '@shared';
 import { calcularPendencias, prazoRelativo } from './pendencias';
 
 const evento: Evento = {
@@ -39,6 +39,12 @@ describe('calcularPendencias', () => {
     const p = calcularPendencias({ ...base, sessoes: [amanha, montagem, longe], escalas: [], permissoes: MODELOS.gestor });
     expect(p.filter((x) => x.tipo === 'publicar')).toEqual([{ tipo: 'publicar', texto: 'Publicar a escala: Concerto (25/10)', link: '/escalas?aba=montar&mes=2026-10', quando: '2026-10-25' }]);
     expect(p.filter((x) => x.tipo === 'apoio')).toEqual([{ tipo: 'apoio', texto: 'Escalar o apoio: Montagem · Concerto (25/10)', link: '/escalas?aba=apoio&mes=2026-10', quando: '2026-10-25' }]);
+  });
+
+  it('pedidos de data novos viram uma pendência, com a primeira data pedida', () => {
+    const pedido = { id: 'pd', status: 'novo', dias: [{ data: '2026-11-20', atividade: 'evento', inicio: '19:00', fim: '21:00' }] } as unknown as PedidoDatas;
+    const p = calcularPendencias({ ...base, pedidos: [pedido, { ...pedido, id: 'x', status: 'aprovado' }], permissoes: MODELOS.gestor });
+    expect(p).toContainEqual({ tipo: 'pedido', texto: '1 pedido de data para analisar', link: '/pedidos', quando: '2026-11-20' });
   });
 
   it('sessões realizadas fora de lote pedem um lote de pagamento', () => {

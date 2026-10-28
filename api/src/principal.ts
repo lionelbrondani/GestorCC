@@ -15,6 +15,7 @@ import { handlersEmails } from './acoes/emails';
 import { handlersFichas } from './acoes/fichas';
 import { handlersInfra, importarRespostas } from './acoes/infra';
 import { handlersPagamentos } from './acoes/pagamentos';
+import { handlersPedidos } from './acoes/pedidos';
 import { handlersRodadas } from './acoes/rodadas';
 import { handlersSistema } from './acoes/sistema';
 import { portasGas, propriedadesGas, relogioGas, travaGas } from './adaptadores/gas';
@@ -30,7 +31,7 @@ export { backupDiario } from './backup';
 export { instalar, recuperarAcessoGestor } from './instalar';
 export { VERSAO_API };
 
-const HANDLERS: Handlers = { ...handlersAuth, ...handlersPessoas, ...handlersAvisos, ...handlersSistema, ...handlersEventos, ...handlersRodadas, ...handlersEscalas, ...handlersAvaliacoes, ...handlersPagamentos, ...handlersAlmox, ...handlersInfra, ...handlersContratos, ...handlersBusca, ...handlersFichas, ...handlersCortesias, ...handlersEmails };
+const HANDLERS: Handlers = { ...handlersAuth, ...handlersPessoas, ...handlersAvisos, ...handlersSistema, ...handlersEventos, ...handlersRodadas, ...handlersEscalas, ...handlersAvaliacoes, ...handlersPagamentos, ...handlersAlmox, ...handlersInfra, ...handlersContratos, ...handlersBusca, ...handlersFichas, ...handlersCortesias, ...handlersEmails, ...handlersPedidos };
 
 function json(corpo: string): GoogleAppsScript.Content.TextOutput {
   return ContentService.createTextOutput(corpo).setMimeType(ContentService.MimeType.JSON);

@@ -12,6 +12,8 @@ import { MinhasEscalas } from './telas/pessoal/MinhasEscalas';
 
 // Telas carregadas só quando são abertas: o celular baixa menos na primeira visita.
 // Início, login e as telas do bolsista ficam no pacote principal, para abrir na hora.
+const PedidoDeData = lazy(() => import('./telas/pedido/PedidoDeData').then((m) => ({ default: m.PedidoDeData })));
+const Pedidos = lazy(() => import('./telas/pedido/Pedidos').then((m) => ({ default: m.Pedidos })));
 const Agenda = lazy(() => import('./telas/agenda/Agenda').then((m) => ({ default: m.Agenda })));
 const EventoDetalhe = lazy(() => import('./telas/agenda/EventoDetalhe').then((m) => ({ default: m.EventoDetalhe })));
 const ImprimirAgenda = lazy(() => import('./telas/agenda/ImprimirAgenda').then((m) => ({ default: m.ImprimirAgenda })));
@@ -56,6 +58,8 @@ export const ROTAS: RouteObject[] = [
   { path: '/ficha/:token', element: <Suspense fallback={<Carregando />}><FichaProdutor /></Suspense> },
   // link das cortesias: o destino lança os nomes sem login
   { path: '/cortesias/:token', element: <Suspense fallback={<Carregando />}><CortesiasDestino /></Suspense> },
+  // pedido de data: qualquer pessoa pede, sem login
+  { path: '/pedido-de-data', element: <Suspense fallback={<Carregando />}><PedidoDeData /></Suspense> },
   {
     element: <LayoutAutenticado busca={<Busca />} notificacoes={<Notificacoes />} />,
     children: [
@@ -73,6 +77,7 @@ export const ROTAS: RouteObject[] = [
       { path: '/agenda/imprimir', element: comPermissao(['eventos'], <ImprimirAgenda />) },
       { path: '/agenda/:eventoId', element: comPermissao(['eventos'], <EventoDetalhe />) },
       { path: '/fichas', element: comPermissao(['eventos'], <Fichas />, 'editar') },
+      { path: '/pedidos', element: comPermissao(['eventos'], <Pedidos />, 'editar') },
       { path: '/agenda/:eventoId/cortesias', element: comPermissao(['eventos'], <ImprimirCortesias />, 'editar') },
       { path: '/agenda/:eventoId/ficha', element: comPermissao(['eventos'], <ImprimirFicha />, 'editar') },
       { path: '/escalas', element: comPermissao(['escalas'], <Escalas />) },

@@ -92,6 +92,11 @@ export const ESQUEMA: Record<NomeTabela, { planilha: Planilha; colunas: Coluna[]
   fichasSigilo: { planilha: 'sigiloso', colunas: [t('token'), t('documento'), t('email'), t('telefone')] },
   cortesiasDestinos: { planilha: 'dados', colunas: [t('eventoId'), t('nome'), n('quantidade'), b('pedirMatricula'), t('trava'), t('atualizadoPeloDestinoEm'), t('apagadoEm'), n('nomesApagados')] },
   cortesiasSigilo: { planilha: 'sigiloso', colunas: [t('token'), j('pessoas')] },
+  pedidos: {
+    planilha: 'dados',
+    colunas: [t('protocolo'), t('status'), j('dados'), t('recebidoEm'), t('decididoEm'), t('decididoPor'), t('motivoRecusa'), t('eventoId'), t('dadosApagadosEm')],
+  },
+  pedidosSigilo: { planilha: 'sigiloso', colunas: [j('solicitante'), j('responsavel')] },
   credenciais: {
     planilha: 'sigiloso',
     colunas: [t('hash'), t('sal'), n('iteracoes'), b('senhaInicial'), n('versaoToken'), n('falhas'), t('bloqueadoAte')],

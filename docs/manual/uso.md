@@ -87,3 +87,10 @@ Manual resumido, sem dados reais. Ele serve de contexto para as perguntas sobre 
 - **O que precisa de você:** no alto do Início, para gestores. Junta as pendências com prazo (presença, escala a publicar, apoio sem equipe, ficha técnica sem resposta, lote de pagamento, contratos), da mais urgente para a menos.
 - **Saúde do sistema:** em **Configurações**. Mostra o último backup, as rotinas automáticas, a agenda Google, os e-mails do dia e os erros recentes.
 - **Dados pessoais (LGPD):** as páginas da ficha técnica e das cortesias dizem para que servem os dados. O sistema apaga sozinho, depois do evento, os nomes das cortesias (90 dias) e os dados do responsável da ficha (180 dias). Os prazos ficam em **Configurações**.
+
+## Pedidos de data
+
+- **Pedir data:** quem quer usar o Centro de Convenções preenche a página pública `/pedido-de-data` (o link fica em **Pedidos de data → Copiar link do formulário**) e recebe um protocolo.
+- **Analisar (gestores):** em **Pedidos de data**, cada pedido mostra se a agenda está livre nos dias pedidos ou se há conflito.
+- **Aprovar:** vira evento com uma sessão por dia, e a empresa entra como contratante.
+- **Recusar:** pede o motivo. A resposta à pessoa vai pelo botão **E-mail**, depois de conferir.

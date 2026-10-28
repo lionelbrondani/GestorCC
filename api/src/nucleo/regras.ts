@@ -7,6 +7,11 @@ export const ACOES_FASE: Partial<Record<Acao, { regra: Regra; escrita: boolean }
   'sistema.ping': { regra: 'publica', escrita: false },
   'sistema.saude': { regra: ['configuracoes', 'editar'], escrita: false },
   // quem pode mandar depende do tipo do e-mail (MODULO_DO_EMAIL): a ação confere
+  'pedido.abrir': { regra: 'publica', escrita: false },
+  'pedido.enviar': { regra: 'publica', escrita: true },
+  'pedidos.listar': { regra: ['eventos', 'editar'], escrita: false },
+  'pedidos.aprovar': { regra: ['eventos', 'editar'], escrita: true },
+  'pedidos.recusar': { regra: ['eventos', 'editar'], escrita: true },
   'emails.cota': { regra: 'logado', escrita: false },
   'emails.enviar': { regra: 'logado', escrita: true },
   'auth.entrar': { regra: 'publica', escrita: true },

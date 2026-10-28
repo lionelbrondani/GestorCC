@@ -28,3 +28,19 @@ export function normalizarMatricula(s: string): string | null {
   if (!/^\d{9,10}$/.test(limpo)) return null;
   return limpo;
 }
+
+/**
+ * CNPJ com os dígitos verificadores certos, inclusive o alfanumérico (Receita, a partir de 2026): os 12 primeiros
+ * caracteres podem ter letras, que valem o código do caractere menos 48 (A = 17); os 2 últimos são sempre dígitos.
+ */
+export function cnpjValido(s: string): boolean {
+  const c = s.toUpperCase().replace(/[^0-9A-Z]/g, '');
+  if (!/^[0-9A-Z]{12}\d{2}$/.test(c) || /^(.)\1{13}$/.test(c)) return false;
+  const valores = [...c].map((ch) => ch.charCodeAt(0) - 48);
+  const dv = (n: number) => {
+    const pesos = n === 12 ? [5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2] : [6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2];
+    const resto = pesos.reduce((acc, p, i) => acc + p * valores[i], 0) % 11;
+    return resto < 2 ? 0 : 11 - resto;
+  };
+  return dv(12) === valores[12] && dv(13) === valores[13];
+}
