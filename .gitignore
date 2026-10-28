@@ -10,7 +10,6 @@ dist/
 .env
 .env.*
 !.env.exemplo
-.firebaserc
 .clasprc.json
 
 # Sistema
