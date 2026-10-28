@@ -2,9 +2,14 @@ import {
   alertasContrato,
   chamadosAtrasados,
   contaNaEscala,
+  diferencaDias,
+  ehApoio,
+  elegiveisParaLote,
   estoqueCritico,
   formatarData,
   pode,
+  somarDias,
+  tituloComAtividade,
   type AlertaContrato,
   type AlmoxItem,
   type Contrato,
@@ -12,6 +17,8 @@ import {
   type Disponibilidade,
   type Escala,
   type Evento,
+  type FichaResumo,
+  type Lote,
   type Ocorrencia,
   type Permissoes,
   type Pessoa,
@@ -19,7 +26,10 @@ import {
   type Sessao,
 } from '@shared';
 
-export type Pendencia = { tipo: 'presenca' | 'rodada' | 'vagas' | 'estoque' | 'contrato' | 'infra'; texto: string; link: string };
+export type TipoPendencia = 'presenca' | 'rodada' | 'vagas' | 'publicar' | 'apoio' | 'ficha' | 'pagamento' | 'estoque' | 'contrato' | 'infra';
+
+/** Algo que precisa de alguém da gestão; `quando` é o prazo ou o dia do evento (vem primeiro o que vence antes). */
+export type Pendencia = { tipo: TipoPendencia; texto: string; link: string; quando?: DataISO };
 
 const TEXTO_ALERTA: Record<AlertaContrato, string> = {
   faturaVencendo: 'fatura vence em breve',
@@ -28,6 +38,9 @@ const TEXTO_ALERTA: Record<AlertaContrato, string> = {
   naoAssinado: 'contrato ainda não assinado',
   cortesiasPendentes: 'cortesias não recebidas',
 };
+
+/** Quantos dias à frente a escala, o apoio e a ficha técnica entram como pendência. */
+const ANTECEDENCIA = 14;
 
 export function calcularPendencias(dados: {
   sessoes: Sessao[];
@@ -39,19 +52,33 @@ export function calcularPendencias(dados: {
   itens: AlmoxItem[];
   contratos: Contrato[];
   ocorrencias?: Ocorrencia[];
+  fichas?: FichaResumo[];
+  /** Sem os lotes, não dá para saber o que falta pagar: a pendência de pagamento fica de fora. */
+  lotes?: Lote[];
   hoje: DataISO;
   permissoes: Permissoes;
 }): Pendencia[] {
   const { sessoes, escalas, eventos, hoje, permissoes } = dados;
   const evento = new Map(eventos.map((e) => [e.id, e]));
-  const titulo = (s: Sessao) => `${evento.get(s.eventoId)?.nome ?? 'Evento'}${s.rotulo ? ` – ${s.rotulo}` : ''} (${formatarData(s.data).slice(0, 5)})`;
+  const titulo = (s: Sessao) => `${tituloComAtividade(evento.get(s.eventoId)?.nome ?? 'Evento', s)} (${formatarData(s.data).slice(0, 5)})`;
+  const limite = somarDias(hoje, ANTECEDENCIA);
+  const proxima = (s: Sessao) => s.status === 'ativa' && s.data >= hoje && s.data <= limite;
+  const temEquipe = (s: Sessao) => escalas.some((e) => e.sessaoId === s.id && contaNaEscala(e));
   const lista: Pendencia[] = [];
 
   if (pode(permissoes, 'escalas', 'editar')) {
     for (const s of sessoes) {
       if (s.status !== 'ativa' || s.data >= hoje) continue;
       if (escalas.some((e) => e.sessaoId === s.id && e.status === 'publicado')) {
-        lista.push({ tipo: 'presenca', texto: `Confirmar presença: ${titulo(s)}`, link: '/escalas?aba=presenca' });
+        lista.push({ tipo: 'presenca', texto: `Confirmar presença: ${titulo(s)}`, link: '/escalas?aba=presenca', quando: s.data });
+      }
+    }
+    for (const s of sessoes.filter(proxima)) {
+      const mes = s.data.slice(0, 7);
+      if (ehApoio(s)) {
+        if (!temEquipe(s)) lista.push({ tipo: 'apoio', texto: `Escalar o apoio: ${titulo(s)}`, link: `/escalas?aba=apoio&mes=${mes}`, quando: s.data });
+      } else if (!s.publicadaEm) {
+        lista.push({ tipo: 'publicar', texto: `Publicar a escala: ${titulo(s)}`, link: `/escalas?aba=montar&mes=${mes}`, quando: s.data });
       }
     }
   }
@@ -60,16 +87,30 @@ export function calcularPendencias(dados: {
     const ativos = dados.pessoas.filter((p) => p.ativo);
     for (const r of dados.rodadas.filter((x) => x.status === 'aberta')) {
       const responderam = new Set(dados.disponibilidades.filter((d) => r.sessaoIds.includes(d.sessaoId)).map((d) => d.pessoaId));
-      const total = ativos.length;
       const qtd = ativos.filter((p) => responderam.has(p.id)).length;
-      lista.push({ tipo: 'rodada', texto: `${r.nome}: ${qtd} de ${total} responderam a disponibilidade`, link: '/escalas?aba=rodadas' });
+      lista.push({ tipo: 'rodada', texto: `${r.nome}: ${qtd} de ${ativos.length} responderam a disponibilidade`, link: '/escalas?aba=rodadas', quando: r.prazo.slice(0, 10) });
     }
     for (const s of sessoes) {
-      if (s.status !== 'ativa' || !s.publicadaEm || s.data < hoje) continue;
+      if (s.status !== 'ativa' || !s.publicadaEm || s.data < hoje || ehApoio(s)) continue;
       const bolsistas = escalas.filter((e) => e.sessaoId === s.id && e.papel === 'bolsista' && contaNaEscala(e)).length;
       if (bolsistas < s.vagasBolsistas) {
-        lista.push({ tipo: 'vagas', texto: `${titulo(s)}: ${bolsistas} de ${s.vagasBolsistas} bolsistas`, link: '/escalas?aba=publicadas' });
+        lista.push({ tipo: 'vagas', texto: `${titulo(s)}: ${bolsistas} de ${s.vagasBolsistas} bolsistas`, link: '/escalas?aba=publicadas', quando: s.data });
       }
+    }
+  }
+
+  if (pode(permissoes, 'eventos', 'editar')) {
+    for (const f of dados.fichas ?? []) {
+      const primeira = f.datas[0];
+      if (f.status === 'enviada' || f.eventoCancelado || !primeira || primeira < hoje || primeira > limite) continue;
+      lista.push({ tipo: 'ficha', texto: `Ficha técnica de ${f.evento} ainda não enviada pelo produtor`, link: `/agenda/${f.eventoId}`, quando: f.prazo || primeira });
+    }
+  }
+
+  if (dados.lotes && pode(permissoes, 'pagamentos', 'editar')) {
+    const n = elegiveisParaLote({ eventos, sessoes, escalas, lotes: dados.lotes }).length;
+    if (n > 0) {
+      lista.push({ tipo: 'pagamento', texto: `${n} ${n === 1 ? 'sessão realizada' : 'sessões realizadas'} aguardando lote de pagamento`, link: '/pagamentos/novo' });
     }
   }
 
@@ -84,10 +125,12 @@ export function calcularPendencias(dados: {
       const ev = evento.get(c.eventoId);
       const alertas = alertasContrato(c, datas[0] ?? '9999-12-31', hoje);
       if (alertas.length) {
+        const fatura = alertas.includes('faturaVencendo') || alertas.includes('faturaVencida');
         lista.push({
           tipo: 'contrato',
           texto: `Contrato ${c.numero}${ev ? ` (${ev.nome})` : ''}: ${alertas.map((a) => TEXTO_ALERTA[a]).join(', ')}`,
           link: `/contratos/${c.id}`,
+          ...(fatura && c.vencimento ? { quando: c.vencimento } : datas[0] ? { quando: datas[0] } : {}),
         });
       }
     }
@@ -102,5 +145,15 @@ export function calcularPendencias(dados: {
     }
   }
 
-  return lista;
+  // o que venceu ou vence antes vem primeiro; sem prazo, depois, na ordem em que entrou
+  return lista.map((p, i) => ({ p, i })).sort((a, b) => (a.p.quando ?? '9999').localeCompare(b.p.quando ?? '9999') || a.i - b.i).map(({ p }) => p);
+}
+
+/** "há 2 dias", "hoje", "amanhã", "em 5 dias", com o tom da etiqueta: vencido ou hoje em vermelho, até 7 dias em amarelo. */
+export function prazoRelativo(quando: DataISO, hoje: DataISO): { texto: string; tom: 'erro' | 'aviso' | undefined } {
+  const d = diferencaDias(hoje, quando);
+  if (d < 0) return { texto: `há ${-d} ${d === -1 ? 'dia' : 'dias'}`, tom: 'erro' };
+  if (d === 0) return { texto: 'hoje', tom: 'erro' };
+  if (d === 1) return { texto: 'amanhã', tom: 'aviso' };
+  return { texto: `em ${d} dias`, tom: d <= 7 ? 'aviso' : undefined };
 }

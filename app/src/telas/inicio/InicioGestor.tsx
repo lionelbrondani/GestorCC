@@ -1,19 +1,49 @@
 import { diaDaSemanaCurto, ehGestor, formatarReais, pode, somarDias, valorTotalContrato } from '@shared';
-import { AlertTriangle, ChevronRight } from 'lucide-react';
+import {
+  ChevronRight,
+  ClipboardCheck,
+  ClipboardList,
+  FileSignature,
+  FileText,
+  Package,
+  Send,
+  TriangleAlert,
+  Users,
+  Wallet,
+  Wrench,
+  type LucideIcon,
+} from 'lucide-react';
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { usePeriodo, usePessoas } from '../../api/consultas';
 import { useConsulta } from '../../api/hooks';
 import { useEu } from '../../auth/SessaoContexto';
-import { Carregando, Cartao, Etiqueta, Pagina } from '../../componentes';
+import { Botao, Carregando, Cartao, Etiqueta, Pagina } from '../../componentes';
 import { hoje, janela } from '../../util/hoje';
 import { chegadaTexto, dataLonga, tituloSessao } from '../../util/sessoes';
 import { CartaoAviso } from '../pessoal/Avisos';
 import { InicioBolsista } from './InicioBolsista';
-import { calcularPendencias } from './pendencias';
+import { calcularPendencias, prazoRelativo, type TipoPendencia } from './pendencias';
 import { InicioSimples } from './InicioSimples';
 import { recursoAtivo } from '../../recursos';
 import { itensVisiveis } from '../../layout/menu';
 import './inicio.css';
+
+const ICONE_PENDENCIA: Record<TipoPendencia, LucideIcon> = {
+  presenca: ClipboardCheck,
+  rodada: ClipboardList,
+  vagas: Users,
+  publicar: Send,
+  apoio: Wrench,
+  ficha: FileText,
+  pagamento: Wallet,
+  estoque: Package,
+  contrato: FileSignature,
+  infra: TriangleAlert,
+};
+
+/** Quantas pendências aparecem antes do "ver todas": o mais urgente fica à vista sem afogar a tela. */
+const PENDENCIAS_A_VISTA = 8;
 
 export function Inicio() {
   const eu = useEu();
@@ -37,6 +67,9 @@ export function InicioGestor() {
   const contratos = useConsulta('contratos.listar', null, { habilitada: recursoAtivo('contratos') && pode(p, 'contratos', 'ver') });
   const avisos = useConsulta('avisos.listar', null);
   const ocorrencias = useConsulta('infra.listar', null, { habilitada: recursoAtivo('infraestrutura') && pode(p, 'infraestrutura', 'ver') });
+  const fichas = useConsulta('fichas.listar', null, { habilitada: pode(p, 'eventos', 'editar') });
+  const lotes = useConsulta('lotes.listar', null, { habilitada: recursoAtivo('pagamentos') && pode(p, 'pagamentos', 'editar') });
+  const [todas, setTodas] = useState(false);
 
   if (periodo.isLoading || escalas.isLoading) return <Carregando />;
 
@@ -48,8 +81,9 @@ export function InicioGestor() {
   const pendencias = calcularPendencias({
     sessoes: periodo.sessoes, escalas: escalas.data ?? [], eventos: periodo.eventos, rodadas: rodadas.data ?? [],
     disponibilidades: disp.data ?? [], pessoas: pessoas.lista, itens: almox.data?.itens ?? [], contratos: contratos.data?.contratos ?? [],
-    ocorrencias: ocorrencias.data ?? [], hoje: h, permissoes: p,
+    ocorrencias: ocorrencias.data ?? [], fichas: fichas.data, lotes: lotes.data?.lotes, hoje: h, permissoes: p,
   });
+  const urgentes = pendencias.filter((pd) => pd.quando && pd.quando <= h).length;
   const ano = h.slice(0, 4);
   const doAno = (contratos.data?.contratos ?? []).filter((c) => c.numero.endsWith(ano) && c.statusContrato !== 'Cancelado');
   const contratado = doAno.reduce((acc, c) => acc + valorTotalContrato(c, contratos.data?.aditivos ?? []), 0);
@@ -95,6 +129,40 @@ export function InicioGestor() {
           </Link>
         ))}
       </nav>
+      <Cartao titulo={`O que precisa de você (${pendencias.length})`} destaque={urgentes > 0}>
+        {pendencias.length === 0 ? (
+          <p className="texto-3 pequeno">Tudo em dia. 🎉</p>
+        ) : (
+          <>
+            <ul className="inicio-lista inicio-pendencias">
+              {pendencias.slice(0, todas ? undefined : PENDENCIAS_A_VISTA).map((pd, i) => {
+                const Icone = ICONE_PENDENCIA[pd.tipo];
+                const prazo = pd.quando ? prazoRelativo(pd.quando, h) : null;
+                return (
+                  <li key={i}>
+                    <Link to={pd.link}>
+                      <span className="linha inicio-pendencia">
+                        <Icone size={18} aria-hidden className="inicio-icone-pendencia" />
+                        {pd.texto}
+                      </span>
+                      <span className="linha inicio-pendencia-prazo">
+                        {prazo && <Etiqueta tom={prazo.tom ?? 'neutro'}>{prazo.texto}</Etiqueta>}
+                        <ChevronRight size={16} aria-hidden />
+                      </span>
+                    </Link>
+                  </li>
+                );
+              })}
+            </ul>
+            {pendencias.length > PENDENCIAS_A_VISTA && (
+              <Botao variante="fantasma" tamanho="pequeno" onClick={() => setTodas(!todas)}>
+                {todas ? 'Mostrar só as mais urgentes' : `Ver todas as ${pendencias.length}`}
+              </Botao>
+            )}
+          </>
+        )}
+      </Cartao>
+
       <div className="grade-2">
         <Cartao titulo="Hoje" destaque={deHoje.length > 0}>
           <ListaSessoes lista={deHoje} vazio="Nenhum evento hoje." />
@@ -103,26 +171,6 @@ export function InicioGestor() {
           <ListaSessoes lista={daSemana} vazio="Nada marcado para a semana." />
         </Cartao>
       </div>
-
-      <Cartao titulo={`Pendências (${pendencias.length})`}>
-        {pendencias.length === 0 ? (
-          <p className="texto-3 pequeno">Tudo em dia. 🎉</p>
-        ) : (
-          <ul className="inicio-lista">
-            {pendencias.map((pd, i) => (
-              <li key={i}>
-                <Link to={pd.link}>
-                  <span className="linha">
-                    <AlertTriangle size={16} aria-hidden className="inicio-icone-pendencia" />
-                    {pd.texto}
-                  </span>
-                  <ChevronRight size={16} aria-hidden />
-                </Link>
-              </li>
-            ))}
-          </ul>
-        )}
-      </Cartao>
 
       {contratos.data && (
         <div className="grade-cartoes">
