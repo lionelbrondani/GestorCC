@@ -61,3 +61,14 @@ Manual resumido, sem dados reais. Ele serve de contexto para as perguntas sobre 
 - **Mandar o link:** **Copiar mensagem** gera o texto com o link do destino. O GestorCC não envia e-mails.
 - **Lançar os nomes:** o destino abre o link sem login e lança nome e matrícula de quem vai receber, até o dia anterior ao evento.
 - **Dia do evento:** **Imprimir lista** gera a lista em ordem alfabética, com a coluna para marcar a retirada.
+
+## Atividades de apoio
+
+- **Cadastrar:** montagem, passagem de som, desmontagem e ensaio são sessões do evento. No evento, escolha a **Atividade** de cada sessão, ou use **Lançar montagem e desmontagem na agenda do CC** na ficha técnica.
+- **Escalar:** em **Escalas → Apoio** ficam os bolsistas fixos (administração) e os servidores. Essas atividades não entram na rodada e não pagam diária.
+
+## Ver escala e relatório
+
+- **Ver escala:** em **Escalas → Ver escala**, a escala do mês ou de uma rodada aparece por evento ou por pessoa.
+- **Relatório mensal:** imprime os números do mês e o que cada pessoa tem direito a receber.
+- **Manual:** o **Manual** do menu explica cada parte do GestorCC e pode ser impresso ou salvo em PDF.

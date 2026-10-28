@@ -1,0 +1,210 @@
+.manual {
+  display: grid;
+  gap: var(--esp-5);
+  max-width: 980px;
+}
+.manual-capa {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--esp-4);
+  padding: var(--esp-5);
+  border-radius: var(--raio-3);
+  background: var(--cor-destaque);
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+.manual-capa img {
+  height: 64px;
+  width: auto;
+}
+.manual-capa h2 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 4px;
+  font-family: var(--fonte-titulo);
+}
+.manual-capa p {
+  margin: 0;
+}
+.manual-sumario {
+  padding: var(--esp-4);
+  border-radius: var(--raio-3);
+  background: var(--cor-superficie);
+  border: 1px solid var(--cor-borda);
+}
+.manual-sumario h3 {
+  margin: 0 0 var(--esp-2);
+}
+.manual-sumario ol {
+  margin: 0;
+  columns: 2;
+  column-gap: var(--esp-5);
+}
+.manual-sumario li {
+  padding: 2px 0;
+  break-inside: avoid;
+}
+.manual-secao {
+  display: grid;
+  gap: var(--esp-3);
+  padding: var(--esp-5);
+  border-radius: var(--raio-3);
+  background: var(--cor-superficie);
+  border: 1px solid var(--cor-borda);
+  border-left: 6px solid var(--cor-destaque);
+  scroll-margin-top: 80px;
+}
+.manual-secao[data-publico='gestao'] {
+  border-left-color: var(--cor-info);
+}
+.manual-secao h3 {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+  font-family: var(--fonte-titulo);
+  font-size: 1.25rem;
+}
+.manual-numero {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--cor-nav);
+  color: var(--cor-destaque);
+  font-size: 15px;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+.manual-serve {
+  margin: 0;
+  font-size: 1.05rem;
+  color: var(--cor-texto-2);
+}
+.manual-conteudo {
+  display: grid;
+  gap: var(--esp-4);
+  align-items: start;
+}
+@media (min-width: 820px) {
+  .manual-conteudo:has(.manual-tela) {
+    grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+  }
+}
+.manual-passos {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: passo;
+  display: grid;
+  gap: var(--esp-2);
+}
+.manual-passos li {
+  counter-increment: passo;
+  position: relative;
+  padding-left: 38px;
+  line-height: 1.5;
+}
+.manual-passos li::before {
+  content: counter(passo);
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--cor-destaque-suave);
+  border: 2px solid var(--cor-destaque-escuro);
+  font-weight: 700;
+  font-size: 13px;
+}
+.manual-tela {
+  margin: 0;
+  border-radius: var(--raio-2);
+  overflow: hidden;
+  border: 1px solid var(--cor-borda-forte);
+  box-shadow: var(--sombra-2);
+  background: var(--cor-fundo);
+}
+.manual-tela figcaption {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  background: var(--cor-nav);
+  color: var(--cor-nav-texto);
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+.manual-tela-bolinhas {
+  display: inline-flex;
+  gap: 4px;
+}
+.manual-tela-bolinhas i {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--cor-destaque);
+}
+.manual-tela-corpo {
+  padding: var(--esp-4);
+  pointer-events: none;
+}
+.manual-form {
+  display: grid;
+  gap: var(--esp-2);
+}
+.manual-form label {
+  display: grid;
+  gap: 2px;
+  font-size: 13px;
+  font-weight: 600;
+}
+.manual-form .cc-entrada {
+  font-weight: 400;
+  color: var(--cor-texto-3);
+}
+.manual-aviso {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  padding: var(--esp-3);
+  border-radius: var(--raio-2);
+  background: var(--cor-superficie);
+  border-left: 4px solid var(--cor-info);
+}
+.manual-dica {
+  margin: 0;
+  padding: var(--esp-2) var(--esp-3);
+  border-radius: var(--raio-2);
+  background: var(--cor-destaque-suave);
+  font-size: 14px;
+}
+.manual-fim {
+  text-align: center;
+  color: var(--cor-texto-3);
+  font-size: 13px;
+}
+@media print {
+  .manual {
+    gap: 12px;
+  }
+  .manual-secao {
+    break-inside: avoid;
+    padding: 12px 14px;
+  }
+  .manual-sumario {
+    break-after: page;
+  }
+  .manual-conteudo:has(.manual-tela) {
+    grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+  }
+}

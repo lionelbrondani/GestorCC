@@ -24,6 +24,7 @@ import { SolicitarFundep } from './telas/contratos/SolicitarFundep';
 import { Almox } from './telas/almox/Almox';
 import { Configuracoes } from './telas/configuracoes/Configuracoes';
 import { Formularios } from './telas/formularios/Formularios';
+import { Manual } from './telas/manual/Manual';
 import { Mural } from './telas/mural/Mural';
 import { Orcamento } from './telas/orcamento/Orcamento';
 import { RelatorioMensal } from './telas/relatorio/RelatorioMensal';
@@ -61,6 +62,7 @@ export const ROTAS: RouteObject[] = [
       { path: '/ganhos', element: <ExigeRecurso recurso="pagamentos"><MeusGanhos /></ExigeRecurso> },
       { path: '/avisos', element: <Avisos /> },
       { path: '/perfil', element: <Perfil /> },
+      { path: '/manual', element: <Manual /> },
       { path: '/relatar', element: <ExigeRecurso recurso="relatar"><Relatar /></ExigeRecurso> },
       { path: '/infra', element: comPermissao(['infraestrutura'], <Infra />) },
       { path: '/infra/:id', element: comPermissao(['infraestrutura'], <OcorrenciaDetalhe />) },

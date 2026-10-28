@@ -4,6 +4,7 @@ import {
   Banknote,
   BarChart3,
   Bell,
+  BookOpen,
   CalendarCheck,
   CalendarDays,
   ClipboardCheck,
@@ -62,6 +63,7 @@ export const ITENS_PESSOAIS: ItemMenu[] = [
   { rota: '/avisos', rotulo: 'Avisos', icone: Bell },
   { rota: '/relatar', rotulo: 'Relatar problema', icone: TriangleAlert, recurso: 'relatar' },
   { rota: '/perfil', rotulo: 'Perfil', icone: UserRound },
+  { rota: '/manual', rotulo: 'Manual', icone: BookOpen },
 ];
 
 export function itensVisiveis(p: Pessoa): { gestao: ItemMenu[]; pessoais: ItemMenu[] } {

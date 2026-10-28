@@ -468,3 +468,23 @@ Nada disso vai para a agenda Google sozinho. Para tirar tudo, rode `resetarDados
 - **No evento:** o botão **Lançar montagem e desmontagem na agenda do CC** cria os eventos "Montagem", "Passagem de som" e "Desmontagem" na agenda do setor, sem convidados.
 - **Se a ficha mudar:** use **Atualizar na agenda do CC**. O que saiu da ficha também sai da agenda.
 - **Evento cancelado:** esses itens não saem sozinhos da agenda; apague à mão.
+
+## 24. Apoio, relatório, manual e ajustes (versão 0.13.0)
+
+**Novidades:**
+- **Atividades de apoio:** montagem, passagem de som, desmontagem e ensaio passam a ser sessões do evento.
+  - Têm a escala própria dos bolsistas fixos e servidores, na aba **Apoio** em Escalas.
+  - Não entram na rodada nem pagam diária.
+  - A ficha técnica cria essas sessões quando você usa **Lançar na agenda**.
+- **Escalas → Ver escala:** a escala do mês ou da rodada, por evento ou por pessoa.
+- **Relatório mensal:** para imprimir, com o direito de cada pessoa a receber.
+- **Manual:** ilustrado, no menu, com opção de imprimir ou salvar em PDF.
+- **Sobre o GestorCC:** abre no primeiro acesso e fica no menu e no login.
+- **Disponibilidade mais rápida:** as marcações são salvas juntas.
+- **Visual:** ícone visível na aba do navegador, dias com evento em cinza na agenda legado e início com atalhos coloridos.
+- **Execução orçamentária:** a aba já existe, ainda em configuração.
+
+**Para publicar:**
+1. Cole o `Code.js` novo e salve.
+2. Rode o **`instalar`**. Ele acrescenta a coluna `atividade` na aba `sessoes`.
+3. Crie uma **Nova versão** e confira se o `/exec` mostra `"versao":"0.13.0"`.
