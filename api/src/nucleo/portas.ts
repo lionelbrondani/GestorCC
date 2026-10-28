@@ -147,6 +147,26 @@ export interface IA {
   gerar(corpo: object): unknown | null;
 }
 
+export interface MensagemEmail {
+  /** Todos estes endereços vão no Para do mesmo e-mail. */
+  para: string[];
+  assunto: string;
+  texto: string;
+  html?: string;
+  /** Ids de arquivos do Drive do sistema (ex.: contratos assinados). */
+  anexos: string[];
+}
+
+/**
+ * E-mail pela conta do setor. Só a ação emails.enviar usa, quando alguém clica em "Enviar e-mail" depois de ver
+ * o texto: nunca por gatilho nem como efeito de outra ação (o teste do build confere).
+ */
+export interface Email {
+  /** Quantos destinatários ainda cabem hoje na cota do Google. */
+  cotaRestante(): number;
+  enviar(mensagem: MensagemEmail): void;
+}
+
 export interface Portas {
   repo: Repositorio;
   cripto: Cripto;
@@ -159,4 +179,5 @@ export interface Portas {
   formulario: Formulario;
   documentos: Documentos;
   ia: IA;
+  email: Email;
 }

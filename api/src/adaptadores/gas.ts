@@ -2,7 +2,7 @@
 // Portas reais, com os serviços do Apps Script. Não é testado em Node; a lógica fica nos módulos puros.
 import { ErroApi } from '@shared';
 import { eventoSumiuNoGoogle, recursoDoEvento } from '../agenda/recursoGoogle';
-import type { AgendaGoogle, Arquivos, Cache, Cripto, Documentos, Formulario, IA, NomeTabela, Planilha, Portas, Propriedades, Relogio, Repositorio, Trava } from '../nucleo/portas';
+import type { AgendaGoogle, Arquivos, Cache, Cripto, Documentos, Email, Formulario, IA, NomeTabela, Planilha, Portas, Propriedades, Relogio, Repositorio, Trava } from '../nucleo/portas';
 import { ESQUEMA } from '../tabelas/esquema';
 import { criarLeitorAbas } from '../tabelas/leitorAbas';
 import { objetoParaLinha, paraCelula } from '../tabelas/serializacao';
@@ -322,6 +322,21 @@ export const iaGas: IA = {
   },
 };
 
+/** E-mail pela conta do setor, com o nome do Centro de Convenções como remetente. */
+export const emailGas: Email = {
+  cotaRestante: () => MailApp.getRemainingDailyQuota(),
+  enviar({ para, assunto, texto, html, anexos }) {
+    MailApp.sendEmail({
+      to: para.join(','),
+      subject: assunto,
+      body: texto,
+      name: 'Centro de Convenções UFSM',
+      ...(html ? { htmlBody: html } : {}),
+      ...(anexos.length ? { attachments: anexos.map((id) => DriveApp.getFileById(id).getBlob()) } : {}),
+    });
+  },
+};
+
 export function portasGas(): Portas {
   return {
     repo: repositorioGas(relogioGas),
@@ -335,5 +350,6 @@ export function portasGas(): Portas {
     formulario: formularioGas,
     documentos: documentosGas,
     ia: iaGas,
+    email: emailGas,
   };
 }

@@ -7,10 +7,11 @@ import {
   textoWhatsappSessao,
   type Sessao,
 } from '@shared';
-import { Copy, MessageCircle } from 'lucide-react';
+import { Copy, Mail, MessageCircle } from 'lucide-react';
 import { useState } from 'react';
 import { useMutacao } from '../../api/hooks';
 import { Alerta, Botao, Campo, Carregando, Cartao, EstadoVazio, Etiqueta, Modal } from '../../componentes';
+import { ModalEmail, type RascunhoEmail } from '../../componentes/ModalEmail';
 import { agora, hoje } from '../../util/hoje';
 import { dataLonga, horarioTexto, tituloSessao } from '../../util/sessoes';
 import { copiarTexto, INVALIDAR_ESCALAS, useDadosEscalas } from './dadosEscalas';
@@ -176,6 +177,7 @@ export function Publicadas({ mes }: { mes: string }) {
   const [troca, setTroca] = useState<Sessao | null>(null);
   const [convocacao, setConvocacao] = useState<Sessao | null>(null);
   const [individuais, setIndividuais] = useState(false);
+  const [email, setEmail] = useState<RascunhoEmail | null>(null);
 
   if (dados.carregando) return <Carregando />;
   const publicadas = dados.sessoes.filter((s) => s.publicadaEm && s.status === 'ativa');
@@ -187,6 +189,11 @@ export function Publicadas({ mes }: { mes: string }) {
       .map((e) => dados.pessoas.pessoa.get(e.pessoaId)?.nomeCurto ?? '—')
       .sort((a, b) => a.localeCompare(b, 'pt-BR'));
   const vagasDe = (s: Sessao) => nomes(s, 'bolsista').length;
+  const equipe = (s: Sessao) =>
+    dados.escalas
+      .filter((e) => e.sessaoId === s.id && contaNaEscala(e))
+      .map((e) => ({ id: e.pessoaId, nome: dados.pessoas.pessoa.get(e.pessoaId)?.nomeCurto ?? '—' }))
+      .sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'));
 
   const porPessoa = dados.ctxBase.pessoas
     .map((p) => ({
@@ -239,11 +246,28 @@ export function Publicadas({ mes }: { mes: string }) {
           >
             <details>
               <summary className="pequeno texto-2" style={{ cursor: 'pointer' }}>
-                Equipe: {[...nomes(s, 'servidor'), ...nomes(s, 'bolsista')].join(', ') || '—'} · ver mensagem do WhatsApp
+                Equipe: {[...nomes(s, 'servidor'), ...nomes(s, 'bolsista')].join(', ') || '—'} · ver mensagem (WhatsApp ou e-mail)
               </summary>
               <div className="pilha-2" style={{ marginTop: 8 }}>
                 <pre className="texto-whats">{texto}</pre>
-                <BotoesTexto texto={texto} />
+                <span className="linha">
+                  <BotoesTexto texto={texto} />
+                  <Botao
+                    tamanho="pequeno"
+                    onClick={() =>
+                      setEmail({
+                        tipo: 'escala',
+                        titulo: 'Mandar a escala por e-mail',
+                        para: [],
+                        pessoas: equipe(s),
+                        assunto: `Escala: ${tituloSessao(ev, s)} (${dataLonga(s.data)})`,
+                        mensagem: texto,
+                      })
+                    }
+                  >
+                    <Mail size={14} aria-hidden /> E-mail para a equipe
+                  </Botao>
+                </span>
               </div>
             </details>
           </Cartao>
@@ -251,6 +275,7 @@ export function Publicadas({ mes }: { mes: string }) {
       })}
       {troca && <ModalTroca sessao={troca} dados={dados} aoFechar={() => setTroca(null)} />}
       {convocacao && <ModalConvocacao sessao={convocacao} dados={dados} aoFechar={() => setConvocacao(null)} />}
+      <ModalEmail rascunho={email} aoFechar={() => setEmail(null)} />
       <Modal aberto={individuais} titulo="Mensagens individuais" aoFechar={() => setIndividuais(false)} largura="grande">
         <div className="pilha">
           {porPessoa.map(({ p, itens }) => {

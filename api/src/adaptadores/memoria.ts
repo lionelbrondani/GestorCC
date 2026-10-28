@@ -1,6 +1,6 @@
 // Portas em memória, usadas nos testes da API.
 import { ErroApi } from '@shared';
-import type { AgendaGoogle, Arquivos, Cache, Documentos, EventoAgenda, FormatoAba, Formulario, IA, NomeTabela, Planilha, Propriedades, Relogio, Repositorio, Trava } from '../nucleo/portas';
+import type { AgendaGoogle, Arquivos, Cache, Documentos, Email, EventoAgenda, FormatoAba, Formulario, IA, MensagemEmail, NomeTabela, Planilha, Propriedades, Relogio, Repositorio, Trava } from '../nucleo/portas';
 
 type Registro = { id: string } & Record<string, unknown>;
 
@@ -173,6 +173,18 @@ export function iaMemoria(resposta: unknown = null): IA & { pedidos: object[] } 
       pedidos.push(corpo);
       if (resposta instanceof Error) throw resposta;
       return resposta;
+    },
+  };
+}
+
+/** E-mail de mentira: guarda o que seria enviado; a cota do dia desconta cada destinatário. */
+export function emailMemoria(cota = 100): Email & { enviados: MensagemEmail[] } {
+  const enviados: MensagemEmail[] = [];
+  return {
+    enviados,
+    cotaRestante: () => cota - enviados.reduce((n, e) => n + e.para.length, 0),
+    enviar(mensagem) {
+      enviados.push(mensagem);
     },
   };
 }

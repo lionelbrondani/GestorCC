@@ -1,8 +1,9 @@
-import { ehApoio, formatarDataHora, linkWhatsapp, mesExtenso, textoLembreteRodada, type Rodada } from '@shared';
-import { Copy, MessageCircle } from 'lucide-react';
+import { ehApoio, formatarDataHora, linkWhatsapp, mesExtenso, textoLembreteRodada, textoLembreteRodadaEmail, type Rodada } from '@shared';
+import { Copy, Mail, MessageCircle } from 'lucide-react';
 import { useState } from 'react';
 import { useMutacao } from '../../api/hooks';
 import { Alerta, Botao, Campo, Carregando, Cartao, EstadoVazio, Etiqueta, Modal } from '../../componentes';
+import { ModalEmail, type RascunhoEmail } from '../../componentes/ModalEmail';
 import { agora } from '../../util/hoje';
 import { dataLonga, tituloSessao } from '../../util/sessoes';
 import { copiarTexto, INVALIDAR_ESCALAS, useDadosEscalas } from './dadosEscalas';
@@ -158,6 +159,7 @@ export function Rodadas({ mes }: { mes: string }) {
   const [nova, setNova] = useState(false);
   const [marcandoEm, setMarcandoEm] = useState<Rodada | null>(null);
   const [copiada, setCopiada] = useState<string | null>(null);
+  const [email, setEmail] = useState<RascunhoEmail | null>(null);
 
   if (dados.carregando) return <Carregando />;
   const doMes = dados.rodadas.filter((r) => r.sessaoIds.some((id) => dados.periodo.sessao.has(id)));
@@ -219,6 +221,21 @@ export function Rodadas({ mes }: { mes: string }) {
                       <a className="cc-botao" data-variante="secundario" data-tamanho="pequeno" href={linkWhatsapp(lembrete)} target="_blank" rel="noreferrer">
                         <MessageCircle size={14} aria-hidden /> Abrir no WhatsApp
                       </a>
+                      <Botao
+                        tamanho="pequeno"
+                        onClick={() =>
+                          setEmail({
+                            tipo: 'rodada',
+                            titulo: 'Lembrar por e-mail quem não respondeu',
+                            para: [],
+                            pessoas: faltam.map((p) => ({ id: p.id, nome: p.nomeCurto })),
+                            assunto: `Disponibilidade da rodada ${r.nome}: responda até ${formatarDataHora(r.prazo)}`,
+                            mensagem: textoLembreteRodadaEmail(r, `${window.location.origin}/disponibilidade`),
+                          })
+                        }
+                      >
+                        <Mail size={14} aria-hidden /> Lembrar por e-mail
+                      </Botao>
                     </span>
                   )}
                 </>
@@ -229,6 +246,7 @@ export function Rodadas({ mes }: { mes: string }) {
       })}
       {nova && <NovaRodada mes={mes} dados={dados} aoFechar={() => setNova(false)} />}
       {marcandoEm && <MarcarPorAlguem rodada={marcandoEm} dados={dados} aoFechar={() => setMarcandoEm(null)} />}
+      <ModalEmail rascunho={email} aoFechar={() => setEmail(null)} />
     </div>
   );
 }

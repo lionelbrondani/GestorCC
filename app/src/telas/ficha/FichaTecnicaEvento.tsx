@@ -1,10 +1,11 @@
 import { formatarData, formatarDataHora, type Evento, type FichaPublica, type FichaTecnica, type Sessao } from '@shared';
-import { CalendarPlus, Copy, Eye, Link2, Lock, LockOpen, Pencil, Printer, RefreshCw } from 'lucide-react';
+import { CalendarPlus, Copy, Eye, Link2, Lock, LockOpen, Mail, Pencil, Printer, RefreshCw } from 'lucide-react';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useApi } from '../../api/cliente';
 import { useConsulta, useMutacao } from '../../api/hooks';
 import { Alerta, Botao, Carregando, Cartao, Etiqueta, Modal } from '../../componentes';
+import { ModalEmail, type RascunhoEmail } from '../../componentes/ModalEmail';
 import { baixar } from '../../util/arquivos';
 import { FormularioFicha } from './FormularioFicha';
 import { ResumoFicha } from './ResumoFicha';
@@ -57,6 +58,7 @@ export function FichaTecnicaEvento({ evento, sessoes }: { evento: Evento; sessoe
   const salvar = useMutacao('fichas.salvar', [...INVALIDAR]);
   const [aviso, setAviso] = useState<{ tom: 'sucesso' | 'erro'; texto: string } | null>(null);
   const [modal, setModal] = useState<'ver' | 'corrigir' | 'novoLink' | null>(null);
+  const [email, setEmail] = useState<RascunhoEmail | null>(null);
   const ev = eventoDaFicha(evento, sessoes);
 
   async function executar(fn: () => Promise<unknown>, ok?: string) {
@@ -103,6 +105,20 @@ export function FichaTecnicaEvento({ evento, sessoes }: { evento: Evento; sessoe
             </Botao>
             <Botao tamanho="pequeno" onClick={() => copiar(mensagemDaFicha(evento.nome, f.token, f.prazo), 'Mensagem copiada. Cole no e-mail ou no WhatsApp do produtor.')}>
               <Copy size={16} aria-hidden /> Copiar mensagem para o produtor
+            </Botao>
+            <Botao
+              tamanho="pequeno"
+              onClick={() =>
+                setEmail({
+                  tipo: 'ficha',
+                  titulo: 'Mandar a ficha técnica por e-mail',
+                  para: f.dados.responsavel.email ? [f.dados.responsavel.email] : [],
+                  assunto: `Ficha técnica do Centro de Convenções: ${evento.nome}`,
+                  mensagem: mensagemDaFicha(evento.nome, f.token, f.prazo),
+                })
+              }
+            >
+              <Mail size={16} aria-hidden /> Enviar por e-mail
             </Botao>
             <Botao tamanho="pequeno" onClick={() => setModal('ver')}>
               <Eye size={16} aria-hidden /> Ver ficha
@@ -154,6 +170,7 @@ export function FichaTecnicaEvento({ evento, sessoes }: { evento: Evento; sessoe
         </div>
       )}
       {aviso && <Alerta tom={aviso.tom}>{aviso.texto}</Alerta>}
+      <ModalEmail rascunho={email} aoFechar={() => setEmail(null)} />
 
       {f && (
         <>

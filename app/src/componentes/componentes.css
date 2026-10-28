@@ -384,3 +384,52 @@ textarea.cc-entrada {
 .cc-barra-progresso[data-completa='true'] > span {
   background: var(--cor-sucesso);
 }
+
+/* Janela de e-mail: pessoas da equipe como etiquetas que dá para tirar e pôr de volta */
+.email-pessoas {
+  display: grid;
+  gap: 6px;
+}
+.email-rotulo {
+  font-weight: 600;
+  font-size: 14px;
+}
+.email-pessoas ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.email-pessoa {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 2px 4px 2px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--cor-destaque-escuro);
+  background: var(--cor-destaque-suave);
+  font-size: 13px;
+  font-weight: 600;
+}
+.email-pessoa[data-fora] {
+  border-style: dashed;
+  background: transparent;
+  color: var(--cor-texto-3);
+  text-decoration: line-through;
+}
+.email-pessoa button {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+.email-pessoa button:hover {
+  background: rgb(0 0 0 / 8%);
+}

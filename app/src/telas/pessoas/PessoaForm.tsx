@@ -1,10 +1,12 @@
 import { cpfValido, MODELOS, normalizarCpf, normalizarMatricula, pode, type DadosPessoais, type Pessoa } from '@shared';
+import { Mail } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { usePessoas } from '../../api/consultas';
 import { useConsulta, useMutacao } from '../../api/hooks';
 import { useEu } from '../../auth/SessaoContexto';
 import { Alerta, Botao, Campo, Carregando, Cartao, EstadoVazio, Modal, Pagina } from '../../componentes';
+import { ModalEmail, type RascunhoEmail } from '../../componentes/ModalEmail';
 import { copiarTexto } from '../escalas/dadosEscalas';
 import { PermissoesEditor } from './PermissoesEditor';
 
@@ -78,6 +80,7 @@ export function PessoaForm() {
   const [confirmarSenha, setConfirmarSenha] = useState(false);
   const [mensagemSenha, setMensagemSenha] = useState<string | null>(null);
   const [copiado, setCopiado] = useState(false);
+  const [emailSenha, setEmailSenha] = useState<RascunhoEmail | null>(null);
 
   useEffect(() => {
     if (!pessoas.isLoading && !p) setP(nova ? pessoaVazia() : pessoas.pessoa.get(id) ?? null);
@@ -209,6 +212,20 @@ export function PessoaForm() {
         rodape={
           <>
             <Botao onClick={async () => setCopiado(await copiarTexto(mensagemSenha ?? ''))}>Copiar</Botao>
+            <Botao
+              onClick={() => {
+                setEmailSenha({
+                  tipo: 'acesso',
+                  titulo: 'Mandar o aviso de senha por e-mail',
+                  para: [p.emailAcademico].filter(Boolean),
+                  assunto: 'Sua senha do GestorCC',
+                  mensagem: mensagemSenha ?? '',
+                });
+                setMensagemSenha(null);
+              }}
+            >
+              <Mail size={16} aria-hidden /> Enviar por e-mail
+            </Botao>
             <Botao variante="primario" onClick={() => setMensagemSenha(null)}>
               Fechar
             </Botao>
@@ -216,13 +233,14 @@ export function PessoaForm() {
         }
       >
         <div className="pilha">
-          <p>O sistema não envia e-mails. Mande esta mensagem para {p.nome} pelo e-mail ou WhatsApp:</p>
+          <p>Mande esta mensagem para {p.nome}: por e-mail (você confere antes de enviar) ou copie e cole no WhatsApp.</p>
           <Campo rotulo="Mensagem para enviar">
             {(id) => <textarea id={id} className="cc-entrada" rows={4} readOnly value={mensagemSenha ?? ''} />}
           </Campo>
           {copiado && <Alerta tom="info">Copiado! Agora é só colar na conversa.</Alerta>}
         </div>
       </Modal>
+      <ModalEmail rascunho={emailSenha} aoFechar={() => setEmailSenha(null)} />
     </Pagina>
   );
 }

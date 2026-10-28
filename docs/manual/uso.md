@@ -6,7 +6,7 @@ Manual resumido, sem dados reais. Ele serve de contexto para as perguntas sobre 
 
 - **Entrar:** use o e-mail cadastrado. A senha inicial é a matrícula.
 - **Trocar a senha:** em **Perfil → Trocar senha**. A nova senha precisa ter pelo menos 8 caracteres.
-- **Esqueceu a senha:** peça a um gestor. Ele abre **Pessoas e acessos**, escolhe a pessoa e usa **Redefinir senha para a matrícula**. O GestorCC não envia e-mails.
+- **Esqueceu a senha:** peça a um gestor. Ele abre **Pessoas e acessos**, escolhe a pessoa e usa **Redefinir senha para a matrícula**. O sistema mostra a mensagem pronta para copiar ou mandar por e-mail.
 
 ## Disponibilidade e escalas
 
@@ -16,9 +16,9 @@ Manual resumido, sem dados reais. Ele serve de contexto para as perguntas sobre 
 - **Convites na sua agenda Google:** ative em **Perfil → Receber minhas escalas no Google Agenda**.
 - **Convocação extra:** quando faltam bolsistas numa sessão já publicada, ela aparece de novo em **Disponibilidade** para quem ainda não está nela.
 - **Para gestores:**
-  - **Escalas → Disponibilidade:** abrir rodadas e ver quem respondeu;
+  - **Escalas → Disponibilidade:** abrir rodadas, ver quem respondeu e lembrar por e-mail quem ainda não respondeu;
   - **Escalas → Montar:** montar a escala;
-  - **Escalas → Publicadas:** publicar, fazer trocas e convocar mais pessoas;
+  - **Escalas → Publicadas:** publicar, fazer trocas, convocar mais pessoas e mandar a escala por e-mail para a equipe;
   - **Escalas → Presença:** confirmar quem compareceu.
 
 ## Agenda
@@ -45,12 +45,12 @@ Manual resumido, sem dados reais. Ele serve de contexto para as perguntas sobre 
 
 - **Onde ficam:** em **Contratos**, com contratante, valor, aditivos e situações.
 - **Documentos:** são gerados a partir dos modelos do Google Docs.
-- **FUNDEP:** o pedido é só um texto para copiar e colar no seu e-mail.
+- **FUNDEP:** o pedido vai por e-mail, com os PDFs assinados anexados, depois que o gestor confere e clica em **Enviar**. Também dá para copiar o texto.
 
 ## Ficha técnica
 
 - **Gerar o link (gestor):** abra o evento na **Agenda** e use **Ficha técnica → Gerar link da ficha técnica**.
-- **Mandar ao produtor:** use **Copiar mensagem para o produtor** e cole no e-mail ou no WhatsApp. O GestorCC não envia e-mails.
+- **Mandar ao produtor:** use **Enviar por e-mail** (o gestor confere e clica em Enviar) ou **Copiar mensagem para o produtor** e cole no WhatsApp.
 - **Preenchimento:** o produtor preenche em etapas, sem login, e marca no mapa as poltronas que quer reservar. O progresso fica salvo a cada etapa.
 - **Prazo:** dá para corrigir até 2 dias antes da primeira sessão. Depois, a ficha trava. O gestor pode destravar.
 - **Imprimir:** **Imprimir resumo** gera os dados para a equipe e o mapa das poltronas reservadas.
@@ -58,7 +58,7 @@ Manual resumido, sem dados reais. Ele serve de contexto para as perguntas sobre 
 ## Cortesias
 
 - **Criar destino (gestor):** no evento, use **Cortesias → Novo destino**, com o nome do destino (ex.: Casa do Estudante) e a quantidade.
-- **Mandar o link:** **Copiar mensagem** gera o texto com o link do destino. O GestorCC não envia e-mails.
+- **Mandar o link:** **E-mail** manda o link do destino (o gestor confere e clica em Enviar); **Copiar mensagem** gera o mesmo texto para o WhatsApp.
 - **Lançar os nomes:** o destino abre o link sem login e lança nome e matrícula de quem vai receber, até o dia anterior ao evento.
 - **Dia do evento:** **Imprimir lista** gera a lista em ordem alfabética, com a coluna para marcar a retirada.
 
@@ -72,3 +72,10 @@ Manual resumido, sem dados reais. Ele serve de contexto para as perguntas sobre 
 - **Ver escala:** em **Escalas → Ver escala**, a escala do mês ou de uma rodada aparece por evento ou por pessoa.
 - **Relatório mensal:** imprime os números do mês e o que cada pessoa tem direito a receber.
 - **Manual:** o **Manual** do menu explica cada parte do GestorCC e pode ser impresso ou salvo em PDF.
+
+## E-mails
+
+- **Nada sai sozinho:** o GestorCC só manda e-mail quando alguém clica em **Enviar**, depois de ver para quem vai, o assunto e o texto. Dá para mudar tudo antes.
+- **Onde:** ficha técnica (ao produtor), cortesias (ao destino), escala publicada (à equipe), lembrete da rodada, pedido à FUNDEP e senha redefinida.
+- **Privacidade:** cada pessoa recebe o seu e-mail e não vê os endereços dos outros. Só o pedido à FUNDEP vai junto, para todos os destinatários.
+- **Limite:** o Google deixa mandar cerca de 100 e-mails por dia. A janela de e-mail mostra quantos ainda cabem.

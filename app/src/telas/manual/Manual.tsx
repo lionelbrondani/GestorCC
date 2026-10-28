@@ -118,7 +118,7 @@ const SECOES: Secao[] = [
     serve: 'O produtor preenche horários, camarins, poltronas reservadas e coffee break por um link, sem login.',
     passos: [
       <>Abra o evento e use <strong>Ficha técnica → Gerar link da ficha técnica</strong>.</>,
-      <><strong>Copiar mensagem para o produtor</strong> e cole no e-mail ou no WhatsApp (o GestorCC não envia e-mails).</>,
+      <><strong>Enviar por e-mail</strong> (você confere o texto antes) ou <strong>Copiar mensagem para o produtor</strong> e cole no WhatsApp.</>,
       'O produtor preenche em etapas e marca as poltronas no mapa. Ele pode corrigir até 2 dias antes da primeira sessão.',
       <>Acompanhe tudo em <strong>Fichas técnicas</strong> (menu): enviadas, aguardando e com prazo na semana.</>,
       <><strong>Lançar montagem e desmontagem na agenda do CC</strong> cria as atividades de apoio do evento a partir da ficha.</>,
@@ -129,14 +129,17 @@ const SECOES: Secao[] = [
       { arquivo: 'fichas', legenda: 'Menu Fichas técnicas', formato: 'pc' },
       { arquivo: 'ficha-produtor', legenda: 'O que o produtor vê, no celular', formato: 'cel' },
     ],
-    dicas: ['Evento de um dia: a montagem e a desmontagem devem ser no mesmo dia; a ficha avisa e não deixa passar.'],
+    dicas: [
+      'Evento de um dia: a montagem e a desmontagem devem ser no mesmo dia; a ficha avisa e não deixa passar.',
+      'E-mail: o GestorCC só manda quando você clica em Enviar, depois de ver para quem vai, o assunto e o texto (dá para mudar tudo). O Google deixa mandar cerca de 100 por dia.',
+    ],
   },
   {
     id: 'cortesias', titulo: 'Cortesias', icone: Gift, publico: 'gestao',
     serve: 'Repartir as cortesias entre destinos (ex.: Casa do Estudante); cada destino lança os nomes pelo link.',
     passos: [
       <>No evento, <strong>Cortesias → Novo destino</strong>: nome do destino e quantidade.</>,
-      <><strong>Copiar mensagem</strong> e envie ao responsável do destino.</>,
+      <><strong>E-mail</strong> manda o link ao responsável do destino (você confere antes); ou <strong>Copiar mensagem</strong> para o WhatsApp.</>,
       'O destino lança nome e matrícula de quem vai receber, até o dia anterior ao evento.',
       <><strong>Imprimir lista</strong> no dia do evento: ordem alfabética, com a coluna para marcar a retirada.</>,
     ],
@@ -149,11 +152,13 @@ const SECOES: Secao[] = [
     id: 'escalas', titulo: 'Escalas: rodada, montar e publicar', icone: ClipboardList, publico: 'gestao',
     serve: 'Abrir a rodada de disponibilidade, montar a escala evento a evento e publicar.',
     passos: [
-      <><strong>Escalas → Disponibilidade → Nova rodada</strong>: escolha as sessões e o prazo. Todos recebem o aviso.</>,
+      <><strong>Escalas → Disponibilidade → Nova rodada</strong>: escolha as sessões e o prazo. Todos recebem o aviso no app.</>,
+      <>Faltando respostas? <strong>Lembrar por e-mail</strong> manda um lembrete para cada pessoa que ainda não respondeu.</>,
       <>Se alguém avisou por fora, use <strong>Marcar por alguém</strong> (Sim/Não aparecem na hora e salvam juntos).</>,
       <><strong>Montar → Evento a evento</strong>: toque no bloco da pessoa para escalar; toque na vaga para tirar.</>,
       <><strong>Escalar próximo evento</strong> salva e passa para o seguinte. No último, <strong>Revisar e publicar</strong>.</>,
       <><strong>Ver escala</strong> mostra o mês (ou a rodada) por evento ou por pessoa, sem imprimir.</>,
+      <>Em <strong>Publicadas</strong>, a mensagem de cada sessão vai pelo WhatsApp ou por <strong>E-mail para a equipe</strong>.</>,
       <>Trocas (inclusive depois do evento) em <strong>Publicadas → Trocar</strong>, com justificativa.</>,
       <><strong>Presença</strong>: depois do evento, confirme quem compareceu (isso libera o pagamento).</>,
     ],
@@ -188,7 +193,7 @@ const SECOES: Secao[] = [
     passos: [
       'Cada contrato aparece com a trilha das 6 etapas: verde concluído, azul em andamento, amarelo a fazer, laranja prazo perto, vermelho atrasado.',
       'Clique num número do resumo no topo para ver só os contratos com aquela etapa pendente.',
-      <>Documentos são gerados a partir dos modelos do Google Docs; o pedido à FUNDEP sai como texto para copiar.</>,
+      <>Documentos são gerados a partir dos modelos do Google Docs; o pedido à FUNDEP vai por e-mail, com os PDFs assinados anexados (ou como texto para copiar).</>,
     ],
     prints: [{ arquivo: 'contratos', legenda: 'Contratos, com a trilha de etapas', formato: 'pc' }],
   },

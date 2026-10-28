@@ -1,5 +1,6 @@
 import type { Consulta } from '../busca';
 import type { CortesiasPublica, DestinoCortesias, PessoaCortesia } from '../cortesias';
+import type { TipoEmail } from '../email';
 import type { AnexoFicha, FichaPublica, FichaResumo, FichaTecnica, FichaTecnicaDados, TravaFicha } from '../fichaTecnica';
 import type { MeusGanhos } from '../pagamentos/ganhos';
 import type {
@@ -68,7 +69,7 @@ export interface Acoes {
     { sessaoId: Id; itens: { pessoaId: Id; papel: 'bolsista' | 'servidor'; adicaoDireta: boolean }[] },
     Escala[]
   >;
-  /** Avisa os escalados só pelo app: o sistema não envia e-mail. */
+  /** Avisa os escalados pelo app; e-mail só se alguém mandar depois, pelo botão de e-mail. */
   'escalas.publicar': A<{ sessaoIds: Id[] }, null>;
   'escalas.trocar': A<{ sessaoId: Id; sai: Id | null; entra: Id | null; justificativa: string }, Escala[]>;
   'escalas.convocar': A<{ sessaoId: Id; vagas: number; abertaAte: string }, Sessao>;
@@ -178,6 +179,16 @@ export interface Acoes {
   'cortesias.resumo': A<{ eventoIds: Id[] }, { eventoId: Id; destinos: { nome: string; quantidade: number; lancados: number }[] }[]>;
   'cortesia.abrir': A<{ token: string }, CortesiasPublica>;
   'cortesia.salvar': A<{ token: string; pessoas: PessoaCortesia[] }, CortesiasPublica>;
+  /** Quantos destinatários ainda cabem hoje na cota de e-mails do Google. */
+  'emails.cota': A<null, { restante: number }>;
+  /**
+   * Manda na hora o e-mail que a pessoa viu e confirmou (nunca automático). Destinatários: os e-mails digitados e
+   * os das pessoas escolhidas (pessoaIds, o servidor busca o endereço). Na FUNDEP, contratoIds anexa os PDFs assinados.
+   */
+  'emails.enviar': A<
+    { tipo: TipoEmail; para: string[]; pessoaIds?: Id[]; assunto: string; mensagem: string; html?: string; contratoIds?: Id[] },
+    { enviados: number; restante: number }
+  >;
   'busca.interpretar': A<{ pergunta: string }, { consulta: Consulta | null; ajuda: string | null; motivo: 'limite' | 'indisponivel' | null }>;
 
   'avisos.listar': A<null, Aviso[]>;

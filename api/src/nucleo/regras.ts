@@ -5,6 +5,9 @@ export type Regra = 'publica' | 'logado' | [Modulo, 'ver' | 'editar'];
 /** Ações disponíveis até a fase atual e como cada uma é protegida. As demais respondem NAO_DISPONIVEL. */
 export const ACOES_FASE: Partial<Record<Acao, { regra: Regra; escrita: boolean }>> = {
   'sistema.ping': { regra: 'publica', escrita: false },
+  // quem pode mandar depende do tipo do e-mail (MODULO_DO_EMAIL): a ação confere
+  'emails.cota': { regra: 'logado', escrita: false },
+  'emails.enviar': { regra: 'logado', escrita: true },
   'auth.entrar': { regra: 'publica', escrita: true },
   'auth.trocarSenha': { regra: 'logado', escrita: true },
   'perfil.salvarAgenda': { regra: 'logado', escrita: true },

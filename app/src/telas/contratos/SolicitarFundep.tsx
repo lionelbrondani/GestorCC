@@ -1,8 +1,9 @@
 import { formatarReais, montarEmailFundep, valorTotalContrato, type Aditivo, type Contrato } from '@shared';
-import { Copy } from 'lucide-react';
+import { Copy, Mail } from 'lucide-react';
 import { useState } from 'react';
 import { useApi } from '../../api/cliente';
 import { Alerta, Botao, Carregando, Cartao, EstadoVazio, Pagina } from '../../componentes';
+import { ModalEmail, type RascunhoEmail } from '../../componentes/ModalEmail';
 import { useQueryClient } from '@tanstack/react-query';
 import { copiarTexto } from '../escalas/dadosEscalas';
 import { AVISO_VERSAO_INICIAL } from './Contratos';
@@ -18,6 +19,7 @@ export function SolicitarFundep() {
   const [marcados, setMarcados] = useState<Set<string>>(new Set());
   const [msg, setMsg] = useState<{ tom: 'sucesso' | 'erro' | 'info'; texto: string } | null>(null);
   const [enviando, setEnviando] = useState(false);
+  const [rascunho, setRascunho] = useState<RascunhoEmail | null>(null);
   if (dados.carregando || !dados.config) return <Carregando />;
 
   const assinados = dados.contratos.filter((c) => c.statusContrato === 'Assinado');
@@ -33,6 +35,15 @@ export function SolicitarFundep() {
   const email = escolhidos.length
     ? montarEmailFundep(escolhidos.map((i) => ({ contrato: i.contrato, contratante: contratante(i.contrato), aditivo: i.aditivo })), dados.config)
     : null;
+
+  // vão anexados os PDFs assinados que já estão no sistema (os aditivos não têm PDF próprio)
+  const nomeItem = (i: Item) => (i.aditivo ? `Aditivo ${i.aditivo.numero} ao ${i.contrato.numero}` : `Contrato ${i.contrato.numero}`);
+  const comPdf = escolhidos.filter((i) => !i.aditivo && i.contrato.pdfAssinado);
+  const semPdf = escolhidos.filter((i) => i.aditivo || !i.contrato.pdfAssinado);
+  const observacao = [
+    comPdf.length ? `Vão anexados os PDFs assinados: ${comPdf.map(nomeItem).join(', ')}.` : 'Nenhum PDF assinado vai anexado.',
+    semPdf.length ? `Sem PDF assinado no sistema: ${semPdf.map(nomeItem).join(', ')} (anexe no contrato, no cartão Anexos, ou mande à parte).` : '',
+  ].join(' ');
 
   async function marcarEnviado() {
     setEnviando(true);
@@ -98,11 +109,27 @@ export function SolicitarFundep() {
                   >
                     <Copy size={16} aria-hidden /> Copiar formatado
                   </Botao>
+                  <Botao
+                    onClick={() =>
+                      setRascunho({
+                        tipo: 'fundep',
+                        titulo: 'Pedir as faturas à FUNDEP por e-mail',
+                        para: email.destinatarios,
+                        assunto: email.assunto,
+                        mensagem: email.corpoTexto,
+                        html: email.corpoHtml,
+                        contratoIds: escolhidos.filter((i) => !i.aditivo).map((i) => i.contrato.id),
+                        observacao,
+                      })
+                    }
+                  >
+                    <Mail size={16} aria-hidden /> Enviar por e-mail
+                  </Botao>
                   <Botao variante="primario" carregando={enviando} onClick={marcarEnviado}>
                     Marcar como enviado
                   </Botao>
                 </div>
-                <p className="pequeno texto-3">O GestorCC não envia e-mails: cole o texto no seu e-mail e anexe os PDFs assinados (baixe-os em cada contrato, no cartão Anexos).</p>
+                <p className="pequeno texto-3">Mande por <strong>Enviar por e-mail</strong> (você confere tudo antes; os PDFs assinados que estão no sistema vão anexados) ou copie e cole no seu e-mail. Depois, use Marcar como enviado.</p>
               </div>
             ) : (
               <p className="texto-3">Selecione ao lado o que vai no e-mail.</p>
@@ -111,6 +138,7 @@ export function SolicitarFundep() {
         </div>
       )}
       {msg && <Alerta tom={msg.tom}>{msg.texto}</Alerta>}
+      <ModalEmail rascunho={rascunho} aoFechar={() => setRascunho(null)} />
     </Pagina>
   );
 }

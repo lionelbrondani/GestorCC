@@ -84,7 +84,7 @@ Antes de rodar, preencha as propriedades:
    | `MATRICULA_PRIMEIRO_GESTOR` | matrícula dessa pessoa (vira a senha inicial) |
 
 3. Abra o editor, escolha a função `instalar` na barra de cima e clique em **Executar**.
-4. O Google pede autorização na primeira vez. Aceite com a conta do setor. O GestorCC não pede permissão para enviar e-mails: nenhum e-mail sai pelo sistema.
+4. O Google pede autorização na primeira vez. Aceite com a conta do setor. Entre as permissões está **Enviar e-mail como você**: o GestorCC só manda e-mail quando alguém clica em **Enviar** (seção 25).
 5. No registro de execução aparece `GestorCC instalado na pasta "GestorCC"`, com o link da pasta.
 
 Pode rodar `instalar` de novo sem medo: ele não duplica nada que já existe.
@@ -217,7 +217,7 @@ O que foi feito no sistema depois do horário do backup se perde. Por isso, avis
 
 ## 12. Se o gestor perder o acesso
 
-Quem esquece a senha pede a um gestor. Ele abre **Pessoas e acessos**, escolhe a pessoa e usa **Redefinir senha para a matrícula**. O sistema mostra uma mensagem pronta para copiar e enviar por e-mail ou WhatsApp.
+Quem esquece a senha pede a um gestor. Ele abre **Pessoas e acessos**, escolhe a pessoa e usa **Redefinir senha para a matrícula**. O sistema mostra uma mensagem pronta para copiar (WhatsApp) ou mandar por e-mail, depois de conferir.
 
 Use o passo a passo abaixo só quando **o próprio gestor** perder o acesso e não houver outro gestor para redefinir a senha dele.
 
@@ -262,7 +262,7 @@ Para ligar:
 3. Em **Gerenciar implantações**, escolha **Nova versão** (seção 10).
 4. Publique o site com o `VITE_RECURSOS` da fase 3 (tabela da seção 7).
 
-Os avisos às pessoas (escala publicada, troca, convocação extra, cancelamento) aparecem no sininho do GestorCC. Nenhum e-mail é enviado.
+Os avisos às pessoas (escala publicada, troca, convocação extra, cancelamento) aparecem no sininho do GestorCC. Nenhum e-mail sai sozinho: em **Publicadas**, o gestor pode mandar a escala por e-mail para a equipe e, em **Disponibilidade**, lembrar por e-mail quem não respondeu.
 
 A planilha **GestorCC - Relatórios** ganha, alguns minutos depois de cada mudança, estas abas:
 
@@ -348,7 +348,7 @@ Cada documento gerado vai para **GestorCC/Documentos gerados/\<ano\>**. Para mud
 
 **PDFs anexados** (contrato assinado e fatura): ficam em **GestorCC/Contratos**, sem compartilhamento. Baixe-os pelo GestorCC.
 
-**Solicitação à FUNDEP:** o GestorCC monta o texto. Copie, cole no seu e-mail e anexe os PDFs assinados. O sistema não envia nada.
+**Solicitação à FUNDEP:** o GestorCC monta o e-mail. Use **Enviar por e-mail**: você confere, e ele vai com os PDFs assinados anexados. Ou copie o texto, cole no seu e-mail e anexe os PDFs.
 
 A planilha de Relatórios ganha a aba **CONTRATOS**, sem dados pessoais dos contratantes.
 
@@ -391,7 +391,7 @@ Para publicar:
 
 A ficha técnica sai do Google Forms e passa para o GestorCC. Na tela do evento, o cartão **Ficha técnica** tem estas ações:
 - **Gerar link:** cria o endereço único do evento. O produtor preenche sem login, no celular ou no computador, e marca as poltronas no mapa.
-- **Copiar mensagem para o produtor:** um texto pronto para colar no e-mail ou no WhatsApp. O sistema não envia nada.
+- **Copiar mensagem para o produtor** (WhatsApp) ou **Enviar por e-mail** (você confere e clica em Enviar).
 - **Ver ficha, Corrigir e Imprimir resumo:** a impressão tem uma página com os dados e outra com o mapa das poltronas reservadas.
 - **Travar e Destravar:** a ficha trava sozinha no dia seguinte ao prazo (2 dias antes da primeira sessão). Os dois botões sobrepõem o prazo.
 - **Gerar novo link:** o link antigo deixa de valer e o que já foi preenchido continua salvo.
@@ -412,7 +412,7 @@ Para publicar:
 ## 21. Distribuição de cortesias (versão 0.10.0)
 
 Na tela do evento, o cartão **Cortesias** reparte as cortesias entre destinos, por exemplo "Casa do Estudante: 30":
-- **Copiar mensagem:** cada destino recebe um link próprio e um texto pronto para mandar. O sistema não envia nada.
+- **Copiar mensagem** ou **E-mail:** cada destino recebe um link próprio e um texto pronto. O e-mail só sai quando você clica em Enviar.
 - **O que o destino faz:** abre o link sem login, vê "Você recebeu 30 cortesias para distribuir à Casa do Estudante" e lança nome e matrícula de cada pessoa, sem passar da quantidade. Dá para salvar e voltar até o dia anterior ao evento. Depois disso a lista trava, e o gestor pode destravar.
 - **Matrícula:** é pedida por padrão. Para um destino de fora da UFSM, desmarque "Pedir a matrícula".
 - **Imprimir lista:** sai uma lista única em ordem alfabética (ou separada por destino), com uma coluna para marcar quem retirou.
@@ -488,3 +488,22 @@ Nada disso vai para a agenda Google sozinho. Para tirar tudo, rode `resetarDados
 1. Cole o `Code.js` novo e salve.
 2. Rode o **`instalar`**. Ele acrescenta a coluna `atividade` na aba `sessoes`.
 3. Crie uma **Nova versão** e confira se o `/exec` mostra `"versao":"0.13.0"`.
+
+## 25. E-mail com o seu clique e manual com prints (versão 0.14.0)
+
+**Novidades:**
+- **E-mail, só com o seu clique:** o GestorCC volta a mandar e-mail, mas nunca sozinho.
+  - A janela mostra para quem vai, o assunto e o texto. Dá para mudar tudo, e nada sai antes de clicar em **Enviar**.
+  - Onde: ficha técnica (ao produtor), cortesias (ao destino), escala publicada (à equipe), rodada (lembrete a quem não respondeu), pedido à FUNDEP (com os PDFs assinados anexados) e senha redefinida (à própria pessoa).
+  - Sai pela conta do setor, com o nome "Centro de Convenções UFSM". Cada pessoa recebe o seu e-mail e não vê os endereços dos outros; só o da FUNDEP vai junto, para todos os destinatários.
+  - Uma conta gmail.com manda para cerca de 100 destinatários por dia. A janela mostra quanto ainda cabe no dia.
+  - Cada envio fica no histórico (quem mandou, o assunto e quantas pessoas), sem guardar os endereços.
+  - Nenhum gatilho manda e-mail. Um teste do código garante que só o botão **Enviar** chega ao envio.
+- **Manual com prints reais** das telas (com dados fictícios), no computador e no celular.
+
+**Para publicar:**
+1. Cole o `Code.js` novo **e o `appsscript.json` novo** (ele traz a permissão de enviar e-mail) e salve.
+2. Rode o **`instalar`** no editor. O Google pede autorização de novo: aceite com a conta do setor, inclusive **Enviar e-mail como você**. Sem essa autorização, a API não funciona.
+3. Crie uma **Nova versão** e confira se o `/exec` mostra `"versao":"0.14.0"`.
+4. Depois disso, publique o site.
+

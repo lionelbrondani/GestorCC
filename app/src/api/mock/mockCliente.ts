@@ -18,6 +18,8 @@ import {
   meusGanhos,
   normalizarMatricula,
   pode,
+  MODULO_DO_EMAIL,
+  separarEmails,
   validarRetirada,
   validarTransicao,
   ROTULO_STATUS_OCORRENCIA,
@@ -238,7 +240,13 @@ const REGRAS: Record<Acao, Regra> = {
   'historico.listar': 'logado',
   'config.obter': 'logado',
   'config.salvar': ['configuracoes', 'editar'],
+  'emails.cota': 'logado',
+  'emails.enviar': 'logado',
 };
+
+/** Protótipo: nenhum e-mail sai de verdade; só confere como a API e desconta da cota do dia. */
+const COTA_EMAILS_PROTOTIPO = 100;
+let emailsMandados = 0;
 
 type Handlers = { [A in Acao]: Handler<A> };
 
@@ -250,6 +258,17 @@ const handlers: Handlers = {
     return { token: `tok-${p.id}`, pessoa: p, senhaInicial: cred.inicial };
   },
   'sistema.ping': () => ({ versao: 'prototipo' }),
+  'emails.cota': () => ({ restante: COTA_EMAILS_PROTOTIPO - emailsMandados }),
+  'emails.enviar': ({ tipo, para, pessoaIds }, ctx) => {
+    if (!pode(ctx.eu!.permissoes, MODULO_DO_EMAIL[tipo], 'editar')) throw SEM_PERMISSAO();
+    const dasPessoas = (pessoaIds ?? []).map((id) => ctx.banco.pessoas.find((p) => p.id === id && p.ativo)?.emailAcademico ?? '');
+    const { validos, invalidos } = separarEmails([...para, ...dasPessoas].join(' '));
+    if (invalidos.length) throw erro('VALIDACAO', `E-mail inválido: ${invalidos.join(', ')}.`);
+    if (!validos.length) throw erro('VALIDACAO', 'Informe para quem vai o e-mail.');
+    emailsMandados += validos.length;
+    registrar(ctx, 'email', tipo, `mandou um e-mail para ${validos.length} pessoa(s)`);
+    return { enviados: validos.length, restante: COTA_EMAILS_PROTOTIPO - emailsMandados };
+  },
   'pessoas.importar': () => ({ importadas: 0, atualizadas: 0, problemas: [] }),
   'auth.trocarSenha': ({ atual, nova }, ctx) => {
     const cred = ctx.banco.senhas[ctx.eu!.id];

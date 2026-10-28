@@ -1,5 +1,5 @@
 import { execFileSync } from 'node:child_process';
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { fileURLToPath, URL } from 'node:url';
 import { beforeAll, describe, expect, it } from 'vitest';
 
@@ -40,9 +40,13 @@ describe('build para o Apps Script', () => {
     expect(manifesto.dependencies.enabledAdvancedServices).toContainEqual({ userSymbol: 'Sheets', serviceId: 'sheets', version: 'v4' });
   });
 
-  it('o sistema não envia e-mail: sem permissão de e-mail e sem MailApp/GmailApp no código', () => {
+  it('e-mail só pelo botão Enviar: só a permissão de enviar, MailApp só no adaptador e a porta só na ação emails.enviar', () => {
     const manifesto = JSON.parse(readFileSync(`${raiz}dist/appsscript.json`, 'utf8'));
-    expect(manifesto.oauthScopes.filter((s: string) => /mail/i.test(s))).toEqual([]);
-    expect(readFileSync(`${raiz}dist/Code.js`, 'utf8')).not.toMatch(/MailApp|GmailApp/);
+    expect(manifesto.oauthScopes.filter((s: string) => /mail/i.test(s))).toEqual(['https://www.googleapis.com/auth/script.send_mail']);
+    expect(readFileSync(`${raiz}dist/Code.js`, 'utf8')).not.toMatch(/GmailApp/);
+    const fontes = (readdirSync(`${raiz}src`, { recursive: true }) as string[]).filter((f) => f.endsWith('.ts')).map((f) => f.replace(/\\/g, '/'));
+    const usam = (re: RegExp) => fontes.filter((f) => re.test(readFileSync(`${raiz}src/${f}`, 'utf8')));
+    expect(usam(/MailApp/)).toEqual(['adaptadores/gas.ts']);
+    expect(usam(/\.email\.(enviar|cotaRestante)\(/)).toEqual(['acoes/emails.ts']);
   });
 });

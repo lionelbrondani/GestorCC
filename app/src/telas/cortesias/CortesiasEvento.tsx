@@ -1,9 +1,10 @@
 import { formatarData, formatarDataHora, type DestinoCortesias, type Evento, type PessoaCortesia, type Sessao } from '@shared';
-import { Copy, ListChecks, Pencil, Plus, Printer } from 'lucide-react';
+import { Copy, ListChecks, Mail, Pencil, Plus, Printer } from 'lucide-react';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useConsulta, useMutacao } from '../../api/hooks';
 import { Alerta, Botao, Campo, Carregando, Cartao, Etiqueta, Modal, Tabela, type ColunaTabela } from '../../componentes';
+import { ModalEmail, type RascunhoEmail } from '../../componentes/ModalEmail';
 import { errosDasLinhas, ListaPessoas, preenchidas } from './ListaPessoas';
 
 const INVALIDAR = ['cortesias.listar'] as const;
@@ -156,6 +157,7 @@ export function CortesiasEvento({ evento, sessoes }: { evento: Evento; sessoes: 
   const [editando, setEditando] = useState<DestinoCortesias | 'novo' | null>(null);
   const [lista, setLista] = useState<DestinoCortesias | null>(null);
   const [aviso, setAviso] = useState<{ tom: 'sucesso' | 'erro'; texto: string } | null>(null);
+  const [email, setEmail] = useState<RascunhoEmail | null>(null);
   const datas = sessoes.filter((s) => s.status === 'ativa').map((s) => s.data).sort();
 
   async function copiar(texto: string, ok: string) {
@@ -203,6 +205,22 @@ export function CortesiasEvento({ evento, sessoes }: { evento: Evento; sessoes: 
           <Botao tamanho="pequeno" onClick={() => copiar(mensagemDasCortesias(evento.nome, datas, d), `Mensagem para ${d.nome} copiada. Cole no e-mail ou no WhatsApp.`)}>
             <Copy size={14} aria-hidden /> Copiar mensagem
           </Botao>
+          <Botao
+            tamanho="pequeno"
+            variante="fantasma"
+            aria-label={`E-mail para ${d.nome}`}
+            onClick={() =>
+              setEmail({
+                tipo: 'cortesias',
+                titulo: 'Mandar as cortesias por e-mail',
+                para: [],
+                assunto: `Cortesias: ${evento.nome}`,
+                mensagem: mensagemDasCortesias(evento.nome, datas, d),
+              })
+            }
+          >
+            <Mail size={14} aria-hidden /> E-mail
+          </Botao>
           <Botao tamanho="pequeno" variante="fantasma" onClick={() => copiar(linkDasCortesias(d.token), 'Link copiado.')}>
             Link
           </Botao>
@@ -242,6 +260,7 @@ export function CortesiasEvento({ evento, sessoes }: { evento: Evento; sessoes: 
       {destinos.length > 0 && <Tabela colunas={colunas} linhas={destinos} chaveLinha={(d) => d.id} />}
       {editando && <ModalDestino eventoId={evento.id} destino={editando} aoFechar={() => setEditando(null)} />}
       {lista && <ModalLista destino={lista} aoFechar={() => setLista(null)} />}
+      <ModalEmail rascunho={email} aoFechar={() => setEmail(null)} />
     </Cartao>
   );
 }

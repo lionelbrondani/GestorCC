@@ -24,3 +24,4 @@ export * from './poltronas';
 export * from './fichaTecnica';
 export * from './atividades';
 export * from './cortesias';
+export * from './email';
