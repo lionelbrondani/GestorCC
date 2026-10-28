@@ -10,6 +10,7 @@ export const ACOES_FASE: Partial<Record<Acao, { regra: Regra; escrita: boolean }
   'emails.cota': { regra: 'logado', escrita: false },
   'emails.enviar': { regra: 'logado', escrita: true },
   'auth.entrar': { regra: 'publica', escrita: true },
+  'auth.entrarGoogle': { regra: 'publica', escrita: false },
   'auth.trocarSenha': { regra: 'logado', escrita: true },
   'perfil.salvarAgenda': { regra: 'logado', escrita: true },
   'pessoas.listar': { regra: 'logado', escrita: false },

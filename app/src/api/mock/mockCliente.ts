@@ -243,6 +243,7 @@ const REGRAS: Record<Acao, Regra> = {
   'config.obter': 'logado',
   'config.salvar': ['configuracoes', 'editar'],
   'sistema.saude': ['configuracoes', 'editar'],
+  'auth.entrarGoogle': 'publica',
   'emails.cota': 'logado',
   'emails.enviar': 'logado',
 };
@@ -261,6 +262,9 @@ const handlers: Handlers = {
     return { token: `tok-${p.id}`, pessoa: p, senhaInicial: cred.inicial };
   },
   'sistema.ping': () => ({ versao: 'prototipo' }),
+  'auth.entrarGoogle': () => {
+    throw erro('NAO_DISPONIVEL', 'No protótipo, entre com e-mail e senha.');
+  },
   'emails.cota': () => ({ restante: COTA_EMAILS_PROTOTIPO - emailsMandados }),
   'sistema.saude': (_d, ctx) => ({
     versao: 'protótipo', agora: ctx.agora, ultimoBackup: `${ctx.hoje}T03:00`, ultimaRotina: ctx.agora,

@@ -2,7 +2,7 @@
 // Portas reais, com os serviços do Apps Script. Não é testado em Node; a lógica fica nos módulos puros.
 import { ErroApi } from '@shared';
 import { eventoSumiuNoGoogle, recursoDoEvento } from '../agenda/recursoGoogle';
-import type { AgendaGoogle, Arquivos, Cache, Cripto, Documentos, Email, Formulario, IA, NomeTabela, Planilha, Portas, Propriedades, Relogio, Repositorio, Trava } from '../nucleo/portas';
+import type { AgendaGoogle, Arquivos, Cache, Cripto, Documentos, Email, Formulario, IA, IdentidadeGoogle, NomeTabela, Planilha, Portas, Propriedades, Relogio, Repositorio, Trava } from '../nucleo/portas';
 import { ESQUEMA } from '../tabelas/esquema';
 import { criarLeitorAbas } from '../tabelas/leitorAbas';
 import { objetoParaLinha, paraCelula } from '../tabelas/serializacao';
@@ -337,6 +337,22 @@ export const emailGas: Email = {
   },
 };
 
+/** O próprio Google confere a assinatura do comprovante (tokeninfo) e devolve os dados da conta. */
+export const identidadeGas: IdentidadeGoogle = {
+  verificar(credencial) {
+    const r = UrlFetchApp.fetch(`https://oauth2.googleapis.com/tokeninfo?id_token=${encodeURIComponent(credencial)}`, { muteHttpExceptions: true });
+    if (r.getResponseCode() !== 200) return null;
+    const t = JSON.parse(r.getContentText()) as Record<string, unknown>;
+    return {
+      email: String(t.email ?? ''),
+      emailVerificado: String(t.email_verified) === 'true',
+      audiencia: String(t.aud ?? ''),
+      emissor: String(t.iss ?? ''),
+      expiraEm: Number(t.exp ?? 0),
+    };
+  },
+};
+
 export function portasGas(): Portas {
   return {
     repo: repositorioGas(relogioGas),
@@ -351,5 +367,6 @@ export function portasGas(): Portas {
     documentos: documentosGas,
     ia: iaGas,
     email: emailGas,
+    identidade: identidadeGas,
   };
 }

@@ -4,7 +4,7 @@ Manual resumido, sem dados reais. Ele serve de contexto para as perguntas sobre 
 
 ## Entrar e senha
 
-- **Entrar:** use o e-mail cadastrado. A senha inicial é a matrícula.
+- **Entrar:** use o e-mail cadastrado. A senha inicial é a matrícula. Se aparecer o botão **Fazer login com o Google**, dá para entrar com a conta da UFSM, sem senha.
 - **Trocar a senha:** em **Perfil → Trocar senha**. A nova senha precisa ter pelo menos 8 caracteres.
 - **Esqueceu a senha:** peça a um gestor. Ele abre **Pessoas e acessos**, escolhe a pessoa e usa **Redefinir senha para a matrícula**. O sistema mostra a mensagem pronta para copiar ou mandar por e-mail.
 
@@ -46,6 +46,7 @@ Manual resumido, sem dados reais. Ele serve de contexto para as perguntas sobre 
 
 - **Onde ficam:** em **Contratos**, com contratante, valor, aditivos e situações.
 - **Documentos:** são gerados a partir dos modelos do Google Docs.
+- **Novo contratante:** ao digitar o CNPJ, o sistema preenche razão social, endereço, CEP e e-mail com os dados da Receita.
 - **FUNDEP:** o pedido vai por e-mail, com os PDFs assinados anexados, depois que o gestor confere e clica em **Enviar**. Também dá para copiar o texto.
 
 ## Ficha técnica

@@ -1,4 +1,9 @@
 import '@testing-library/jest-dom/vitest';
+import { configure } from '@testing-library/react';
+
+// As telas de gestão carregam sob demanda (React.lazy): com a suíte inteira rodando em paralelo, a primeira
+// aparição de uma tela pode passar de 1 s. Os "findBy" esperam até 3 s antes de desistir.
+configure({ asyncUtilTimeout: 3000 });
 
 // No jsdom, o AbortSignal da janela não é aceito pelo Request do Node usado pelo roteador.
 // Nos testes o cancelamento de navegação não importa, então o sinal é descartado.

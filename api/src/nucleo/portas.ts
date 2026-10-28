@@ -147,6 +147,22 @@ export interface IA {
   gerar(corpo: object): unknown | null;
 }
 
+/** Dados do comprovante ("ID token") que o botão "Fazer login com o Google" devolve, conferido pelo próprio Google. */
+export interface ContaGoogle {
+  email: string;
+  emailVerificado: boolean;
+  /** Para qual site o comprovante foi feito (o ID do cliente OAuth). */
+  audiencia: string;
+  emissor: string;
+  /** Segundos desde 1970. */
+  expiraEm: number;
+}
+
+export interface IdentidadeGoogle {
+  /** null quando o Google não reconhece o comprovante (falso, alterado ou mal formado). */
+  verificar(credencial: string): ContaGoogle | null;
+}
+
 export interface MensagemEmail {
   /** Todos estes endereços vão no Para do mesmo e-mail. */
   para: string[];
@@ -180,4 +196,5 @@ export interface Portas {
   documentos: Documentos;
   ia: IA;
   email: Email;
+  identidade: IdentidadeGoogle;
 }

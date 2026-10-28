@@ -40,6 +40,8 @@ type A<E, S> = { entrada: E; saida: S };
 export interface Acoes {
   'sistema.ping': A<null, { versao: string }>;
   'auth.entrar': A<{ email: string; senha: string }, { token: string; pessoa: Pessoa; senhaInicial: boolean }>;
+  /** Comprovante do botão "Fazer login com o Google": entra como a pessoa ativa com aquele e-mail acadêmico. */
+  'auth.entrarGoogle': A<{ credencial: string }, { token: string; pessoa: Pessoa; senhaInicial: boolean }>;
   /** Devolve um novo token: a troca invalida as sessões antigas. */
   'auth.trocarSenha': A<{ atual: string; nova: string }, { token: string }>;
   'perfil.salvarAgenda': A<{ email: string | null }, Pessoa>;

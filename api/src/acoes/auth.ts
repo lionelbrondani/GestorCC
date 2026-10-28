@@ -67,6 +67,8 @@ export function recuperarAcesso(portas: Portas, email: string, matricula: string
   return pessoa.id;
 }
 
+const EMISSORES_GOOGLE = ['accounts.google.com', 'https://accounts.google.com'];
+
 export const handlersAuth: Handlers = {
   'auth.entrar': ({ email, senha }, ctx) => {
     const { repo, relogio, cripto } = ctx.portas;
@@ -94,6 +96,23 @@ export const handlersAuth: Handlers = {
       pessoa: montarPessoa(repo, linha.id)!,
       senhaInicial: cred.senhaInicial,
     };
+  },
+
+  'auth.entrarGoogle': ({ credencial }, ctx) => {
+    const { repo, relogio, cripto, props, identidade } = ctx.portas;
+    const clienteId = props.obter('GOOGLE_CLIENT_ID');
+    if (!clienteId) throw new ErroApi('NAO_DISPONIVEL', 'O login com Google ainda não foi ligado. Entre com e-mail e senha.');
+    // o Google confere a assinatura; aqui conferimos que o comprovante é deste site, do Google, recente e de e-mail confirmado
+    const conta = typeof credencial === 'string' && credencial.length < 5000 ? identidade.verificar(credencial) : null;
+    if (!conta || conta.audiencia !== clienteId || !EMISSORES_GOOGLE.includes(conta.emissor) || !conta.emailVerificado || conta.expiraEm * 1000 < relogio.agoraMs()) {
+      throw new ErroApi('GOOGLE', 'Não foi possível confirmar a sua conta Google. Tente de novo.');
+    }
+    const alvo = conta.email.trim().toLowerCase();
+    const linha = repo.listar<{ id: string; emailAcademico: string; ativo: boolean }>('pessoas').find((p) => p.ativo && p.emailAcademico.trim().toLowerCase() === alvo);
+    const cred = linha && credencialDe(ctx.portas, linha.id);
+    if (!linha || !cred) throw new ErroApi('SEM_CADASTRO', `A conta ${alvo} não está cadastrada no GestorCC. Peça a um gestor para conferir o seu e-mail em Pessoas.`);
+    // quem entra pelo Google não precisa trocar a senha inicial agora: a senha continua só como alternativa
+    return { token: emitirToken(cripto, segredo(ctx.portas), linha.id, cred.versaoToken, relogio.agoraMs()), pessoa: montarPessoa(repo, linha.id)!, senhaInicial: false };
   },
 
   'auth.trocarSenha': (d, ctx) => {

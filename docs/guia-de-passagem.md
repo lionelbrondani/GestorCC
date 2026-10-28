@@ -60,6 +60,7 @@ As planilhas ficam na pasta **GestorCC** do Drive da conta do setor:
 **Ao assumir:**
 - No Apps Script, em **Configurações do projeto → Propriedades do script**, troque `EMAIL_PRIMEIRO_GESTOR`, `NOME_PRIMEIRO_GESTOR` e `MATRICULA_PRIMEIRO_GESTOR` para os seus dados. Elas são usadas pelo `recuperarAcessoGestor` e pelo `resetarDados`.
 - Quando eu sair, desative o meu cadastro em **Pessoas** (não precisa apagar).
+- **Login com Google:** o ID do cliente OAuth fica no Google Cloud do projeto `gestorcc-ae6f8` (conta gestorcc.webapp), na propriedade `GOOGLE_CLIENT_ID` do Apps Script e no `VITE_GOOGLE_CLIENT_ID` do site. O passo a passo está em `docs/implantacao.md`, seção 26.
 
 ---
 
@@ -117,6 +118,7 @@ Nenhuma rotina automática manda e-mail.
    ```
    VITE_API_URL=<endereço /exec da API: Apps Script → Implantar → Gerenciar implantações>
    VITE_RECURSOS=pessoas,dadosPessoais,mural,formularios,configuracoes,eventos,escalas,escalasPessoais,pagamentos,almoxEstoque,almoxSaidas,infraestrutura,relatar,contratos,busca
+   VITE_GOOGLE_CLIENT_ID=<ID do cliente OAuth, se o login com Google estiver ligado>
    ```
 
 4. Copie o `.firebaserc.exemplo` para `.firebaserc` (também fica fora do GitHub) e troque os campos: projeto e site de produção `gestorcc-ae6f8`, site de teste `gestorcc-teste`.

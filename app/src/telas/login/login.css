@@ -98,3 +98,16 @@
   color: var(--cor-nav-texto-2);
   text-align: center;
 }
+
+/* Botão oficial do Google (só aparece com VITE_GOOGLE_CLIENT_ID) */
+.login-google {
+  display: flex;
+  justify-content: center;
+  min-height: 44px;
+}
+.login-ou {
+  margin: 0;
+  text-align: center;
+  font-size: 13px;
+  color: var(--cor-texto-3);
+}

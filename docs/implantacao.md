@@ -521,10 +521,28 @@ Nada disso vai para a agenda Google sozinho. Para tirar tudo, rode `resetarDados
 - **Contratos:** o campo `{{VALOR_EXTENSO}}` dos modelos passa a ser preenchido.
 - **WhatsApp:** botão na ficha técnica e em cada destino de cortesias.
 - **Site mais leve no celular:** cada tela de gestão carrega só quando é aberta.
+- **BrasilAPI (gratuita, sem chave):**
+  - No novo contratante, o CNPJ preenche razão social, endereço, CEP e e-mail, e o sistema avisa se a empresa não está ativa na Receita. O CEP preenche o endereço.
+  - Em Configurações, os feriados nacionais do ano (ou do próximo) entram com um clique.
+- **Busca:** o modelo padrão do Gemini passa a ser o `gemini-3.8-flash`.
+- **Entrar com a conta Google da UFSM:** fica pronto, mas só aparece depois de ligado (passos abaixo). A senha continua como alternativa.
 
 **Para publicar:**
 1. Cole o `Code.js` novo e salve (o `appsscript.json` não mudou).
 2. Rode o **`instalar`**. Ele acrescenta as colunas `dadosApagadosEm` (aba `fichas`), `apagadoEm` e `nomesApagados` (aba `cortesiasDestinos`).
 3. Crie uma **Nova versão** e confira se o `/exec` mostra `"versao":"0.15.0"`.
 4. Depois disso, publique o site.
+
+**Para ligar o login com Google (uma vez, quando quiser):**
+1. Entre em <https://console.cloud.google.com> com **gestorcc.webapp@gmail.com** e escolha o projeto **gestorcc-ae6f8**.
+2. Em **Google Auth Platform** (ou "APIs e serviços → Tela de permissão OAuth"), configure:
+   - tipo **Externo**, nome **GestorCC** e um e-mail de suporte;
+   - publique o app (status **Em produção**). Ele só pede nome e e-mail, então o Google não exige verificação.
+3. Em **Clientes** (ou "Credenciais → Criar credenciais → ID do cliente OAuth"), crie um cliente do tipo **Aplicativo da Web**:
+   - em **Origens JavaScript autorizadas**, coloque `https://gestorcc-ae6f8.web.app` e `https://gestorcc-ae6f8.firebaseapp.com`;
+   - copie o **ID do cliente**, que termina em `.apps.googleusercontent.com`.
+4. No Apps Script, nas **Propriedades do script**, crie `GOOGLE_CLIENT_ID` com esse ID.
+5. No site, ponha o mesmo ID em `VITE_GOOGLE_CLIENT_ID`, no `app/.env.producao`, e publique. O ID não é segredo.
+
+A pessoa entra com a conta Google cujo e-mail está cadastrado em Pessoas, no campo "E-mail acadêmico".
 

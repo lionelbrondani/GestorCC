@@ -49,6 +49,7 @@ const SECOES: Secao[] = [
     serve: 'Acessar o GestorCC pelo celular ou pelo computador.',
     passos: [
       'Abra o endereço do GestorCC e digite o e-mail cadastrado.',
+      <>Se aparecer o botão <strong>Fazer login com o Google</strong>, entre com a sua conta da UFSM: não precisa de senha.</>,
       'Na primeira vez, a senha é a sua matrícula. O sistema pede para você criar uma senha nova.',
       <>Para trocar a senha depois: <strong>Perfil → Trocar senha</strong> (mínimo de 8 caracteres).</>,
       'Esqueceu a senha? Peça a um gestor: ele volta a senha para a sua matrícula.',
@@ -196,6 +197,7 @@ const SECOES: Secao[] = [
       'Cada contrato aparece com a trilha das 6 etapas: verde concluído, azul em andamento, amarelo a fazer, laranja prazo perto, vermelho atrasado.',
       'Clique num número do resumo no topo para ver só os contratos com aquela etapa pendente.',
       <>Documentos são gerados a partir dos modelos do Google Docs; o pedido à FUNDEP vai por e-mail, com os PDFs assinados anexados (ou como texto para copiar).</>,
+      <><strong>Novo contratante</strong>: digite o CNPJ e o sistema preenche razão social, endereço, CEP e e-mail com os dados da Receita (confira antes de salvar).</>,
     ],
     prints: [{ arquivo: 'contratos', legenda: 'Contratos, com a trilha de etapas', formato: 'pc' }],
   },
@@ -234,7 +236,7 @@ const SECOES: Secao[] = [
     passos: [
       <><strong>Pessoas → Nova pessoa</strong>: nome, e-mail, matrícula, tipo (bolsista/servidor) e vínculo (fixo/eventual).</>,
       'A senha inicial é a matrícula. Para quem esqueceu: Redefinir senha para a matrícula.',
-      <><strong>Configurações</strong>: diária padrão, vagas padrão, feriados, edital/iniciativa, FUNDEP, links (ex.: folder do CC).</>,
+      <><strong>Configurações</strong>: diária padrão, vagas padrão, feriados (com <strong>Importar feriados nacionais</strong>), edital/iniciativa, FUNDEP, links (ex.: folder do CC).</>,
       <><strong>Configurações → Saúde do sistema</strong>: último backup, rotinas automáticas, agenda Google, e-mails do dia e erros recentes.</>,
       <><strong>Configurações → Dados pessoais (LGPD)</strong>: em quantos dias depois do evento o sistema apaga os nomes das cortesias e os dados do responsável da ficha.</>,
     ],

@@ -13,6 +13,8 @@ export type SessaoInicial = SessaoUsuario & { token: string };
 interface ValorSessao {
   sessao: SessaoUsuario | null;
   entrar(email: string, senha: string): Promise<void>;
+  /** Comprovante do botão do Google; a API confere e abre a sessão da pessoa com aquele e-mail. */
+  entrarGoogle(credencial: string): Promise<void>;
   sair(): void;
   marcarSenhaTrocada(): void;
   /** Atualiza o retrato da pessoa guardado na sessão (ex.: após mudar preferências no Perfil). */
@@ -80,6 +82,15 @@ export function SessaoProvedor({
     [api, qc, trocar],
   );
 
+  const entrarGoogle = useCallback(
+    async (credencial: string) => {
+      const r = await api.chamar('auth.entrarGoogle', { credencial });
+      qc.clear();
+      trocar({ token: r.token, pessoa: r.pessoa, senhaInicial: r.senhaInicial });
+    },
+    [api, qc, trocar],
+  );
+
   const sair = useCallback(() => {
     trocar(null);
     qc.clear();
@@ -115,12 +126,13 @@ export function SessaoProvedor({
     () => ({
       sessao: atual ? { pessoa: atual.pessoa, senhaInicial: atual.senhaInicial } : null,
       entrar,
+      entrarGoogle,
       sair,
       marcarSenhaTrocada,
       atualizarPessoa,
       atualizarToken,
     }),
-    [atual, entrar, sair, marcarSenhaTrocada, atualizarPessoa, atualizarToken],
+    [atual, entrar, entrarGoogle, sair, marcarSenhaTrocada, atualizarPessoa, atualizarToken],
   );
 
   return <SessaoContexto.Provider value={valor}>{children}</SessaoContexto.Provider>;

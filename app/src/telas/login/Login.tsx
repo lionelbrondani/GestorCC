@@ -5,6 +5,7 @@ import { MODO_PROTOTIPO } from '../../ambiente';
 import { Alerta, Botao, Campo, Modal } from '../../componentes';
 import { CREDITO } from '../../layout/menu';
 import { ModalSobre } from '../../layout/Sobre';
+import { BotaoGoogle } from './BotaoGoogle';
 import './login.css';
 
 function Padrao() {
@@ -21,7 +22,7 @@ function Padrao() {
 }
 
 export function Login() {
-  const { sessao, entrar } = useSessao();
+  const { sessao, entrar, entrarGoogle } = useSessao();
   const navegar = useNavigate();
   const [params] = useSearchParams();
   const [email, setEmail] = useState('');
@@ -33,6 +34,16 @@ export function Login() {
 
   const voltar = params.get('voltar') || '/';
   if (sessao) return <Navigate to={voltar} replace />;
+
+  async function comGoogle(credencial: string) {
+    setErro(null);
+    try {
+      await entrarGoogle(credencial);
+      navegar(voltar, { replace: true });
+    } catch (err) {
+      setErro((err as Error).message);
+    }
+  }
 
   async function enviar(e: React.FormEvent) {
     e.preventDefault();
@@ -63,6 +74,8 @@ export function Login() {
             <h1>GestorCC</h1>
             <p className="texto-2">Entre com seu e-mail acadêmico.</p>
           </div>
+          <BotaoGoogle aoCredencial={comGoogle} />
+          {import.meta.env.VITE_GOOGLE_CLIENT_ID && <p className="login-ou">ou com e-mail e senha</p>}
           <Campo rotulo="E-mail acadêmico">
             {(id) => (
               <input id={id} className="cc-entrada" type="email" autoComplete="username" value={email} onChange={(e) => setEmail(e.target.value)} required />
