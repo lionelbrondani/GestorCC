@@ -1,4 +1,4 @@
-import { diaDaSemanaCurto, somarDias, type Consulta, type DataISO } from '@shared';
+import { diaDaSemanaCurto, somarDias, validarAnalise, type Consulta, type DataISO } from '@shared';
 import { semAcento } from './buscaComum';
 
 export type { Consulta };
@@ -19,11 +19,16 @@ function dataMencionada(t: string, hoje: DataISO): DataISO | null {
 }
 
 /**
- * Substitui o Gemini nesta fase: transforma a pergunta numa consulta por palavras-chave.
- * Na fase 7 o Gemini recebe só a pergunta e devolve a mesma estrutura (chamada de função).
+ * Sem o Gemini (sem chave, limite do dia ou fora do ar) e no protótipo: transforma a pergunta numa consulta por
+ * palavras-chave, a mesma estrutura que o Gemini devolve.
  */
 export function interpretarSimulado(pergunta: string, hoje: DataISO): Consulta | null {
   const t = semAcento(pergunta).replace(/[?!.]+/g, ' ').replace(/\s+/g, ' ').trim();
+
+  // as perguntas complexas mais comuns; as outras o Gemini monta
+  if (/\bquem (mais )?trabalhou\b|\bmais escalad/.test(t)) return validarAnalise({ assunto: 'escalas', agrupar: 'pessoa' });
+  if (/\bquant[ao]s? sess(oes|ao)\b|\bsessoes por mes\b/.test(t)) return validarAnalise({ assunto: 'sessoes', agrupar: 'mes' });
+  if (/\bquanto (foi )?pago\b|\btotal pago\b/.test(t)) return validarAnalise({ assunto: 'pagamentos', agrupar: /\bpor mes\b/.test(t) ? 'mes' : 'pessoa' });
 
   const saldo = t.match(/^(?:quanto|quantos|quantas|qual o saldo|saldo)\b.*?\b(?:de|do|da|dos|das)\s+(.+)$/);
   if (saldo) return { nome: 'saldoItem', termo: saldo[1].trim() };

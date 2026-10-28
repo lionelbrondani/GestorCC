@@ -309,6 +309,8 @@ export interface Config {
   destinatariosFundep: string[];
   assinaturaEmail: string;
   limitePerguntasDia: number;
+  /** Texto livre sobre o setor (capacidade, horários, contatos institucionais) que vai para o Gemini junto com a pergunta: nada pessoal. */
+  informacoesSetor: string;
   /** LGPD: dias depois do evento para apagar os nomes das cortesias e os dados do responsável da ficha (0 = nunca). */
   diasGuardarCortesias: number;
   diasGuardarFicha: number;

@@ -833,7 +833,10 @@ const handlers: Handlers = {
     return o;
   },
   'infra.foto': ({ id }, ctx) => ctx.banco.ocorrencias.find((o) => o.id === id)?.foto ?? null,
-  'busca.interpretar': ({ pergunta }, ctx) => ({ consulta: interpretarSimulado(pergunta, ctx.hoje), ajuda: null, motivo: null }),
+  'busca.interpretar': ({ pergunta }, ctx) => {
+    const consulta = interpretarSimulado(pergunta, ctx.hoje);
+    return { consulta, consultas: consulta ? [consulta] : [], ajuda: null, motivo: null };
+  },
   'cortesias.resumo': ({ eventoIds }) =>
     eventoIds
       .map((eventoId) => ({

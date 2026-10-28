@@ -139,7 +139,17 @@ export function Configuracoes() {
               )}
             </Campo>
             <Campo rotulo="Assinatura dos e-mails">{(id) => <textarea id={id} className="cc-entrada" {...t('assinaturaEmail')} />}</Campo>
-            <Campo rotulo="Limite de perguntas por pessoa/dia (busca)">{(id) => <input id={id} className="cc-entrada" type="number" {...n('limitePerguntasDia')} />}</Campo>
+          </div>
+        </Cartao>
+        <Cartao titulo="Busca inteligente">
+          <div className="pilha">
+            <Campo
+              rotulo="Informações do setor"
+              ajuda="Vão junto com as perguntas ao Gemini, para ele responder dúvidas sobre o Centro de Convenções (capacidade, endereço, horários, contatos do setor). Não escreva dados pessoais: o plano gratuito do Gemini pode usar o texto."
+            >
+              {(id) => <textarea id={id} className="cc-entrada" rows={5} maxLength={2000} {...t('informacoesSetor')} />}
+            </Campo>
+            <Campo rotulo="Limite de perguntas por pessoa/dia">{(id) => <input id={id} className="cc-entrada" type="number" {...n('limitePerguntasDia')} />}</Campo>
           </div>
         </Cartao>
         <Cartao titulo="Dados pessoais (LGPD)">

@@ -11,6 +11,7 @@ import {
   type DataISO,
 } from '@shared';
 import type { ApiCliente } from '../api/cliente';
+import { executarAnalise } from './analise';
 import { semAcento } from './buscaComum';
 import type { Consulta } from './interpretarSimulado';
 
@@ -18,6 +19,8 @@ export interface RespostaBusca {
   titulo: string;
   itens: { texto: string; detalhe?: string; link: string }[];
   vazio?: string;
+  /** Resposta das perguntas complexas: grupo e valor já formatados, e o total. */
+  tabela?: { colunas: [string, string]; linhas: [string, string][]; total: string; observacao?: string };
 }
 
 const nomeSessao = (ev: { nome: string } | undefined, rotulo?: string) => `${ev?.nome ?? 'Evento'}${rotulo ? ` – ${rotulo}` : ''}`;
@@ -153,6 +156,8 @@ export async function executarConsulta(c: Consulta, api: ApiCliente, hoje: DataI
           vazio: 'Nenhum lote em aberto.',
         };
       }
+      case 'analise':
+        return await executarAnalise(c, api, hoje);
     }
   } catch {
     return { titulo: 'Sem acesso', itens: [], vazio: 'Você não tem acesso a esta informação.' };

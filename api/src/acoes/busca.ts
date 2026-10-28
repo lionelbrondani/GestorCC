@@ -11,14 +11,15 @@ export const handlersBusca: Handlers = {
     const { cache, relogio, ia } = ctx.portas;
     const chave = `busca:${ctx.eu!.id}:${relogio.hoje()}`;
     const feitas = Number(cache.obter(chave) ?? '0');
-    if (feitas >= configAtual(ctx).limitePerguntasDia) return { consulta: null, ajuda: null, motivo: 'limite' };
+    const cfg = configAtual(ctx);
+    if (feitas >= cfg.limitePerguntasDia) return { consulta: null, consultas: [], ajuda: null, motivo: 'limite' };
     let resposta: unknown;
     try {
-      resposta = ia.gerar(montarPedido(String(pergunta ?? ''), relogio.hoje(), manual));
+      resposta = ia.gerar(montarPedido(String(pergunta ?? ''), relogio.hoje(), manual, cfg.informacoesSetor ?? ''));
     } catch {
-      return { consulta: null, ajuda: null, motivo: 'indisponivel' };
+      return { consulta: null, consultas: [], ajuda: null, motivo: 'indisponivel' };
     }
-    if (resposta === null) return { consulta: null, ajuda: null, motivo: 'indisponivel' };
+    if (resposta === null) return { consulta: null, consultas: [], ajuda: null, motivo: 'indisponivel' };
     cache.guardar(chave, String(feitas + 1), UM_DIA_S);
     return { ...lerResposta(resposta), motivo: null };
   },

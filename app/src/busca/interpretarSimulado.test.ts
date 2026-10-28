@@ -21,6 +21,11 @@ describe('interpretarSimulado', () => {
     expect(interpretarSimulado('quais vazamentos estão abertos?', '2026-10-24')).toEqual({ nome: 'ocorrenciasAbertas', termo: 'vazamento' });
     expect(interpretarSimulado('tem chamado de infraestrutura atrasado?', '2026-10-24')).toEqual({ nome: 'ocorrenciasAbertas', termo: '' });
   });
+  it('perguntas complexas simples viram análise', () => {
+    expect(interpretarSimulado('quem mais trabalhou?', '2026-10-24')).toMatchObject({ nome: 'analise', assunto: 'escalas', agrupar: 'pessoa' });
+    expect(interpretarSimulado('quantas sessões tivemos por mês?', '2026-10-24')).toMatchObject({ nome: 'analise', assunto: 'sessoes', agrupar: 'mes' });
+    expect(interpretarSimulado('quanto foi pago para cada bolsista?', '2026-10-24')).toMatchObject({ nome: 'analise', assunto: 'pagamentos', agrupar: 'pessoa', medida: 'valor' });
+  });
   it('sem interpretação', () => {
     expect(interpretarSimulado('bom dia', '2026-10-24')).toBeNull();
   });

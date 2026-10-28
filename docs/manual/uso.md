@@ -88,6 +88,14 @@ Manual resumido, sem dados reais. Ele serve de contexto para as perguntas sobre 
 - **Saúde do sistema:** em **Configurações**. Mostra o último backup, as rotinas automáticas, a agenda Google, os e-mails do dia e os erros recentes.
 - **Dados pessoais (LGPD):** as páginas da ficha técnica e das cortesias dizem para que servem os dados. O sistema apaga sozinho, depois do evento, os nomes das cortesias (90 dias) e os dados do responsável da ficha (180 dias). Os prazos ficam em **Configurações**.
 
+## Busca
+
+- **Buscar:** digite parte do nome de um evento, pessoa, item ou contrato na barra do alto.
+- **Perguntar:** escreva a pergunta e aperte Enter. Exemplos: "quem está escalado sábado?", "quem mais trabalhou em outubro?", "quanto foi pago por mês este ano?", "quantos pedidos de data chegaram por categoria?".
+- **Perguntas com contas** (quantos, quanto, quem mais) viram uma tabela com o total. Uma pergunta pode ter até 3 partes.
+- **Privacidade:** antes de a pergunta ir ao Gemini, os nomes das pessoas viram códigos. Nenhum dado das planilhas vai junto: as contas são feitas no GestorCC, com as permissões de quem perguntou.
+- **Informações do setor:** em **Configurações → Busca inteligente**, a gestão escreve o que a busca pode responder sobre o Centro de Convenções (capacidade, endereço, horários). Não ponha dados pessoais.
+
 ## Pedidos de data
 
 - **Pedir data:** quem quer usar o Centro de Convenções preenche a página pública `/pedido-de-data` (o link fica em **Pedidos de data → Copiar link do formulário**) e recebe um protocolo.

@@ -70,6 +70,36 @@
   background: var(--cor-superficie-2);
   border-radius: var(--raio-1);
 }
+.busca-tabela {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+  margin-top: 4px;
+}
+.busca-tabela th,
+.busca-tabela td {
+  padding: 4px var(--esp-2);
+  text-align: left;
+  border-bottom: 1px solid var(--cor-borda);
+}
+.busca-tabela thead th {
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--cor-texto-3);
+}
+.busca-tabela th:last-child,
+.busca-tabela td:last-child {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.busca-tabela tfoot th,
+.busca-tabela tfoot td {
+  font-weight: 700;
+  border-bottom: none;
+}
 .busca-marca {
   font-size: 0.72rem;
   color: var(--cor-texto-3);

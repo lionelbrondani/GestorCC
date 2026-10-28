@@ -1,4 +1,4 @@
-import { screen } from '@testing-library/react';
+import { screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { vi, type MockInstance } from 'vitest';
 import { renderizar } from '../teste/renderizar';
@@ -35,6 +35,31 @@ describe('Busca inteligente', () => {
     const chamar = await perguntar({ consulta: null, ajuda: null, motivo: 'indisponivel' }, 'o que precisamos comprar no estoque critico?');
     expect(await screen.findByText('resposta automática · confira os dados')).toBeInTheDocument();
     expect(chamar.mock.calls.map((c) => c[0])).toContain('almox.listar');
+  });
+
+  it('pergunta complexa vira tabela, com o total', async () => {
+    const analise = { nome: 'analise', assunto: 'sessoes', de: null, ate: null, agrupar: 'mes', medida: 'contar', filtro: '', ordem: 'cronologica', limite: 20 };
+    await perguntar({ consulta: analise, consultas: [analise], ajuda: null, motivo: null }, 'quantas sessões tivemos por mês?');
+    const tabela = await screen.findByRole('table');
+    expect(within(tabela).getByRole('columnheader', { name: 'Mês' })).toBeInTheDocument();
+    expect(within(tabela).getByRole('rowheader', { name: 'Total' })).toBeInTheDocument();
+  });
+
+  it('uma pergunta com várias partes mostra uma resposta para cada', async () => {
+    await perguntar(
+      { consulta: { nome: 'estoqueCritico' }, consultas: [{ nome: 'estoqueCritico' }, { nome: 'lotesEmAberto' }], ajuda: null, motivo: null },
+      'o que falta comprar e quais lotes estão em aberto?',
+    );
+    expect(await screen.findByText('Itens no estoque mínimo')).toBeInTheDocument();
+    expect(await screen.findByText('Lotes aguardando pagamento')).toBeInTheDocument();
+    expect(screen.getAllByText('resposta automática · confira os dados')).toHaveLength(1);
+  });
+
+  it('os nomes das pessoas vão ao Gemini como código e voltam na resposta', async () => {
+    const consulta = { nome: 'escalasDaPessoa', termo: 'PESSOA_1' };
+    const chamar = await perguntar({ consulta, consultas: [consulta], ajuda: null, motivo: null }, 'quando a Camila Freitas trabalha?');
+    expect(chamar).toHaveBeenCalledWith('busca.interpretar', { pergunta: 'quando a PESSOA_1 trabalha?' });
+    expect(await screen.findByText('Próximas escalas de Camila Freitas')).toBeInTheDocument();
   });
 
   it('nada entendido mostra a mensagem da busca comum', async () => {

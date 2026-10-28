@@ -16,6 +16,7 @@ export const CONFIG_PADRAO: Config = {
   destinatariosFundep: [],
   assinaturaEmail: 'Centro de Convenções - UFSM\nCoordenadoria de Cultura e Arte\nPró-Reitoria de Extensão - UFSM',
   limitePerguntasDia: 30,
+  informacoesSetor: '',
   diasGuardarCortesias: DIAS_GUARDAR_CORTESIAS,
   diasGuardarFicha: DIAS_GUARDAR_FICHA,
   linksFormularios: [],

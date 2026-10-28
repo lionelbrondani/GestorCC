@@ -205,7 +205,8 @@ export interface Acoes {
     { tipo: TipoEmail; para: string[]; pessoaIds?: Id[]; assunto: string; mensagem: string; html?: string; contratoIds?: Id[] },
     { enviados: number; restante: number }
   >;
-  'busca.interpretar': A<{ pergunta: string }, { consulta: Consulta | null; ajuda: string | null; motivo: 'limite' | 'indisponivel' | null }>;
+  /** consulta = a primeira de consultas (uma pergunta com várias partes vira até 3). */
+  'busca.interpretar': A<{ pergunta: string }, { consulta: Consulta | null; consultas: Consulta[]; ajuda: string | null; motivo: 'limite' | 'indisponivel' | null }>;
 
   'avisos.listar': A<null, Aviso[]>;
   'avisos.salvar': A<Aviso, Aviso>;

@@ -356,7 +356,12 @@ A planilha de Relatórios ganha a aba **CONTRATOS**, sem dados pessoais dos cont
 
 A barra de busca entende perguntas como "quem trabalha sábado?" ou "o que precisamos comprar?". Para isso ela usa o Gemini, no nível gratuito, sem custo.
 
-**O que vai para o Gemini:** só a pergunta digitada e o manual de uso (`docs/manual/uso.md`, sem dados reais). O Gemini devolve qual consulta fazer, e a consulta roda no GestorCC com as permissões de quem perguntou. Nenhum dado das planilhas sai do Google da conta do setor.
+**O que vai para o Gemini:**
+- a pergunta digitada, com os nomes das pessoas cadastradas trocados por códigos (`PESSOA_1`, `PESSOA_2`);
+- o manual de uso (`docs/manual/uso.md`, sem dados reais);
+- as informações do setor escritas em **Configurações → Busca inteligente** (até 2.000 caracteres, sem dados pessoais).
+
+O Gemini devolve quais consultas fazer (até 3 por pergunta). Elas rodam no GestorCC, com as permissões de quem perguntou, e as contas das perguntas complexas (quantos, quanto, quem mais) também são feitas aqui. Nenhum dado das planilhas sai do Google da conta do setor.
 
 Para ligar:
 
@@ -365,7 +370,7 @@ Para ligar:
 3. Opcional: crie `GEMINI_MODELO` para trocar o modelo. O padrão é `gemini-3.8-flash`, porque o `gemini-2.5-flash` não é mais liberado para chaves novas. Se o modelo estiver sobrecarregado, o sistema tenta o `gemini-3.5-flash-lite` (desde a versão 0.15.1).
 4. Cole o `Code.js` novo, crie uma **Nova versão** e publique o site com o `VITE_RECURSOS` da fase 7.
 
-O limite de perguntas por pessoa por dia fica em **Configurações**. Sem a chave, com o limite atingido ou com o Gemini fora do ar, a barra continua funcionando: ela interpreta perguntas simples por palavras-chave e sempre mostra os resultados da busca comum.
+O limite de perguntas por pessoa por dia fica em **Configurações → Busca inteligente**. Sem a chave, com o limite atingido ou com o Gemini fora do ar, a barra continua funcionando: ela interpreta perguntas simples por palavras-chave e sempre mostra os resultados da busca comum.
 
 ## 19. Desempenho (versão 0.8.0)
 
@@ -568,13 +573,18 @@ A pessoa entra com a conta Google cujo e-mail está cadastrado em Pessoas, no ca
 - **Avisos:** um pedido novo avisa no sininho e entra em "O que precisa de você".
 - **LGPD:** CPF, e-mail e telefone ficam na planilha Sigiloso. Os dados de pedidos recusados são apagados no prazo da ficha (180 dias depois da recusa).
 - **Proteção contra robôs:** um limite de 30 pedidos por dia e um campo-armadilha invisível. O Cloudflare Turnstile fica pronto para ligar (abaixo).
-- **Busca:** o Gemini 3.5 Flash-Lite é a reserva quando o modelo principal está sobrecarregado (seção 27).
+- **Busca:**
+  - perguntas complexas (contagens, somas e rankings, ex.: "quem mais trabalhou em outubro?") viram uma tabela com o total, e uma pergunta pode ter até 3 partes;
+  - os nomes das pessoas viram códigos antes de a pergunta ir ao Gemini;
+  - as **informações do setor**, em **Configurações → Busca inteligente**, ajudam a responder dúvidas sobre o Centro de Convenções (capacidade, endereço, horários);
+  - o Gemini 3.5 Flash-Lite é a reserva quando o modelo principal está sobrecarregado (seção 27).
 
 **Para publicar:**
 1. Cole o `Code.js` novo e salve (o `appsscript.json` não mudou).
 2. Rode o **`instalar`**. Ele cria as abas `pedidos` (Dados) e `pedidosSigilo` (Sigiloso).
 3. Crie uma **Nova versão** e confira se o `/exec` mostra `"versao":"0.16.0"`.
 4. Depois disso, publique o site e troque, no site do CC e no Instagram, o link do formulário do Google pelo `https://gestorcc-ae6f8.web.app/pedido-de-data`.
+5. Opcional: em **Configurações → Busca inteligente**, escreva as informações do setor, sem dados pessoais.
 
 **Para ligar o Cloudflare Turnstile (opcional):**
 1. Crie uma conta gratuita em <https://dash.cloudflare.com>, com a conta **gestorcc.webapp@gmail.com**.

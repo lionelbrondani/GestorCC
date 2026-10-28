@@ -98,7 +98,7 @@ const SECOES: Secao[] = [
       <><strong>O que precisa de você</strong>, no alto: as pendências com prazo (presença, escala a publicar, apoio sem equipe, ficha técnica sem resposta, lote de pagamento, contratos), da mais urgente para a menos. Toque para ir direto.</>,
       'Os atalhos coloridos levam direto a cada área: agenda, fichas, escalas, pagamentos e as demais.',
       <><strong>Hoje</strong> e <strong>Próximos 7 dias</strong> mostram os eventos e quantas vagas já estão preenchidas (ex.: 4/4).</>,
-      <>A <strong>busca</strong>, no alto, encontra eventos e pessoas e entende perguntas como "quem está escalado sábado?".</>,
+      <>A <strong>busca</strong>, no alto, encontra eventos e pessoas e entende perguntas como "quem está escalado sábado?". Perguntas com contas ("quem mais trabalhou em outubro?") viram uma tabela com o total. Os nomes das pessoas viram códigos antes de a pergunta ir ao Gemini.</>,
       'O sininho mostra os avisos. No celular, o menu completo fica no botão Menu, embaixo.',
     ],
     prints: [{ arquivo: 'inicio', legenda: 'Início da gestão', formato: 'pc' }],
