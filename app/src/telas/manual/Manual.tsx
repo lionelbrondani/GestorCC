@@ -293,10 +293,10 @@ const SECOES: Secao[] = [
   },
   {
     id: 'relatorio', titulo: 'Relatório mensal', icone: BarChart3, publico: 'gestao',
-    serve: 'Imprimir tudo o que aconteceu no mês e o que cada pessoa tem direito a receber.',
+    serve: 'Panorama administrativo do setor no mês, para imprimir e prestar contas.',
     passos: [
       <>Abra <strong>Relatório mensal</strong>, escolha o mês e clique em <strong>Imprimir</strong>.</>,
-      'Traz: números do mês, diárias de cada bolsista (o que já está em lote), agenda, lotes, contratos, fichas, almoxarifado e prédio.',
+      'Traz: números do mês e ocupação do espaço, eventos por tipo, equipe e diárias (em totais), contratos, ECAD, ISS e cortesias por evento, fichas técnicas, almoxarifado e prédio.',
     ],
     ilustracao: (
       <Tela titulo="Relatório mensal">
