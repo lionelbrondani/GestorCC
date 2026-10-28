@@ -1,6 +1,7 @@
 import type { Consulta } from '../busca';
 import type { CortesiasPublica, DestinoCortesias, PessoaCortesia } from '../cortesias';
 import type { TipoEmail } from '../email';
+import type { SaudeSistema } from '../saude';
 import type { AnexoFicha, FichaPublica, FichaResumo, FichaTecnica, FichaTecnicaDados, TravaFicha } from '../fichaTecnica';
 import type { MeusGanhos } from '../pagamentos/ganhos';
 import type {
@@ -181,6 +182,8 @@ export interface Acoes {
   'cortesias.resumo': A<{ eventoIds: Id[] }, { eventoId: Id; destinos: { nome: string; quantidade: number; lancados: number }[] }[]>;
   'cortesia.abrir': A<{ token: string }, CortesiasPublica>;
   'cortesia.salvar': A<{ token: string; pessoas: PessoaCortesia[] }, CortesiasPublica>;
+  /** Backup, rotina de 5 minutos, agenda, e-mails, erros recentes e tamanho das abas (Configurações → Saúde do sistema). */
+  'sistema.saude': A<null, SaudeSistema>;
   /** Quantos destinatários ainda cabem hoje na cota de e-mails do Google. */
   'emails.cota': A<null, { restante: number }>;
   /**

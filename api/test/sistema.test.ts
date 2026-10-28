@@ -1,4 +1,4 @@
-import type { Config, Feriado, RegistroHistorico } from '@shared';
+import type { Config, Feriado, RegistroHistorico, SaudeSistema } from '@shared';
 import { describe, expect, it } from 'vitest';
 import { handlersAvisos } from '../src/acoes/avisos';
 import { CONFIG_PADRAO, handlersSistema } from '../src/acoes/sistema';
@@ -70,6 +70,28 @@ describe('histórico e ping', () => {
 
   it('ping responde sem login', () => {
     const amb = ambiente();
-    expect(amb.chamar('sistema.ping', null)).toEqual({ ok: true, dados: { versao: '0.14.0' } });
+    expect(amb.chamar('sistema.ping', null)).toEqual({ ok: true, dados: { versao: '0.15.0' } });
+  });
+
+  it('saúde do sistema: backup, rotina, agenda, e-mails, erros e tamanho das abas, só para quem administra', () => {
+    const amb = ambiente();
+    amb.portas.props.definir('ULTIMO_BACKUP', '2026-10-24T03:00');
+    amb.portas.props.definir('ULTIMA_ROTINA', '2026-10-24T09:55');
+    amb.repo.inserir('sessoes', { id: 's1', agendaPendente: true } as never);
+    const r = amb.chamar('sistema.saude', null, { token: amb.token('p01') }) as Ok<SaudeSistema>;
+    expect(r.dados).toMatchObject({
+      versao: '0.15.0', agora: '2026-10-24T10:00', ultimoBackup: '2026-10-24T03:00', ultimaRotina: '2026-10-24T09:55',
+      agendaPendentes: 1, emailsRestantes: 100, erros: [],
+    });
+    expect(r.dados.tabelas).toContainEqual({ tabela: 'pessoas', linhas: 2 });
+    expect(amb.chamar('sistema.saude', null, { token: amb.token('p02') })).toMatchObject({ erro: { codigo: 'SEM_PERMISSAO' } });
+  });
+
+  it('erro interno fica registrado para a saúde do sistema (os 10 últimos)', () => {
+    const amb = criarAmbiente({ handlers: { ...handlersSistema, 'avisos.listar': () => { throw new Error('planilha sumiu'); } } });
+    for (let i = 0; i < 12; i++) amb.chamar('avisos.listar', null, { token: amb.token('p01') });
+    const { erros } = (amb.chamar('sistema.saude', null, { token: amb.token('p01') }) as Ok<SaudeSistema>).dados;
+    expect(erros).toHaveLength(10);
+    expect(erros[0]).toEqual({ quando: '2026-10-24T10:00', acao: 'avisos.listar', mensagem: 'planilha sumiu' });
   });
 });

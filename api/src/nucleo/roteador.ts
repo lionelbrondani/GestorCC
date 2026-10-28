@@ -1,6 +1,7 @@
 import { ErroApi, pode, type Acao, type Entrada, type Saida } from '@shared';
 import { lerToken } from '../auth/tokens';
 import { montarPessoa, type Contexto } from './historico';
+import { registrarErro } from './erros';
 import type { Portas } from './portas';
 import { ACOES_FASE } from './regras';
 
@@ -104,6 +105,7 @@ export function tratarRequisicao(corpo: string, portas: Portas, handlers: Handle
   } catch (e) {
     if (e instanceof ErroApi) return resposta({ ok: false, erro: { codigo: e.codigo, mensagem: e.message } });
     console.error(e);
+    registrarErro(portas, String(req.acao ?? ''), e);
     // quem administra o sistema vê o detalhe técnico, para resolver sem abrir o registro do Apps Script
     const detalhe = eu && pode(eu.permissoes, 'configuracoes', 'editar') ? ` Detalhe: ${String((e as Error)?.message ?? e).slice(0, 300)}` : '';
     return resposta({

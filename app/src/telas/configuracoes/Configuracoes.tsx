@@ -1,4 +1,4 @@
-import type { Config, Feriado } from '@shared';
+import { pode, type Config, type Feriado } from '@shared';
 import { Plus, Trash2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useApi } from '../../api/cliente';
@@ -6,7 +6,9 @@ import { useConsulta, useMutacao } from '../../api/hooks';
 import { Alerta, Botao, Campo, Carregando, Cartao, Modal, Pagina } from '../../componentes';
 import { useQueryClient } from '@tanstack/react-query';
 import { hoje } from '../../util/hoje';
+import { useEu } from '../../auth/SessaoContexto';
 import { CartaoAgendaSetor } from '../pessoal/AgendaGoogle';
+import { CartaoSaude } from './CartaoSaude';
 
 function Feriados() {
   const ano = Number(hoje().slice(0, 4));
@@ -54,6 +56,7 @@ function Feriados() {
 
 export function Configuracoes() {
   const q = useConsulta('config.obter', null);
+  const administra = pode(useEu().permissoes, 'configuracoes', 'editar');
   const salvar = useMutacao('config.salvar', ['config.obter']);
   const api = useApi() as ReturnType<typeof useApi> & { restaurar?: () => void };
   const qc = useQueryClient();
@@ -88,6 +91,7 @@ export function Configuracoes() {
       }
     >
       {msg && <Alerta tom={msg.tom}>{msg.texto}</Alerta>}
+      {administra && <CartaoSaude />}
       <div className="grade-2">
         <Cartao titulo="Escalas e pagamentos">
           <div className="pilha">

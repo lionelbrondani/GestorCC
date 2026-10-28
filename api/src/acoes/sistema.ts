@@ -1,6 +1,7 @@
 import { ehGestor, ErroApi, type Config, type Feriado, type RegistroHistorico } from '@shared';
 import { exigirVersao, registrar, type Contexto, type Handlers } from '../nucleo/roteador';
 import { marcarAgendaPendente } from '../relatorios/pendentes';
+import { lerErros } from '../nucleo/erros';
 import { VERSAO_API } from '../versao';
 
 /** Valores iniciais do spec (seção 4.1). */
@@ -43,6 +44,27 @@ const nomeDe = (ctx: Contexto) => (id: string) =>
 
 export const handlersSistema: Handlers = {
   'sistema.ping': () => ({ versao: VERSAO_API }),
+
+  'sistema.saude': (_d, ctx) => {
+    const { props, repo, relogio, agenda, email } = ctx.portas;
+    let emailsRestantes: number | null;
+    try {
+      emailsRestantes = email.cotaRestante();
+    } catch {
+      emailsRestantes = null; // sem a permissão de e-mail
+    }
+    return {
+      versao: VERSAO_API,
+      agora: relogio.agora(),
+      ultimoBackup: props.obter('ULTIMO_BACKUP'),
+      ultimaRotina: props.obter('ULTIMA_ROTINA'),
+      agendaLigada: agenda.ligada(),
+      agendaPendentes: repo.listar<{ id: string; agendaPendente?: boolean }>('sessoes').filter((s) => s.agendaPendente).length,
+      emailsRestantes,
+      erros: lerErros(props),
+      tabelas: (['pessoas', 'eventos', 'sessoes', 'escalas', 'contratos', 'historico', 'notificacoes'] as const).map((tabela) => ({ tabela, linhas: repo.listar(tabela).length })),
+    };
+  },
 
   'config.obter': (_d, ctx) => {
     const linha = linhaConfig(ctx);

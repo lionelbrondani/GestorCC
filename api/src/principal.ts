@@ -20,6 +20,7 @@ import { handlersSistema } from './acoes/sistema';
 import { portasGas, propriedadesGas, relogioGas, travaGas } from './adaptadores/gas';
 import { sincronizarPendentes } from './agenda/sincronizar';
 import { criarDadosFicticios as criarFicticios, resetarDados as resetar } from './dadosTeste';
+import { registrarErro } from './nucleo/erros';
 import { tratarRequisicao, type Handlers } from './nucleo/roteador';
 import { gerarRelatoriosPendentes } from './relatorios/pendentes';
 import { garantirEpocaCache, novaEpocaCache } from './tabelas/leitorAbas';
@@ -61,12 +62,15 @@ export function gatilhoMinutos(): void {
           console.error(e); // planilha do formulário inacessível não pode parar o resto da rotina
         }
         gerarRelatoriosPendentes(portas);
+        portas.props.definir('ULTIMA_ROTINA', relogioGas.agora()); // aparece na Saúde do sistema
       } finally {
         portas.repo.concluirEscrita();
       }
     }, 10_000);
   } catch (e) {
-    if (!(e instanceof ErroApi && e.codigo === 'SISTEMA_OCUPADO')) throw e;
+    if (e instanceof ErroApi && e.codigo === 'SISTEMA_OCUPADO') return;
+    registrarErro({ props: propriedadesGas, relogio: relogioGas }, 'rotina de 5 minutos', e);
+    throw e;
   }
 }
 

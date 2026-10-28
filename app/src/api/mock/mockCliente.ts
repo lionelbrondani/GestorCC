@@ -241,6 +241,7 @@ const REGRAS: Record<Acao, Regra> = {
   'historico.listar': 'logado',
   'config.obter': 'logado',
   'config.salvar': ['configuracoes', 'editar'],
+  'sistema.saude': ['configuracoes', 'editar'],
   'emails.cota': 'logado',
   'emails.enviar': 'logado',
 };
@@ -260,6 +261,17 @@ const handlers: Handlers = {
   },
   'sistema.ping': () => ({ versao: 'prototipo' }),
   'emails.cota': () => ({ restante: COTA_EMAILS_PROTOTIPO - emailsMandados }),
+  'sistema.saude': (_d, ctx) => ({
+    versao: 'protótipo', agora: ctx.agora, ultimoBackup: `${ctx.hoje}T03:00`, ultimaRotina: ctx.agora,
+    agendaLigada: true, agendaPendentes: 0, emailsRestantes: COTA_EMAILS_PROTOTIPO - emailsMandados, erros: [],
+    tabelas: [
+      { tabela: 'pessoas', linhas: ctx.banco.pessoas.length },
+      { tabela: 'eventos', linhas: ctx.banco.eventos.length },
+      { tabela: 'sessoes', linhas: ctx.banco.sessoes.length },
+      { tabela: 'escalas', linhas: ctx.banco.escalas.length },
+      { tabela: 'historico', linhas: ctx.banco.historico.length },
+    ],
+  }),
   'emails.enviar': ({ tipo, para, pessoaIds }, ctx) => {
     if (!pode(ctx.eu!.permissoes, MODULO_DO_EMAIL[tipo], 'editar')) throw SEM_PERMISSAO();
     const dasPessoas = (pessoaIds ?? []).map((id) => ctx.banco.pessoas.find((p) => p.id === id && p.ativo)?.emailAcademico ?? '');

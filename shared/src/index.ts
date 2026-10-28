@@ -25,3 +25,4 @@ export * from './fichaTecnica';
 export * from './atividades';
 export * from './cortesias';
 export * from './email';
+export * from './saude';

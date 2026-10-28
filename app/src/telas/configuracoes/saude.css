@@ -1,0 +1,23 @@
+.saude-lista {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--esp-2);
+}
+.saude-lista li {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+.saude-lista .cc-etiqueta {
+  flex: none;
+  min-width: 76px;
+  justify-content: center;
+}
+.saude-erros ul {
+  margin: var(--esp-2) 0 0;
+  padding-left: 18px;
+  display: grid;
+  gap: 4px;
+}

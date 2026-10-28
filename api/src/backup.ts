@@ -35,4 +35,5 @@ export function backupDiario(): void {
   }
   const apagar = new Set(pastasParaApagar(todas, hoje, DIAS_DE_BACKUP));
   for (const p of todas) if (apagar.has(p.nome)) p.pasta.setTrashed(true);
+  propriedadesGas.definir('ULTIMO_BACKUP', relogioGas.agora()); // aparece na Saúde do sistema
 }
