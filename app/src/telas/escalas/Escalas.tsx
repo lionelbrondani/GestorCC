@@ -8,12 +8,14 @@ import { Montador } from './Montador';
 import { Presenca } from './Presenca';
 import { Publicadas } from './Publicadas';
 import { Rodadas } from './Rodadas';
+import { VerEscala } from './VerEscala';
 import './escalas.css';
 
-type Aba = 'rodadas' | 'montar' | 'publicadas' | 'presenca' | 'avaliacoes';
+type Aba = 'rodadas' | 'montar' | 'ver' | 'publicadas' | 'presenca' | 'avaliacoes';
 const ABAS: { id: Aba; rotulo: string }[] = [
   { id: 'rodadas', rotulo: 'Disponibilidade' },
   { id: 'montar', rotulo: 'Montar' },
+  { id: 'ver', rotulo: 'Ver escala' },
   { id: 'publicadas', rotulo: 'Publicadas' },
   { id: 'presenca', rotulo: 'Presença' },
   { id: 'avaliacoes', rotulo: 'Avaliações' },
@@ -46,6 +48,7 @@ export function Escalas() {
       <Abas abas={ABAS} ativa={aba} aoMudar={(a) => mudar('aba', a)} />
       {aba === 'rodadas' && <Rodadas mes={mes} />}
       {aba === 'montar' && <Montador mes={mes} aoPublicar={() => mudar('aba', 'publicadas')} />}
+      {aba === 'ver' && <VerEscala mes={mes} />}
       {aba === 'publicadas' && <Publicadas mes={mes} />}
       {aba === 'presenca' && <Presenca mes={mes} />}
       {aba === 'avaliacoes' && <Avaliacoes mes={mes} />}

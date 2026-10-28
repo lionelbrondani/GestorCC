@@ -413,3 +413,48 @@
     bottom: var(--altura-barra-inferior);
   }
 }
+
+/* Ver escala */
+.ver-lista {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--esp-3);
+}
+.ver-lista > li {
+  display: grid;
+  gap: var(--esp-2);
+  padding-bottom: var(--esp-3);
+  border-bottom: 1px solid var(--cor-borda);
+}
+.ver-lista > li:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+.ver-equipe {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.ver-chip {
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: var(--cor-sucesso-suave);
+  border: 1.5px solid var(--cor-sucesso);
+  font-weight: 600;
+  font-size: 14px;
+}
+.ver-chip[data-papel='servidor'] {
+  background: var(--cor-info-suave);
+  border-color: var(--cor-info);
+}
+.ver-chip[data-status='rascunho'] {
+  background: var(--cor-superficie);
+  border-style: dashed;
+}
+.ver-chip[data-status='faltou'] {
+  background: var(--cor-erro-suave);
+  border-color: var(--cor-erro);
+  text-decoration: line-through;
+}
