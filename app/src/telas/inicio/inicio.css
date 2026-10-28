@@ -22,3 +22,90 @@
   color: var(--cor-aviso);
   flex-shrink: 0;
 }
+
+/* Atalhos coloridos */
+.inicio-atalhos {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: var(--esp-3);
+}
+.inicio-atalho {
+  --c: var(--cor-destaque-escuro);
+  --f: var(--cor-destaque-suave);
+  display: grid;
+  justify-items: center;
+  gap: var(--esp-2);
+  padding: var(--esp-4) var(--esp-2);
+  border-radius: var(--raio-3);
+  background: var(--cor-superficie);
+  border: 1px solid var(--cor-borda);
+  border-bottom: 4px solid var(--c);
+  text-decoration: none;
+  color: var(--cor-texto);
+  font-weight: 600;
+  font-size: 14px;
+  text-align: center;
+  transition: transform 0.1s ease, box-shadow 0.1s ease;
+}
+.inicio-atalho:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--sombra-2);
+}
+.inicio-atalho-icone {
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--f);
+  color: var(--c);
+}
+.inicio-atalho[data-cor='1'] {
+  --c: var(--cor-info);
+  --f: var(--cor-info-suave);
+}
+.inicio-atalho[data-cor='2'] {
+  --c: var(--cor-sucesso);
+  --f: var(--cor-sucesso-suave);
+}
+.inicio-atalho[data-cor='3'] {
+  --c: #d9730d;
+  --f: #fde9d6;
+}
+.inicio-atalho[data-cor='4'] {
+  --c: #6a1b9a;
+  --f: #f1e4f7;
+}
+.inicio-atalho[data-cor='5'] {
+  --c: #00838f;
+  --f: #dff3f4;
+}
+
+/* Data em selo de calendário nas listas */
+.inicio-data {
+  flex: none;
+  width: 48px;
+  display: grid;
+  justify-items: center;
+  border-radius: var(--raio-1);
+  overflow: hidden;
+  border: 1px solid var(--cor-borda-forte);
+  background: var(--cor-superficie);
+}
+.inicio-data b {
+  font-family: var(--fonte-titulo);
+  font-size: 1.2rem;
+  line-height: 1.6;
+}
+.inicio-data small {
+  width: 100%;
+  text-align: center;
+  font-size: 10px;
+  text-transform: uppercase;
+  background: var(--cor-nav);
+  color: var(--cor-destaque);
+}
+.inicio-lista a .inicio-sessao {
+  flex: 1;
+  min-width: 0;
+}

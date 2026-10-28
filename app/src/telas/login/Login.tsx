@@ -4,6 +4,7 @@ import { useSessao } from '../../auth/SessaoContexto';
 import { MODO_PROTOTIPO } from '../../ambiente';
 import { Alerta, Botao, Campo, Modal } from '../../componentes';
 import { CREDITO } from '../../layout/menu';
+import { ModalSobre } from '../../layout/Sobre';
 import './login.css';
 
 function Padrao() {
@@ -28,6 +29,7 @@ export function Login() {
   const [erro, setErro] = useState<string | null>(null);
   const [enviando, setEnviando] = useState(false);
   const [esqueci, setEsqueci] = useState(false);
+  const [sobre, setSobre] = useState(false);
 
   const voltar = params.get('voltar') || '/';
   if (sessao) return <Navigate to={voltar} replace />;
@@ -84,8 +86,11 @@ export function Login() {
             </p>
           )}
         </form>
-        <p className="login-credito">{CREDITO}</p>
+        <p className="login-credito">
+          {CREDITO} · <button type="button" onClick={() => setSobre(true)}>Sobre o GestorCC</button>
+        </p>
       </div>
+      <ModalSobre aberto={sobre} aoFechar={() => setSobre(false)} />
       <Modal
         aberto={esqueci}
         titulo="Esqueci minha senha"

@@ -1,4 +1,4 @@
-import { ehGestor, formatarReais, pode, somarDias, valorTotalContrato } from '@shared';
+import { diaDaSemanaCurto, ehGestor, formatarReais, pode, somarDias, valorTotalContrato } from '@shared';
 import { AlertTriangle, ChevronRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { usePeriodo, usePessoas } from '../../api/consultas';
@@ -12,6 +12,7 @@ import { InicioBolsista } from './InicioBolsista';
 import { calcularPendencias } from './pendencias';
 import { InicioSimples } from './InicioSimples';
 import { recursoAtivo } from '../../recursos';
+import { itensVisiveis } from '../../layout/menu';
 import './inicio.css';
 
 export function Inicio() {
@@ -63,7 +64,11 @@ export function InicioGestor() {
         {lista.map((s) => (
           <li key={s.id}>
             <Link to={`/agenda/${s.eventoId}`}>
-              <div>
+              <span className="inicio-data" aria-hidden>
+                <b>{s.data.slice(8, 10)}</b>
+                <small>{diaDaSemanaCurto(s.data)}</small>
+              </span>
+              <div className="inicio-sessao">
                 <strong>{tituloSessao(periodo.evento.get(s.eventoId), s)}</strong>
                 <div className="pequeno texto-2">
                   {dataLonga(s.data)} · chegada {chegadaTexto(s)}
@@ -80,6 +85,16 @@ export function InicioGestor() {
 
   return (
     <Pagina titulo={`Bom trabalho, ${eu.nome.split(' ')[0]}!`} subtitulo={`Hoje é ${dataLonga(h)}.`}>
+      <nav className="inicio-atalhos" aria-label="Atalhos">
+        {itensVisiveis(eu).gestao.slice(0, 8).map((i, k) => (
+          <Link key={i.rota} to={i.rota} className="inicio-atalho" data-cor={k % 6}>
+            <span className="inicio-atalho-icone" aria-hidden>
+              <i.icone size={22} />
+            </span>
+            <span>{i.rotulo}</span>
+          </Link>
+        ))}
+      </nav>
       <div className="grade-2">
         <Cartao titulo="Hoje" destaque={deHoje.length > 0}>
           <ListaSessoes lista={deHoje} vazio="Nenhum evento hoje." />

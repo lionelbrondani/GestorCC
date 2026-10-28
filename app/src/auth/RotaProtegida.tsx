@@ -6,6 +6,7 @@ import { recursoAtivo, type Recurso } from '../recursos';
 import { Shell } from '../layout/Shell';
 import { AvisoSenha } from './AvisoSenha';
 import { useSessao } from './SessaoContexto';
+import { ModalSobre, useSobrePrimeiroAcesso } from '../layout/Sobre';
 
 export function SemAcesso() {
   return (
@@ -45,13 +46,15 @@ export function Exige({
 export function LayoutAutenticado({ busca, notificacoes }: { busca?: ReactNode; notificacoes?: ReactNode }) {
   const { sessao, sair } = useSessao();
   const local = useLocation();
+  const [sobre, abrirSobre, fecharSobre] = useSobrePrimeiroAcesso();
   if (!sessao) {
     const voltar = encodeURIComponent(local.pathname + local.search);
     return <Navigate to={`/entrar?voltar=${voltar}`} replace />;
   }
   return (
-    <Shell pessoa={sessao.pessoa} aoSair={sair} busca={busca} notificacoes={notificacoes} faixa={<AvisoSenha />}>
+    <Shell pessoa={sessao.pessoa} aoSair={sair} busca={busca} notificacoes={notificacoes} faixa={<AvisoSenha />} aoAbrirSobre={abrirSobre}>
       <Outlet />
+      <ModalSobre aberto={sobre} aoFechar={fecharSobre} />
     </Shell>
   );
 }

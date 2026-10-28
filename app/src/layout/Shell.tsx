@@ -3,6 +3,7 @@ import { CalendarCheck, ClipboardList, Home, Menu, Wallet, Bell } from 'lucide-r
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { Link, NavLink, useLocation } from 'react-router-dom';
 import { recursoAtivo } from '../recursos';
+import './sobre.css';
 import { CREDITO, ITEM_INICIO, itensVisiveis, type ItemMenu } from './menu';
 import './layout.css';
 
@@ -26,7 +27,7 @@ function ListaMenu({ titulo, itens, aoNavegar }: { titulo?: string; itens: ItemM
   );
 }
 
-export function MenuLateral({ pessoa }: { pessoa: Pessoa }) {
+export function MenuLateral({ pessoa, aoAbrirSobre }: { pessoa: Pessoa; aoAbrirSobre?: () => void }) {
   const { gestao, pessoais } = itensVisiveis(pessoa);
   return (
     <aside className="cc-menu-lateral">
@@ -36,7 +37,17 @@ export function MenuLateral({ pessoa }: { pessoa: Pessoa }) {
       <ListaMenu itens={[ITEM_INICIO]} />
       <ListaMenu titulo="Gestão" itens={gestao} />
       <ListaMenu titulo="Pessoal" itens={pessoais} />
-      <p className="cc-credito">{CREDITO}</p>
+      <p className="cc-credito">
+        {CREDITO}
+        {aoAbrirSobre && (
+          <>
+            {' · '}
+            <button type="button" onClick={aoAbrirSobre}>
+              Sobre
+            </button>
+          </>
+        )}
+      </p>
     </aside>
   );
 }
@@ -46,11 +57,13 @@ export function BarraSuperior({
   aoSair,
   busca,
   notificacoes,
+  aoAbrirSobre,
 }: {
   pessoa: Pessoa;
   aoSair: () => void;
   busca?: ReactNode;
   notificacoes?: ReactNode;
+  aoAbrirSobre?: () => void;
 }) {
   const [aberto, setAberto] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -83,6 +96,17 @@ export function BarraSuperior({
             <Link to="/perfil" role="menuitem" onClick={() => setAberto(false)}>
               Perfil
             </Link>
+            {aoAbrirSobre && (
+              <button
+                role="menuitem"
+                onClick={() => {
+                  setAberto(false);
+                  aoAbrirSobre();
+                }}
+              >
+                Sobre o GestorCC
+              </button>
+            )}
             <button role="menuitem" onClick={aoSair}>
               Sair
             </button>
@@ -154,6 +178,7 @@ export function Shell({
   busca,
   notificacoes,
   faixa,
+  aoAbrirSobre,
   children,
 }: {
   pessoa: Pessoa;
@@ -161,12 +186,13 @@ export function Shell({
   busca?: ReactNode;
   notificacoes?: ReactNode;
   faixa?: ReactNode;
+  aoAbrirSobre?: () => void;
   children: ReactNode;
 }) {
   return (
     <div className="cc-shell">
-      <MenuLateral pessoa={pessoa} />
-      <BarraSuperior pessoa={pessoa} aoSair={aoSair} busca={busca} notificacoes={notificacoes} />
+      <MenuLateral pessoa={pessoa} aoAbrirSobre={aoAbrirSobre} />
+      <BarraSuperior pessoa={pessoa} aoSair={aoSair} busca={busca} notificacoes={notificacoes} aoAbrirSobre={aoAbrirSobre} />
       <main className="cc-conteudo">
         {faixa}
         {children}
