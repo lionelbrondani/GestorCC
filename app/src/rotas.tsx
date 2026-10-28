@@ -1,45 +1,48 @@
 import type { Modulo } from '@shared';
-import type { ReactNode } from 'react';
+import { lazy, Suspense, type ReactNode } from 'react';
 import type { RouteObject } from 'react-router-dom';
 import { Exige, ExigeRecurso, LayoutAutenticado } from './auth/RotaProtegida';
-import { EstadoVazio } from './componentes';
+import { Carregando, EstadoVazio } from './componentes';
 import { Busca } from './layout/Busca';
 import { Notificacoes } from './layout/Notificacoes';
-import { Agenda } from './telas/agenda/Agenda';
-import { EventoDetalhe } from './telas/agenda/EventoDetalhe';
-import { ImprimirAgenda } from './telas/agenda/ImprimirAgenda';
-import { ImprimirEscala } from './telas/escalas/ImprimirEscala';
-import { Escalas } from './telas/escalas/Escalas';
-import { CortesiasDestino } from './telas/cortesias/CortesiasDestino';
-import { ImprimirCortesias } from './telas/cortesias/ImprimirCortesias';
-import { FichaProdutor } from './telas/ficha/FichaProdutor';
-import { Fichas } from './telas/ficha/Fichas';
-import { ImprimirFicha } from './telas/ficha/ImprimirFicha';
-import { LoteDetalhe } from './telas/pagamentos/LoteDetalhe';
-import { NovoLote } from './telas/pagamentos/NovoLote';
-import { Pagamentos } from './telas/pagamentos/Pagamentos';
-import { ContratoDetalhe } from './telas/contratos/ContratoDetalhe';
-import { Contratos } from './telas/contratos/Contratos';
-import { SolicitarFundep } from './telas/contratos/SolicitarFundep';
-import { Almox } from './telas/almox/Almox';
-import { Configuracoes } from './telas/configuracoes/Configuracoes';
-import { Formularios } from './telas/formularios/Formularios';
-import { Manual } from './telas/manual/Manual';
-import { Mural } from './telas/mural/Mural';
-import { Orcamento } from './telas/orcamento/Orcamento';
-import { RelatorioMensal } from './telas/relatorio/RelatorioMensal';
-import { PessoaForm } from './telas/pessoas/PessoaForm';
-import { Pessoas } from './telas/pessoas/Pessoas';
-import { Infra } from './telas/infra/Infra';
-import { OcorrenciaDetalhe } from './telas/infra/OcorrenciaDetalhe';
-import { Relatar } from './telas/infra/Relatar';
 import { Inicio } from './telas/inicio/InicioGestor';
 import { Login } from './telas/login/Login';
-import { Avisos } from './telas/pessoal/Avisos';
-import { MeusGanhos } from './telas/pessoal/MeusGanhos';
 import { MinhaDisponibilidade } from './telas/pessoal/MinhaDisponibilidade';
 import { MinhasEscalas } from './telas/pessoal/MinhasEscalas';
-import { Perfil } from './telas/pessoal/Perfil';
+
+// Telas carregadas só quando são abertas: o celular baixa menos na primeira visita.
+// Início, login e as telas do bolsista ficam no pacote principal, para abrir na hora.
+const Agenda = lazy(() => import('./telas/agenda/Agenda').then((m) => ({ default: m.Agenda })));
+const EventoDetalhe = lazy(() => import('./telas/agenda/EventoDetalhe').then((m) => ({ default: m.EventoDetalhe })));
+const ImprimirAgenda = lazy(() => import('./telas/agenda/ImprimirAgenda').then((m) => ({ default: m.ImprimirAgenda })));
+const ImprimirEscala = lazy(() => import('./telas/escalas/ImprimirEscala').then((m) => ({ default: m.ImprimirEscala })));
+const Escalas = lazy(() => import('./telas/escalas/Escalas').then((m) => ({ default: m.Escalas })));
+const CortesiasDestino = lazy(() => import('./telas/cortesias/CortesiasDestino').then((m) => ({ default: m.CortesiasDestino })));
+const ImprimirCortesias = lazy(() => import('./telas/cortesias/ImprimirCortesias').then((m) => ({ default: m.ImprimirCortesias })));
+const FichaProdutor = lazy(() => import('./telas/ficha/FichaProdutor').then((m) => ({ default: m.FichaProdutor })));
+const Fichas = lazy(() => import('./telas/ficha/Fichas').then((m) => ({ default: m.Fichas })));
+const ImprimirFicha = lazy(() => import('./telas/ficha/ImprimirFicha').then((m) => ({ default: m.ImprimirFicha })));
+const LoteDetalhe = lazy(() => import('./telas/pagamentos/LoteDetalhe').then((m) => ({ default: m.LoteDetalhe })));
+const NovoLote = lazy(() => import('./telas/pagamentos/NovoLote').then((m) => ({ default: m.NovoLote })));
+const Pagamentos = lazy(() => import('./telas/pagamentos/Pagamentos').then((m) => ({ default: m.Pagamentos })));
+const ContratoDetalhe = lazy(() => import('./telas/contratos/ContratoDetalhe').then((m) => ({ default: m.ContratoDetalhe })));
+const Contratos = lazy(() => import('./telas/contratos/Contratos').then((m) => ({ default: m.Contratos })));
+const SolicitarFundep = lazy(() => import('./telas/contratos/SolicitarFundep').then((m) => ({ default: m.SolicitarFundep })));
+const Almox = lazy(() => import('./telas/almox/Almox').then((m) => ({ default: m.Almox })));
+const Configuracoes = lazy(() => import('./telas/configuracoes/Configuracoes').then((m) => ({ default: m.Configuracoes })));
+const Formularios = lazy(() => import('./telas/formularios/Formularios').then((m) => ({ default: m.Formularios })));
+const Manual = lazy(() => import('./telas/manual/Manual').then((m) => ({ default: m.Manual })));
+const Mural = lazy(() => import('./telas/mural/Mural').then((m) => ({ default: m.Mural })));
+const Orcamento = lazy(() => import('./telas/orcamento/Orcamento').then((m) => ({ default: m.Orcamento })));
+const RelatorioMensal = lazy(() => import('./telas/relatorio/RelatorioMensal').then((m) => ({ default: m.RelatorioMensal })));
+const PessoaForm = lazy(() => import('./telas/pessoas/PessoaForm').then((m) => ({ default: m.PessoaForm })));
+const Pessoas = lazy(() => import('./telas/pessoas/Pessoas').then((m) => ({ default: m.Pessoas })));
+const Infra = lazy(() => import('./telas/infra/Infra').then((m) => ({ default: m.Infra })));
+const OcorrenciaDetalhe = lazy(() => import('./telas/infra/OcorrenciaDetalhe').then((m) => ({ default: m.OcorrenciaDetalhe })));
+const Relatar = lazy(() => import('./telas/infra/Relatar').then((m) => ({ default: m.Relatar })));
+const Avisos = lazy(() => import('./telas/pessoal/Avisos').then((m) => ({ default: m.Avisos })));
+const MeusGanhos = lazy(() => import('./telas/pessoal/MeusGanhos').then((m) => ({ default: m.MeusGanhos })));
+const Perfil = lazy(() => import('./telas/pessoal/Perfil').then((m) => ({ default: m.Perfil })));
 
 const comPermissao = (modulos: Modulo[], el: ReactNode, nivel: 'ver' | 'editar' = 'ver') => (
   <Exige modulos={modulos} nivel={nivel}>
@@ -50,9 +53,9 @@ const comPermissao = (modulos: Modulo[], el: ReactNode, nivel: 'ver' | 'editar' 
 export const ROTAS: RouteObject[] = [
   { path: '/entrar', element: <Login /> },
   // link da ficha técnica: o produtor entra sem login
-  { path: '/ficha/:token', element: <FichaProdutor /> },
+  { path: '/ficha/:token', element: <Suspense fallback={<Carregando />}><FichaProdutor /></Suspense> },
   // link das cortesias: o destino lança os nomes sem login
-  { path: '/cortesias/:token', element: <CortesiasDestino /> },
+  { path: '/cortesias/:token', element: <Suspense fallback={<Carregando />}><CortesiasDestino /></Suspense> },
   {
     element: <LayoutAutenticado busca={<Busca />} notificacoes={<Notificacoes />} />,
     children: [

@@ -68,6 +68,20 @@ describe('lotes', () => {
     expect(amb.criar(['x2'], 'Refeito').ok).toBe(true);
   });
 
+  it('inclui sessões num lote ainda não pago; recusa o que não pode ser pago e lote fechado', () => {
+    const amb = ambiente();
+    const lote = (amb.criar(['x1']) as Ok<Lote>).dados;
+    const incluir = (escalaIds: string[]) => amb.chamar('lotes.adicionarItens', { loteId: lote.id, escalaIds }, { token: amb.gestor });
+    expect(incluir([])).toMatchObject({ erro: { codigo: 'LOTE_VAZIO' } });
+    expect(incluir(['x3'])).toMatchObject({ erro: { codigo: 'NAO_ELEGIVEL' } });
+    expect(incluir(['x1'])).toMatchObject({ erro: { codigo: 'NAO_ELEGIVEL' } });
+    expect(incluir(['x2']).ok).toBe(true);
+    expect(amb.listar().itens.map((i) => [i.escalaId, i.valor]).sort()).toEqual([['x1', 8000], ['x2', 12000]]);
+    expect(amb.loteDe('x2')).toBe(lote.id);
+    amb.chamar('lotes.marcarPago', { loteId: lote.id, data: '2026-11-10' }, { token: amb.gestor });
+    expect(incluir(['x2'])).toMatchObject({ erro: { codigo: 'LOTE_FECHADO' } });
+  });
+
   it('marcar pago avisa as pessoas no app e exige a data', () => {
     const amb = ambiente();
     const lote = (amb.criar(['x1']) as Ok<Lote>).dados;

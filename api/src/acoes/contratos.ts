@@ -1,4 +1,4 @@
-import { ErroApi, formatarData, formatarReais, horarioSessao, valorTotalContrato, type Aditivo, type Contratante, type Contrato } from '@shared';
+import { ErroApi, formatarData, formatarReais, horarioSessao, valorPorExtenso, valorTotalContrato, type Aditivo, type Contratante, type Contrato } from '@shared';
 import { exigirVersao, novoId, registrar, type Contexto, type Handlers } from '../nucleo/roteador';
 import { marcarRelatorios } from '../relatorios/pendentes';
 import { linhasEventos, linhasSessoes, paraSessao } from './eventos';
@@ -126,7 +126,7 @@ export const handlersContratos: Handlers = {
       HORARIOS: sessoes.map((s) => `${formatarData(s.data).slice(0, 5)}: ${horarioSessao(paraSessao(s))}`).join('; '),
       CONTRATANTE: k?.razaoSocial ?? '', DOCUMENTO: k?.documento ?? '', ENDERECO: k?.endereco ?? '', CEP: k?.cep ?? '',
       REPRESENTANTE: k?.representanteNome ?? '', EMAIL: k?.email ?? '',
-      VALOR: formatarReais(valorTotalContrato(c, aditivos)), VALOR_EXTENSO: '', VENCIMENTO: c.vencimento ? formatarData(c.vencimento) : '',
+      VALOR: formatarReais(valorTotalContrato(c, aditivos)), VALOR_EXTENSO: valorPorExtenso(valorTotalContrato(c, aditivos)), VENCIMENTO: c.vencimento ? formatarData(c.vencimento) : '',
       AREAS: c.areas.join(', '), CORTESIAS: String(c.cortesiasQtd), INGRESSO_SOLIDARIO: c.ingressoSolidario, OBSERVACOES: c.observacoes,
       HOJE: formatarData(ctx.portas.relogio.hoje()),
     };

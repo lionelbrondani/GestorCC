@@ -49,6 +49,7 @@ export const ACOES_FASE: Partial<Record<Acao, { regra: Regra; escrita: boolean }
   // fase 4
   'lotes.listar': { regra: ['pagamentos', 'ver'], escrita: false },
   'lotes.criar': { regra: ['pagamentos', 'editar'], escrita: true },
+  'lotes.adicionarItens': { regra: ['pagamentos', 'editar'], escrita: true },
   'lotes.retirarItem': { regra: ['pagamentos', 'editar'], escrita: true },
   'lotes.marcarPago': { regra: ['pagamentos', 'editar'], escrita: true },
   'lotes.cancelar': { regra: ['pagamentos', 'editar'], escrita: true },

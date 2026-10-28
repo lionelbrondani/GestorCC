@@ -1,5 +1,5 @@
-import { formatarData, formatarDataHora, type Evento, type FichaPublica, type FichaTecnica, type Sessao } from '@shared';
-import { CalendarPlus, Copy, Eye, Link2, Lock, LockOpen, Mail, Pencil, Printer, RefreshCw } from 'lucide-react';
+import { formatarData, formatarDataHora, linkWhatsapp, type Evento, type FichaPublica, type FichaTecnica, type Sessao } from '@shared';
+import { CalendarPlus, Copy, Eye, Link2, Lock, LockOpen, Mail, MessageCircle, Pencil, Printer, RefreshCw } from 'lucide-react';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useApi } from '../../api/cliente';
@@ -120,6 +120,9 @@ export function FichaTecnicaEvento({ evento, sessoes }: { evento: Evento; sessoe
             >
               <Mail size={16} aria-hidden /> Enviar por e-mail
             </Botao>
+            <a className="cc-botao" data-variante="secundario" data-tamanho="pequeno" href={linkWhatsapp(mensagemDaFicha(evento.nome, f.token, f.prazo))} target="_blank" rel="noreferrer">
+              <MessageCircle size={16} aria-hidden /> Abrir no WhatsApp
+            </a>
             <Botao tamanho="pequeno" onClick={() => setModal('ver')}>
               <Eye size={16} aria-hidden /> Ver ficha
             </Botao>

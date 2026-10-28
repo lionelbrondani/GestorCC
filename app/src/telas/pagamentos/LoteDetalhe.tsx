@@ -1,4 +1,4 @@
-import { formatarData, formatarReais, pode } from '@shared';
+import { elegiveisParaLote, formatarData, formatarReais, pode, type Escala, type Lote } from '@shared';
 import { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useMutacao } from '../../api/hooks';
@@ -10,12 +10,81 @@ import { INVALIDAR_PAGAMENTOS, useDadosPagamentos } from './dadosPagamentos';
 import { FichaIndicacao } from './FichaIndicacao';
 import { ETIQUETA_LOTE } from './Pagamentos';
 
+type Dados = ReturnType<typeof useDadosPagamentos>;
+
+/** Sessões realizadas que ainda não estão em nenhum lote, para juntar a um lote já criado. */
+function ModalIncluir({ lote, dados, aoFechar }: { lote: Lote; dados: Dados; aoFechar: () => void }) {
+  const incluir = useMutacao('lotes.adicionarItens', [...INVALIDAR_PAGAMENTOS]);
+  const [marcadas, setMarcadas] = useState<Set<string>>(new Set());
+  const [erro, setErro] = useState<string | null>(null);
+  const porSessao = new Map<string, Escala[]>();
+  for (const e of elegiveisParaLote(dados.base)) porSessao.set(e.sessaoId, [...(porSessao.get(e.sessaoId) ?? []), e]);
+  const sessoes = [...porSessao.keys()]
+    .map((id) => dados.periodo.sessao.get(id))
+    .filter((x) => x !== undefined)
+    .sort((a, b) => a.data.localeCompare(b.data));
+  const escalaIds = [...marcadas].flatMap((id) => (porSessao.get(id) ?? []).map((e) => e.id));
+  const alternar = (id: string) => {
+    const n = new Set(marcadas);
+    if (n.has(id)) n.delete(id);
+    else n.add(id);
+    setMarcadas(n);
+  };
+
+  async function confirmar() {
+    setErro(null);
+    try {
+      await incluir.mutateAsync({ loteId: lote.id, escalaIds });
+      aoFechar();
+    } catch (e) {
+      setErro((e as Error).message);
+    }
+  }
+
+  return (
+    <Modal
+      aberto
+      titulo="Incluir sessões no lote"
+      aoFechar={aoFechar}
+      largura="grande"
+      rodape={
+        <>
+          <Botao onClick={aoFechar}>Voltar</Botao>
+          <Botao variante="primario" disabled={!marcadas.size} carregando={incluir.isPending} onClick={confirmar}>
+            {marcadas.size ? `Incluir ${marcadas.size} ${marcadas.size === 1 ? 'sessão' : 'sessões'}` : 'Incluir'}
+          </Botao>
+        </>
+      }
+    >
+      {sessoes.length ? (
+        <div className="pilha-2">
+          <p className="pequeno texto-2">Sessões realizadas, com presença confirmada, que ainda não estão em nenhum lote.</p>
+          {sessoes.map((s) => {
+            const n = porSessao.get(s.id)?.length ?? 0;
+            return (
+              <label key={s.id} className="cc-caixa">
+                <input type="checkbox" checked={marcadas.has(s.id)} onChange={() => alternar(s.id)} />
+                <span>
+                  <strong>{tituloSessao(dados.periodo.evento.get(s.eventoId), s)}</strong> · {dataLonga(s.data)} · {n} {n === 1 ? 'pessoa' : 'pessoas'}
+                </span>
+              </label>
+            );
+          })}
+        </div>
+      ) : (
+        <EstadoVazio titulo="Nenhuma sessão para incluir" texto="Aparecem aqui as sessões realizadas, com presença confirmada, que ainda não estão em nenhum lote." />
+      )}
+      {erro && <Alerta tom="erro">{erro}</Alerta>}
+    </Modal>
+  );
+}
+
 export function LoteDetalhe() {
   const { loteId = '' } = useParams();
   const eu = useEu();
   const dados = useDadosPagamentos();
   const [aba, setAba] = useState<'itens' | 'ficha'>('itens');
-  const [modal, setModal] = useState<'pago' | 'cancelar' | null>(null);
+  const [modal, setModal] = useState<'pago' | 'cancelar' | 'incluir' | null>(null);
   const [data, setData] = useState(hoje());
   const [motivo, setMotivo] = useState('');
   const [erro, setErro] = useState<string | null>(null);
@@ -61,6 +130,7 @@ export function LoteDetalhe() {
       acoes={
         editavel && (
           <>
+            <Botao onClick={() => setModal('incluir')}>Incluir sessões</Botao>
             <Botao variante="primario" onClick={() => setModal('pago')}>
               Marcar como pago
             </Botao>
@@ -107,6 +177,7 @@ export function LoteDetalhe() {
         <FichaIndicacao lote={lote} dados={dados} />
       )}
 
+      {modal === 'incluir' && <ModalIncluir lote={lote} dados={dados} aoFechar={() => setModal(null)} />}
       <Modal
         aberto={modal === 'pago'}
         titulo="Marcar lote como pago"

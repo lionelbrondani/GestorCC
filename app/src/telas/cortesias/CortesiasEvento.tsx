@@ -1,5 +1,5 @@
-import { formatarData, formatarDataHora, type DestinoCortesias, type Evento, type PessoaCortesia, type Sessao } from '@shared';
-import { Copy, ListChecks, Mail, Pencil, Plus, Printer } from 'lucide-react';
+import { formatarData, formatarDataHora, linkWhatsapp, type DestinoCortesias, type Evento, type PessoaCortesia, type Sessao } from '@shared';
+import { Copy, ListChecks, Mail, MessageCircle, Pencil, Plus, Printer } from 'lucide-react';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useConsulta, useMutacao } from '../../api/hooks';
@@ -221,6 +221,17 @@ export function CortesiasEvento({ evento, sessoes }: { evento: Evento; sessoes: 
           >
             <Mail size={14} aria-hidden /> E-mail
           </Botao>
+          <a
+            className="cc-botao"
+            data-variante="fantasma"
+            data-tamanho="pequeno"
+            href={linkWhatsapp(mensagemDasCortesias(evento.nome, datas, d))}
+            target="_blank"
+            rel="noreferrer"
+            aria-label={`WhatsApp para ${d.nome}`}
+          >
+            <MessageCircle size={14} aria-hidden /> WhatsApp
+          </a>
           <Botao tamanho="pequeno" variante="fantasma" onClick={() => copiar(linkDasCortesias(d.token), 'Link copiado.')}>
             Link
           </Botao>

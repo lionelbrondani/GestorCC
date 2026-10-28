@@ -184,6 +184,7 @@ const REGRAS: Record<Acao, Regra> = {
   'avaliacoes.salvar': ['escalas', 'editar'],
   'lotes.listar': ['pagamentos', 'ver'],
   'lotes.criar': ['pagamentos', 'editar'],
+  'lotes.adicionarItens': ['pagamentos', 'editar'],
   'lotes.retirarItem': ['pagamentos', 'editar'],
   'lotes.marcarPago': ['pagamentos', 'editar'],
   'lotes.cancelar': ['pagamentos', 'editar'],
@@ -526,6 +527,23 @@ const handlers: Handlers = {
     }
     ctx.banco.lotes.push(lote);
     registrar(ctx, 'lote', id, `criou lote com ${d.escalaIds.length} escala(s)`);
+    return lote;
+  },
+  'lotes.adicionarItens': ({ loteId, escalaIds }, ctx) => {
+    const lote = ctx.banco.lotes.find((l) => l.id === loteId);
+    if (!lote || lote.status !== 'enviado') throw erro('LOTE_FECHADO', 'Só é possível alterar lotes ainda não pagos.');
+    if (!escalaIds.length) throw erro('LOTE_VAZIO', 'Selecione ao menos uma sessão.');
+    const escolhidas = escalaIds.map((escalaId) => {
+      const e = ctx.banco.escalas.find((x) => x.id === escalaId);
+      const s = e && ctx.banco.sessoes.find((x) => x.id === e.sessaoId);
+      if (!e || !s || e.status !== 'realizado' || e.loteId) throw erro('NAO_ELEGIVEL', 'Alguma sessão selecionada não pode ser paga.');
+      return { e, s };
+    });
+    for (const { e, s } of escolhidas) {
+      e.loteId = loteId;
+      ctx.banco.loteItens.push({ loteId, escalaId: e.id, pessoaId: e.pessoaId, valor: s.diaria ?? ctx.banco.config.diariaPadrao });
+    }
+    registrar(ctx, 'lote', loteId, `incluiu ${escalaIds.length} escala(s) no lote`);
     return lote;
   },
   'lotes.retirarItem': ({ loteId, escalaId }, ctx) => {

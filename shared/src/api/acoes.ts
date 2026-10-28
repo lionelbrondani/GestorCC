@@ -82,6 +82,8 @@ export interface Acoes {
     { escalaIds: Id[]; titulo: string; periodoReferencia: string; edital: string; iniciativa: string; incluirZerados: boolean },
     Lote
   >;
+  /** Inclui sessões realizadas num lote ainda não pago. */
+  'lotes.adicionarItens': A<{ loteId: Id; escalaIds: Id[] }, Lote>;
   'lotes.retirarItem': A<{ loteId: Id; escalaId: Id }, Lote>;
   'lotes.marcarPago': A<{ loteId: Id; data: DataISO }, Lote>;
   'lotes.cancelar': A<{ loteId: Id; justificativa: string }, Lote>;

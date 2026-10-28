@@ -42,6 +42,28 @@ export function basePagamentos(ctx: Contexto): BasePagamentos & { itens: LoteIte
 }
 
 /** Correções só enquanto o lote espera pagamento (spec 8.2.6). */
+/** Confere as escalas pedidas antes de gravar: todas precisam poder ser pagas agora (realizadas, de evento interno, fora de outro lote). */
+function conferirEscalas(ctx: Contexto, escalaIds: string[] | undefined) {
+  if (!escalaIds?.length) throw new ErroApi('LOTE_VAZIO', 'Selecione ao menos uma sessão.');
+  const base = basePagamentos(ctx);
+  const elegiveis = new Map(elegiveisParaLote(base).map((e) => [e.id, e]));
+  if (new Set(escalaIds).size !== escalaIds.length || escalaIds.some((id) => !elegiveis.has(id))) {
+    throw new ErroApi('NAO_ELEGIVEL', 'Alguma sessão selecionada não pode ser paga.');
+  }
+  return { base, elegiveis };
+}
+
+function incluirItens(ctx: Contexto, loteId: string, escalaIds: string[], { base, elegiveis }: ReturnType<typeof conferirEscalas>): void {
+  const { diariaPadrao } = configAtual(ctx);
+  for (const escalaId of escalaIds) {
+    const e = elegiveis.get(escalaId)!;
+    const sessao = base.sessoes.find((s) => s.id === e.sessaoId)!;
+    ctx.portas.repo.inserir('loteItens', { id: `${loteId}:${escalaId}`, loteId, escalaId, pessoaId: e.pessoaId, valor: valorDaSessao(sessao, diariaPadrao) });
+    const linhaEscala = linhasEscalas(ctx).find((x) => x.id === escalaId)!;
+    ctx.portas.repo.atualizar('escalas', { ...linhaEscala, loteId });
+  }
+}
+
 function loteAberto(ctx: Contexto, loteId: string, mensagem: string): LinhaLote {
   const lote = linhasLotes(ctx).find((l) => l.id === loteId);
   if (!lote || lote.status !== 'enviado') throw new ErroApi('LOTE_FECHADO', mensagem);
@@ -63,28 +85,26 @@ export const handlersPagamentos: Handlers = {
   'lotes.criar': (d, ctx) => {
     if (!d.escalaIds?.length) throw new ErroApi('LOTE_VAZIO', 'Selecione ao menos uma sessão.');
     if (!d.titulo?.trim()) throw new ErroApi('VALIDACAO', 'Informe o título do lote.');
-    const base = basePagamentos(ctx);
-    const elegiveis = new Map(elegiveisParaLote(base).map((e) => [e.id, e]));
-    if (new Set(d.escalaIds).size !== d.escalaIds.length || d.escalaIds.some((id) => !elegiveis.has(id))) {
-      throw new ErroApi('NAO_ELEGIVEL', 'Alguma sessão selecionada não pode ser paga.');
-    }
-    const { diariaPadrao } = configAtual(ctx);
+    const escolhidas = conferirEscalas(ctx, d.escalaIds);
     const id = novoId(ctx.portas, 'L');
     const linha: LinhaLote = {
       id, titulo: d.titulo.trim(), periodoReferencia: d.periodoReferencia ?? '', edital: d.edital ?? '', iniciativa: d.iniciativa ?? '',
       incluirZerados: !!d.incluirZerados, status: 'enviado', pagoEm: '',
     };
     ctx.portas.repo.inserir('lotes', linha);
-    for (const escalaId of d.escalaIds) {
-      const e = elegiveis.get(escalaId)!;
-      const sessao = base.sessoes.find((s) => s.id === e.sessaoId)!;
-      ctx.portas.repo.inserir('loteItens', { id: `${id}:${escalaId}`, loteId: id, escalaId, pessoaId: e.pessoaId, valor: valorDaSessao(sessao, diariaPadrao) });
-      const linhaEscala = linhasEscalas(ctx).find((x) => x.id === escalaId)!;
-      ctx.portas.repo.atualizar('escalas', { ...linhaEscala, loteId: id });
-    }
+    incluirItens(ctx, id, d.escalaIds, escolhidas);
     registrar(ctx, 'lote', id, `criou lote com ${d.escalaIds.length} escala(s)`, null, linha);
     marcarLote(ctx, id);
     return relerLote(ctx, id);
+  },
+
+  'lotes.adicionarItens': ({ loteId, escalaIds }, ctx) => {
+    loteAberto(ctx, loteId, 'Só é possível alterar lotes ainda não pagos.');
+    const escolhidas = conferirEscalas(ctx, escalaIds);
+    incluirItens(ctx, loteId, escalaIds, escolhidas);
+    registrar(ctx, 'lote', loteId, `incluiu ${escalaIds.length} escala(s) no lote`, null, { escalaIds });
+    marcarLote(ctx, loteId);
+    return relerLote(ctx, loteId);
   },
 
   'lotes.retirarItem': ({ loteId, escalaId }, ctx) => {

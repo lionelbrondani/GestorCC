@@ -122,7 +122,7 @@ describe('anexos e documentos', () => {
     expect(docs.gerados[0]).toMatchObject({
       modelo: 'Modelo - Contrato',
       nome: 'Contrato 1-2026 - Show Teste',
-      campos: { NUMERO: '1/2026', EVENTO: 'Show Teste', CONTRATANTE: 'Produtora Teste Ltda', VALOR: 'R$ 5.000,00', DATAS: '05/12/2026', AREAS: 'Plateia, Palco', HOJE: '24/10/2026' },
+      campos: { NUMERO: '1/2026', EVENTO: 'Show Teste', CONTRATANTE: 'Produtora Teste Ltda', VALOR: 'R$ 5.000,00', VALOR_EXTENSO: 'cinco mil reais', DATAS: '05/12/2026', AREAS: 'Plateia, Palco', HOJE: '24/10/2026' },
     });
   });
 

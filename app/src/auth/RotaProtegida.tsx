@@ -1,7 +1,7 @@
 import { pode, type Modulo } from '@shared';
-import type { ReactNode } from 'react';
+import { Suspense, type ReactNode } from 'react';
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
-import { EstadoVazio } from '../componentes';
+import { Carregando, EstadoVazio } from '../componentes';
 import { recursoAtivo, type Recurso } from '../recursos';
 import { Shell } from '../layout/Shell';
 import { AvisoSenha } from './AvisoSenha';
@@ -53,7 +53,9 @@ export function LayoutAutenticado({ busca, notificacoes }: { busca?: ReactNode; 
   }
   return (
     <Shell pessoa={sessao.pessoa} aoSair={sair} busca={busca} notificacoes={notificacoes} faixa={<AvisoSenha />} aoAbrirSobre={abrirSobre}>
-      <Outlet />
+      <Suspense fallback={<Carregando />}>
+        <Outlet />
+      </Suspense>
       <ModalSobre aberto={sobre} aoFechar={fecharSobre} />
     </Shell>
   );
