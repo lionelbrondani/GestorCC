@@ -14,6 +14,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useMutacao } from '../../api/hooks';
 import { useEu } from '../../auth/SessaoContexto';
 import { Alerta, Botao, Campo, Carregando, Cartao, EstadoVazio, Modal, Pagina, Tabela } from '../../componentes';
+import { consultarCep, consultarCnpj } from '../../util/brasilapi';
 import { hoje } from '../../util/hoje';
 import { AVISO_VERSAO_INICIAL } from './Contratos';
 import { INVALIDAR_CONTRATOS, useDadosContratos } from './dadosContratos';
@@ -35,6 +36,23 @@ function ModalContratante({ aoFechar, aoSalvo }: { aoFechar: () => void; aoSalvo
     representanteNome: '', email: '', contatoFaturaNome: '', contatoFaturaEmail: '', contatoFaturaTelefone: '',
   });
   const [erro, setErro] = useState<string | null>(null);
+  const [receita, setReceita] = useState<{ tom: 'info' | 'aviso'; texto: string } | null>(null);
+  // CNPJ e CEP preenchem só os campos ainda vazios (BrasilAPI); CPF não é consultado
+  async function aoSairDoDocumento() {
+    const d = await consultarCnpj(k.documento);
+    if (!d) return;
+    setK((atual) => ({ ...atual, razaoSocial: atual.razaoSocial || d.razaoSocial, endereco: atual.endereco || d.endereco, cep: atual.cep || d.cep, email: atual.email || d.email }));
+    setReceita(
+      d.situacao && d.situacao !== 'ATIVA'
+        ? { tom: 'aviso', texto: `Atenção: na Receita, este CNPJ está com situação ${d.situacao}.` }
+        : { tom: 'info', texto: 'Dados da Receita preenchidos nos campos vazios. Confira antes de salvar.' },
+    );
+  }
+  async function aoSairDoCep() {
+    if (k.endereco) return;
+    const d = await consultarCep(k.cep);
+    if (d) setK((atual) => ({ ...atual, endereco: atual.endereco || d.endereco, cep: d.cep }));
+  }
   const campos: [keyof Contratante, string][] = [
     ['razaoSocial', 'Razão social / nome'], ['documento', 'CNPJ ou CPF'], ['inscricaoMunicipal', 'Inscrição municipal'],
     ['inscricaoEstadual', 'Inscrição estadual'], ['endereco', 'Endereço completo'], ['cep', 'CEP'], ['representanteNome', 'Representante'],
@@ -71,10 +89,19 @@ function ModalContratante({ aoFechar, aoSalvo }: { aoFechar: () => void; aoSalvo
         <div className="grade-2">
           {campos.map(([chave, rotulo]) => (
             <Campo key={chave} rotulo={rotulo}>
-              {(id) => <input id={id} className="cc-entrada" value={k[chave]} onChange={(e) => setK({ ...k, [chave]: e.target.value })} />}
+              {(id) => (
+                <input
+                  id={id}
+                  className="cc-entrada"
+                  value={k[chave]}
+                  onChange={(e) => setK({ ...k, [chave]: e.target.value })}
+                  onBlur={chave === 'documento' ? aoSairDoDocumento : chave === 'cep' ? aoSairDoCep : undefined}
+                />
+              )}
             </Campo>
           ))}
         </div>
+        {receita && <Alerta tom={receita.tom}>{receita.texto}</Alerta>}
         {erro && <Alerta tom="erro">{erro}</Alerta>}
       </div>
     </Modal>

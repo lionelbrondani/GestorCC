@@ -1,29 +1,54 @@
 import { pode, type Config, type Feriado } from '@shared';
-import { Plus, Trash2 } from 'lucide-react';
+import { Download, Plus, Trash2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useApi } from '../../api/cliente';
 import { useConsulta, useMutacao } from '../../api/hooks';
 import { Alerta, Botao, Campo, Carregando, Cartao, Modal, Pagina } from '../../componentes';
 import { useQueryClient } from '@tanstack/react-query';
+import { feriadosNacionais } from '../../util/brasilapi';
 import { hoje } from '../../util/hoje';
 import { useEu } from '../../auth/SessaoContexto';
 import { CartaoAgendaSetor } from '../pessoal/AgendaGoogle';
 import { CartaoSaude } from './CartaoSaude';
 
 function Feriados() {
-  const ano = Number(hoje().slice(0, 4));
+  const atual = Number(hoje().slice(0, 4));
+  const [ano, setAno] = useState(atual);
+  const [importando, setImportando] = useState(false);
   const q = useConsulta('feriados.listar', { ano });
   const salvar = useMutacao('feriados.salvar', ['feriados.listar']);
   const [lista, setLista] = useState<Feriado[]>([]);
   const [msg, setMsg] = useState<string | null>(null);
   useEffect(() => setLista(q.data ?? []), [q.data]);
+
+  // nacionais pela BrasilAPI; a pessoa confere e salva (municipais e recessos da UFSM continuam à mão)
+  async function importar() {
+    setMsg(null);
+    setImportando(true);
+    const nacionais = await feriadosNacionais(ano);
+    setImportando(false);
+    if (!nacionais) return setMsg('Não foi possível buscar os feriados agora. Tente de novo ou adicione à mão.');
+    const novos = nacionais.filter((n) => !lista.some((f) => f.data === n.data));
+    setLista([...lista, ...novos].sort((a, b) => a.data.localeCompare(b.data)));
+    setMsg(novos.length ? `${novos.length} ${novos.length === 1 ? 'feriado nacional incluído' : 'feriados nacionais incluídos'}. Confira e clique em Salvar feriados.` : 'Os feriados nacionais já estavam na lista.');
+  }
+
   return (
     <Cartao
       titulo={`Feriados de ${ano}`}
       acoes={
-        <Botao tamanho="pequeno" onClick={() => setLista([...lista, { data: `${ano}-01-01`, nome: '' }])}>
-          <Plus size={14} aria-hidden /> Adicionar
-        </Botao>
+        <>
+          <select className="cc-entrada" aria-label="Ano dos feriados" style={{ width: 'auto' }} value={ano} onChange={(e) => setAno(Number(e.target.value))}>
+            <option value={atual}>{atual}</option>
+            <option value={atual + 1}>{atual + 1}</option>
+          </select>
+          <Botao tamanho="pequeno" carregando={importando} onClick={importar}>
+            <Download size={14} aria-hidden /> Importar feriados nacionais
+          </Botao>
+          <Botao tamanho="pequeno" onClick={() => setLista([...lista, { data: `${ano}-01-01`, nome: '' }])}>
+            <Plus size={14} aria-hidden /> Adicionar
+          </Botao>
+        </>
       }
     >
       <div className="pilha-2">

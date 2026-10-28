@@ -362,7 +362,7 @@ Para ligar:
 
 1. Com a conta do setor, abra <https://aistudio.google.com/apikey> e crie uma chave de API, no plano gratuito.
 2. Nas **Propriedades do script**, crie `GEMINI_API_KEY` com a chave.
-3. Opcional: crie `GEMINI_MODELO` para trocar o modelo. O padrão é `gemini-2.5-flash`.
+3. Opcional: crie `GEMINI_MODELO` para trocar o modelo. O padrão é `gemini-3.8-flash` (desde a versão 0.16.0; o `gemini-2.5-flash` não é mais liberado para chaves novas).
 4. Cole o `Code.js` novo, crie uma **Nova versão** e publique o site com o `VITE_RECURSOS` da fase 7.
 
 O limite de perguntas por pessoa por dia fica em **Configurações**. Sem a chave, com o limite atingido ou com o Gemini fora do ar, a barra continua funcionando: ela interpreta perguntas simples por palavras-chave e sempre mostra os resultados da busca comum.

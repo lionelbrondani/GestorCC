@@ -309,7 +309,7 @@ export const iaGas: IA = {
   gerar(corpo) {
     const chave = propriedadesGas.obter('GEMINI_API_KEY');
     if (!chave) return null;
-    const modelo = propriedadesGas.obter('GEMINI_MODELO') || 'gemini-2.5-flash';
+    const modelo = propriedadesGas.obter('GEMINI_MODELO') || 'gemini-3.8-flash';
     const r = UrlFetchApp.fetch(`https://generativelanguage.googleapis.com/v1beta/models/${modelo}:generateContent`, {
       method: 'post',
       contentType: 'application/json',
