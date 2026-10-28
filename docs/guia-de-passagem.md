@@ -154,6 +154,7 @@ O histórico de cada versão e o que cada uma pediu na publicação está em `do
 | Pedido de autorização ao rodar uma função | Aceitar com a conta do setor (o Google pede de novo quando entra uma permissão nova) |
 | `/exec` mostra a versão antiga | Faltou criar a **Nova versão** em Gerenciar implantações |
 | Evento não aparece na agenda Google | O gatilho de 5 minutos tenta de novo sozinho. Confira em **Execuções** se há erro |
+| Quer ver se está tudo funcionando | **Configurações → Saúde do sistema**: último backup, rotinas, agenda, e-mails e erros recentes |
 
 ---
 
@@ -165,6 +166,7 @@ O histórico de cada versão e o que cada uma pediu na publicação está em `do
 - **E-mails do sistema:** cada pessoa recebe o seu e não vê os endereços dos outros. O histórico guarda quem mandou, o assunto e quantas pessoas, sem os endereços.
 - **Pessoas que saem:** desative o cadastro em vez de apagar, para manter o histórico. Para apagar dados de alguém a pedido da pessoa, remova as linhas dela nas planilhas Dados e Sigiloso.
 - **Dados de teste:** os fictícios usam e-mails `@teste.invalid` e nomes "TESTE"; o `resetarDados` remove todos.
+- **Limpeza automática:** depois do evento, o sistema apaga os nomes das cortesias (90 dias) e os dados do responsável da ficha (180 dias). Os prazos ficam em **Configurações → Dados pessoais (LGPD)**, e os backups guardam esses dados por mais 30 dias.
 
 ---
 

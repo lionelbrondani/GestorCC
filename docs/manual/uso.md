@@ -34,6 +34,7 @@ Manual resumido, sem dados reais. Ele serve de contexto para as perguntas sobre 
 - **Meus ganhos:** mostra o previsto, o enviado para pagamento e o já pago.
 - **Lotes (gestores):** em **Pagamentos → Novo lote**, escolha as sessões realizadas.
 - **Ficha de indicação:** é copiada ou baixada a partir do lote.
+- **Esqueceu uma sessão:** no lote ainda não pago, use **Incluir sessões**.
 
 ## Almoxarifado e prédio
 
@@ -79,3 +80,9 @@ Manual resumido, sem dados reais. Ele serve de contexto para as perguntas sobre 
 - **Onde:** ficha técnica (ao produtor), cortesias (ao destino), escala publicada (à equipe), lembrete da rodada, pedido à FUNDEP e senha redefinida.
 - **Privacidade:** cada pessoa recebe o seu e-mail e não vê os endereços dos outros. Só o pedido à FUNDEP vai junto, para todos os destinatários.
 - **Limite:** o Google deixa mandar cerca de 100 e-mails por dia. A janela de e-mail mostra quantos ainda cabem.
+
+## Início, saúde do sistema e LGPD
+
+- **O que precisa de você:** no alto do Início, para gestores. Junta as pendências com prazo (presença, escala a publicar, apoio sem equipe, ficha técnica sem resposta, lote de pagamento, contratos), da mais urgente para a menos.
+- **Saúde do sistema:** em **Configurações**. Mostra o último backup, as rotinas automáticas, a agenda Google, os e-mails do dia e os erros recentes.
+- **Dados pessoais (LGPD):** as páginas da ficha técnica e das cortesias dizem para que servem os dados. O sistema apaga sozinho, depois do evento, os nomes das cortesias (90 dias) e os dados do responsável da ficha (180 dias). Os prazos ficam em **Configurações**.

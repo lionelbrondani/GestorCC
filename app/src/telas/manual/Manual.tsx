@@ -91,8 +91,9 @@ const SECOES: Secao[] = [
   },
   {
     id: 'inicio', titulo: 'Início, busca e avisos', icone: Home, publico: 'gestao',
-    serve: 'Ver o dia e a semana e chegar rápido a cada parte do sistema.',
+    serve: 'Ver o que precisa de você, o dia e a semana, e chegar rápido a cada parte do sistema.',
     passos: [
+      <><strong>O que precisa de você</strong>, no alto: as pendências com prazo (presença, escala a publicar, apoio sem equipe, ficha técnica sem resposta, lote de pagamento, contratos), da mais urgente para a menos. Toque para ir direto.</>,
       'Os atalhos coloridos levam direto a cada área: agenda, fichas, escalas, pagamentos e as demais.',
       <><strong>Hoje</strong> e <strong>Próximos 7 dias</strong> mostram os eventos e quantas vagas já estão preenchidas (ex.: 4/4).</>,
       <>A <strong>busca</strong>, no alto, encontra eventos e pessoas e entende perguntas como "quem está escalado sábado?".</>,
@@ -118,7 +119,7 @@ const SECOES: Secao[] = [
     serve: 'O produtor preenche horários, camarins, poltronas reservadas e coffee break por um link, sem login.',
     passos: [
       <>Abra o evento e use <strong>Ficha técnica → Gerar link da ficha técnica</strong>.</>,
-      <><strong>Enviar por e-mail</strong> (você confere o texto antes) ou <strong>Copiar mensagem para o produtor</strong> e cole no WhatsApp.</>,
+      <><strong>Enviar por e-mail</strong> (você confere o texto antes) ou <strong>Abrir no WhatsApp</strong>, com a mensagem pronta.</>,
       'O produtor preenche em etapas e marca as poltronas no mapa. Ele pode corrigir até 2 dias antes da primeira sessão.',
       <>Acompanhe tudo em <strong>Fichas técnicas</strong> (menu): enviadas, aguardando e com prazo na semana.</>,
       <><strong>Lançar montagem e desmontagem na agenda do CC</strong> cria as atividades de apoio do evento a partir da ficha.</>,
@@ -139,7 +140,7 @@ const SECOES: Secao[] = [
     serve: 'Repartir as cortesias entre destinos (ex.: Casa do Estudante); cada destino lança os nomes pelo link.',
     passos: [
       <>No evento, <strong>Cortesias → Novo destino</strong>: nome do destino e quantidade.</>,
-      <><strong>E-mail</strong> manda o link ao responsável do destino (você confere antes); ou <strong>Copiar mensagem</strong> para o WhatsApp.</>,
+      <><strong>E-mail</strong> ou <strong>WhatsApp</strong> mandam a mensagem com o link ao responsável do destino.</>,
       'O destino lança nome e matrícula de quem vai receber, até o dia anterior ao evento.',
       <><strong>Imprimir lista</strong> no dia do evento: ordem alfabética, com a coluna para marcar a retirada.</>,
     ],
@@ -183,6 +184,7 @@ const SECOES: Secao[] = [
     passos: [
       <><strong>Pagamentos → Novo lote</strong>: escolha as sessões realizadas (com presença confirmada).</>,
       'Copie ou baixe a ficha de indicação do lote e envie ao setor de pagamento.',
+      <>Esqueceu uma sessão? No lote ainda não pago, use <strong>Incluir sessões</strong>.</>,
       'Quando o pagamento sair, marque o lote como pago.',
     ],
     prints: [{ arquivo: 'pagamentos', legenda: 'Pagamentos', formato: 'pc' }],
@@ -233,6 +235,8 @@ const SECOES: Secao[] = [
       <><strong>Pessoas → Nova pessoa</strong>: nome, e-mail, matrícula, tipo (bolsista/servidor) e vínculo (fixo/eventual).</>,
       'A senha inicial é a matrícula. Para quem esqueceu: Redefinir senha para a matrícula.',
       <><strong>Configurações</strong>: diária padrão, vagas padrão, feriados, edital/iniciativa, FUNDEP, links (ex.: folder do CC).</>,
+      <><strong>Configurações → Saúde do sistema</strong>: último backup, rotinas automáticas, agenda Google, e-mails do dia e erros recentes.</>,
+      <><strong>Configurações → Dados pessoais (LGPD)</strong>: em quantos dias depois do evento o sistema apaga os nomes das cortesias e os dados do responsável da ficha.</>,
     ],
     prints: [{ arquivo: 'pessoas', legenda: 'Pessoas', formato: 'pc' }],
   },

@@ -23,15 +23,15 @@
   flex-shrink: 0;
 }
 /* pendência: ícone e texto à esquerda, prazo sempre inteiro à direita */
-.inicio-pendencia {
+.inicio-lista .inicio-pendencia {
   flex-wrap: nowrap;
   align-items: flex-start;
   gap: 10px;
 }
-.inicio-pendencia .inicio-icone-pendencia {
+.inicio-lista .inicio-pendencia .inicio-icone-pendencia {
   margin-top: 2px;
 }
-.inicio-pendencia-prazo {
+.inicio-lista .inicio-pendencia-prazo {
   flex: none;
   flex-wrap: nowrap;
 }

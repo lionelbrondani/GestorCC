@@ -507,3 +507,24 @@ Nada disso vai para a agenda Google sozinho. Para tirar tudo, rode `resetarDados
 3. Crie uma **Nova versão** e confira se o `/exec` mostra `"versao":"0.14.0"`.
 4. Depois disso, publique o site.
 
+## 26. Início com pendências, saúde do sistema e LGPD (versão 0.15.0)
+
+**Novidades:**
+- **O que precisa de você:** no alto do Início dos gestores, as pendências com prazo, da mais urgente para a menos. Entram também ficha técnica sem resposta, escala a publicar, apoio sem equipe e sessões aguardando lote de pagamento.
+- **Saúde do sistema:** em Configurações, para quem administra. Mostra o último backup, a rotina de 5 minutos, a agenda Google, os e-mails restantes no dia, os 10 últimos erros e o tamanho das abas.
+- **LGPD:**
+  - As páginas públicas da ficha técnica e das cortesias trazem um aviso de privacidade.
+  - Depois do backup diário, o sistema apaga os nomes e matrículas das cortesias (90 dias depois do evento) e o documento, matrícula, e-mail e telefone do responsável da ficha (180 dias). O nome do responsável e a contagem das cortesias ficam.
+  - Os prazos ficam em Configurações (0 = nunca). Cada limpeza entra no histórico.
+  - Os backups guardam os dados por mais 30 dias, até serem apagados.
+- **Pagamentos:** "Incluir sessões" num lote ainda não pago.
+- **Contratos:** o campo `{{VALOR_EXTENSO}}` dos modelos passa a ser preenchido.
+- **WhatsApp:** botão na ficha técnica e em cada destino de cortesias.
+- **Site mais leve no celular:** cada tela de gestão carrega só quando é aberta.
+
+**Para publicar:**
+1. Cole o `Code.js` novo e salve (o `appsscript.json` não mudou).
+2. Rode o **`instalar`**. Ele acrescenta as colunas `dadosApagadosEm` (aba `fichas`), `apagadoEm` e `nomesApagados` (aba `cortesiasDestinos`).
+3. Crie uma **Nova versão** e confira se o `/exec` mostra `"versao":"0.15.0"`.
+4. Depois disso, publique o site.
+
