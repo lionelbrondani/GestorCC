@@ -1,0 +1,91 @@
+.relatorio-mensal {
+  display: grid;
+  gap: var(--esp-4);
+  border: none;
+  padding: 0;
+  background: none;
+}
+.rel-numeros {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: var(--esp-3);
+}
+.rel-numero {
+  --tom: var(--cor-info);
+  --tom-fundo: var(--cor-info-suave);
+  display: grid;
+  gap: 2px;
+  padding: var(--esp-3) var(--esp-4);
+  border-radius: var(--raio-2);
+  background: var(--cor-superficie);
+  border: 1px solid var(--cor-borda);
+  border-top: 5px solid var(--tom);
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+.rel-numero[data-tom='sucesso'] {
+  --tom: var(--cor-sucesso);
+  --tom-fundo: var(--cor-sucesso-suave);
+}
+.rel-numero[data-tom='destaque'] {
+  --tom: var(--cor-destaque-escuro);
+  --tom-fundo: var(--cor-destaque-suave);
+}
+.rel-numero[data-tom='aviso'] {
+  --tom: var(--cor-aviso);
+  --tom-fundo: var(--cor-aviso-suave);
+}
+.rel-numero[data-tom='erro'] {
+  --tom: var(--cor-erro);
+  --tom-fundo: var(--cor-erro-suave);
+}
+.rel-numero-icone {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--tom-fundo);
+  color: var(--tom);
+  margin-bottom: 4px;
+}
+.rel-numero strong {
+  font-family: var(--fonte-titulo);
+  font-size: 1.5rem;
+  line-height: 1.1;
+}
+.rel-numero span:last-child {
+  font-size: 13px;
+  color: var(--cor-texto-2);
+}
+.rel-barra {
+  position: relative;
+  display: block;
+  min-width: 160px;
+  height: 22px;
+  border-radius: 4px;
+  background: var(--cor-superficie-2);
+  overflow: hidden;
+}
+.rel-barra span {
+  position: absolute;
+  inset: 0 auto 0 0;
+  background: var(--cor-sucesso-suave);
+  border-right: 3px solid var(--cor-sucesso);
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+.rel-barra em {
+  position: relative;
+  font-style: normal;
+  font-size: 13px;
+  font-weight: 600;
+  padding-left: 6px;
+  line-height: 22px;
+}
+@media print {
+  .relatorio-mensal .cc-cartao {
+    break-inside: avoid;
+    box-shadow: none;
+  }
+}

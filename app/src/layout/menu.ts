@@ -2,6 +2,7 @@ import { pode, type Modulo, type Pessoa } from '@shared';
 import { recursoAtivo, type Recurso } from '../recursos';
 import {
   Banknote,
+  BarChart3,
   Bell,
   CalendarCheck,
   CalendarDays,
@@ -38,6 +39,7 @@ export const ITENS_GESTAO: ItemMenu[] = [
   { rota: '/fichas', rotulo: 'Fichas técnicas', icone: ClipboardCheck, modulo: 'eventos', nivel: 'editar' },
   { rota: '/escalas', rotulo: 'Escalas', icone: ClipboardList, modulo: 'escalas' },
   { rota: '/pagamentos', rotulo: 'Pagamentos', icone: Banknote, modulo: 'pagamentos' },
+  { rota: '/relatorio-mensal', rotulo: 'Relatório mensal', icone: BarChart3, modulo: 'escalas', nivel: 'editar' },
   { rota: '/orcamento', rotulo: 'Execução orçamentária', icone: PiggyBank, modulo: 'pagamentos', nivel: 'editar' },
   { rota: '/contratos', rotulo: 'Contratos', icone: FileSignature, modulo: 'contratos' },
   { rota: '/almox', rotulo: 'Almoxarifado', icone: Package, modulo: 'almoxEstoque' },
