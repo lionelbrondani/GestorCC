@@ -1,4 +1,4 @@
-import { diasDoMes, mesExtenso, pode, somarDias, TIPOS_EVENTO, diaDaSemanaCurto } from '@shared';
+import { diasDoMes, ehApoio, mesExtenso, pode, somarDias, TIPOS_EVENTO, diaDaSemanaCurto } from '@shared';
 import { ChevronLeft, ChevronRight, Plus, Printer } from 'lucide-react';
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
@@ -7,7 +7,7 @@ import { useConsulta } from '../../api/hooks';
 import { useEu } from '../../auth/SessaoContexto';
 import { Abas, Botao, Carregando, Etiqueta, Pagina, Tabela } from '../../componentes';
 import { hoje } from '../../util/hoje';
-import { dataLonga, horarioTexto } from '../../util/sessoes';
+import { dataLonga, horarioTexto, tituloSessao } from '../../util/sessoes';
 import { CartaoAgendaSetor } from '../pessoal/AgendaGoogle';
 import { Estatisticas } from './Estatisticas';
 import './agenda.css';
@@ -114,11 +114,11 @@ export function Agenda() {
                           className="calendario-evento"
                           data-cancelado={s.status === 'cancelada' || undefined}
                           data-externo={ev?.pagamento === 'externo' || undefined}
-                          title={`${ev?.nome} ${s.rotulo ?? ''} · ${horarioTexto(s)}`}
+                          title={`${tituloSessao(ev, s)} · ${horarioTexto(s)}`}
+                          data-apoio={ehApoio(s) || undefined}
                         >
                           {s.chegada ? `${s.chegada} ` : ''}
-                          {ev?.nome}
-                          {s.rotulo ? ` (${s.rotulo})` : ''}
+                          {tituloSessao(ev, s)}
                         </Link>
                       );
                     })}
@@ -134,8 +134,7 @@ export function Agenda() {
                   titulo: 'Evento',
                   render: (s) => (
                     <span className="negrito">
-                      {periodo.evento.get(s.eventoId)?.nome}
-                      {s.rotulo ? ` – ${s.rotulo}` : ''}
+                      {tituloSessao(periodo.evento.get(s.eventoId), s)}
                     </span>
                   ),
                 },

@@ -1,4 +1,4 @@
-import { formatarDataHora, linkWhatsapp, mesExtenso, textoLembreteRodada, type Rodada } from '@shared';
+import { ehApoio, formatarDataHora, linkWhatsapp, mesExtenso, textoLembreteRodada, type Rodada } from '@shared';
 import { Copy, MessageCircle } from 'lucide-react';
 import { useState } from 'react';
 import { useMutacao } from '../../api/hooks';
@@ -15,7 +15,8 @@ function NovaRodada({ mes, dados, aoFechar }: { mes: string; dados: Dados; aoFec
   const nomeMes = mesExtenso(m);
   const [nome, setNome] = useState(`${nomeMes.charAt(0)}${nomeMes.slice(1).toLowerCase()}/${ano}`);
   const [prazo, setPrazo] = useState(`${mes}-01T23:59`);
-  const ativas = dados.sessoes.filter((s) => s.status === 'ativa');
+  // atividades de apoio não entram na rodada de disponibilidade
+  const ativas = dados.sessoes.filter((s) => s.status === 'ativa' && !ehApoio(s));
   const [marcadas, setMarcadas] = useState(new Set(ativas.map((s) => s.id)));
   const [erro, setErro] = useState<string | null>(null);
   const salvar = useMutacao('rodadas.salvar', [...INVALIDAR_ESCALAS]);

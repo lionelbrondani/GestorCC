@@ -1,4 +1,4 @@
-import { TIPOS_EVENTO, validarEvento, type Config, type Evento, type Pessoa, type Sessao } from '@shared';
+import { TIPOS_EVENTO, validarEvento, type Config, type Evento, type Pessoa, type Sessao, ATIVIDADES, NOMES_ATIVIDADE, type AtividadeSessao } from '@shared';
 import { Plus, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import { Alerta, Botao, Campo, Cartao } from '../../componentes';
@@ -125,9 +125,32 @@ export function EventoForm({
         }
       >
         <div className="pilha-2">
-          <p className="pequeno texto-2">Cada sessão é escalada e paga separadamente (uma diária por sessão).</p>
+          <p className="pequeno texto-2">
+            Cada sessão é escalada e paga separadamente (uma diária por sessão). Montagem, passagem de som, desmontagem e ensaio são atividades de apoio: entram na
+            agenda, têm escala própria dos bolsistas fixos (aba Apoio, em Escalas) e não pagam diária.
+          </p>
           {lista.map((s, i) => (
             <div key={i} className="sessao-editor">
+              <Campo rotulo="Atividade">
+                {(id) => (
+                  <select
+                    id={id}
+                    className="cc-entrada"
+                    value={s.atividade ?? 'evento'}
+                    onChange={(e) => {
+                      const atividade = e.target.value as AtividadeSessao;
+                      // apoio: equipe pequena dos bolsistas fixos, sem diária
+                      mudarSessao(i, atividade === 'evento' ? { atividade: undefined } : { atividade, vagasBolsistas: Math.min(s.vagasBolsistas, 2) || 1, vagasServidores: 0, minimoExperientes: 0, diaria: null });
+                    }}
+                  >
+                    {ATIVIDADES.map((a) => (
+                      <option key={a} value={a}>
+                        {a === 'evento' ? 'Evento (sessão com público)' : NOMES_ATIVIDADE[a]}
+                      </option>
+                    ))}
+                  </select>
+                )}
+              </Campo>
               <Campo rotulo="Data">{(id) => <input id={id} className="cc-entrada" type="date" value={s.data} onChange={(e) => mudarSessao(i, { data: e.target.value })} />}</Campo>
               <Campo rotulo="Rótulo">{(id) => <input id={id} className="cc-entrada" placeholder="Ex.: Manhã" value={s.rotulo ?? ''} onChange={(e) => mudarSessao(i, { rotulo: e.target.value })} />}</Campo>
               <label className="cc-caixa">

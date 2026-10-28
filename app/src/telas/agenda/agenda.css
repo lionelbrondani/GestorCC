@@ -116,3 +116,11 @@
   size: A4 portrait;
   margin: 12mm;
 }
+
+/* atividade de apoio (montagem, passagem de som…) no calendário */
+.calendario-evento[data-apoio] {
+  font-style: italic;
+  background: var(--cor-info-suave);
+  outline: 1px dashed var(--cor-info);
+  outline-offset: -1px;
+}

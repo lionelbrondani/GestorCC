@@ -1,5 +1,6 @@
 import {
   contaNaEscala,
+  ehApoio,
   contarNoMes,
   estaDisponivel,
   sugestoesEquilibrio,
@@ -47,7 +48,8 @@ export function Montador({ mes, aoPublicar }: { mes: string; aoPublicar: () => v
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dados.carregando, dados.escalas]);
 
-  const ativas = dados.sessoes.filter((s) => s.status === 'ativa');
+  // atividades de apoio têm escala própria (aba Apoio)
+  const ativas = dados.sessoes.filter((s) => s.status === 'ativa' && !ehApoio(s));
   const editaveis = ativas.filter((s) => !s.publicadaEm);
   useEffect(() => {
     if (!sessaoId && ativas.length) setSessaoId((editaveis[0] ?? ativas[0]).id);

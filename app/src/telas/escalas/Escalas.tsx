@@ -3,6 +3,7 @@ import { Printer } from 'lucide-react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { Abas, Pagina } from '../../componentes';
 import { hoje } from '../../util/hoje';
+import { Apoio } from './Apoio';
 import { Avaliacoes } from './Avaliacoes';
 import { Montador } from './Montador';
 import { Presenca } from './Presenca';
@@ -11,10 +12,11 @@ import { Rodadas } from './Rodadas';
 import { VerEscala } from './VerEscala';
 import './escalas.css';
 
-type Aba = 'rodadas' | 'montar' | 'ver' | 'publicadas' | 'presenca' | 'avaliacoes';
+type Aba = 'rodadas' | 'montar' | 'apoio' | 'ver' | 'publicadas' | 'presenca' | 'avaliacoes';
 const ABAS: { id: Aba; rotulo: string }[] = [
   { id: 'rodadas', rotulo: 'Disponibilidade' },
   { id: 'montar', rotulo: 'Montar' },
+  { id: 'apoio', rotulo: 'Apoio' },
   { id: 'ver', rotulo: 'Ver escala' },
   { id: 'publicadas', rotulo: 'Publicadas' },
   { id: 'presenca', rotulo: 'Presença' },
@@ -48,6 +50,7 @@ export function Escalas() {
       <Abas abas={ABAS} ativa={aba} aoMudar={(a) => mudar('aba', a)} />
       {aba === 'rodadas' && <Rodadas mes={mes} />}
       {aba === 'montar' && <Montador mes={mes} aoPublicar={() => mudar('aba', 'publicadas')} />}
+      {aba === 'apoio' && <Apoio mes={mes} />}
       {aba === 'ver' && <VerEscala mes={mes} />}
       {aba === 'publicadas' && <Publicadas mes={mes} />}
       {aba === 'presenca' && <Presenca mes={mes} />}

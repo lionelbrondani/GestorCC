@@ -1,4 +1,5 @@
 import {
+  ehApoio,
   emLoteAtivo,
   valorDaSessao,
   valorTotalContrato,
@@ -71,7 +72,9 @@ export function levantamentoMensal(b: BaseLevantamento) {
       if (!pessoa) return null;
       const minhas = escalas.filter((e) => e.pessoaId === id);
       const realizadas = minhas.filter((e) => e.status === 'realizado');
-      const internas = pessoa.tipo === 'bolsista' ? realizadas.filter((e) => evento(sessoes.find((s) => s.id === e.sessaoId)!)?.pagamento === 'interno') : [];
+      // diária só nas sessões do evento (apoio não paga) de eventos com pagamento interno
+      const sessaoDe = (e: Escala) => sessoes.find((s) => s.id === e.sessaoId)!;
+      const internas = pessoa.tipo === 'bolsista' ? realizadas.filter((e) => !ehApoio(sessaoDe(e)) && evento(sessaoDe(e))?.pagamento === 'interno') : [];
       const valor = (lista: Escala[]) => lista.reduce((n, e) => n + valorDaSessao(sessoes.find((s) => s.id === e.sessaoId)!, b.diariaPadrao), 0);
       return {
         pessoa,

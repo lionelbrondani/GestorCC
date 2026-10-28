@@ -1,8 +1,7 @@
-import { diaDaSemana, formatarData, mesExtenso, type Evento, type Pessoa, type Sessao } from '@shared';
+import { diaDaSemana, formatarData, mesExtenso, tituloComAtividade, type Evento, type Pessoa, type Sessao } from '@shared';
 
 export function tituloSessao(evento: Evento | undefined, sessao: Sessao): string {
-  const nome = evento?.nome ?? 'Evento';
-  return sessao.rotulo ? `${nome} – ${sessao.rotulo}` : nome;
+  return tituloComAtividade(evento?.nome ?? 'Evento', sessao);
 }
 
 export function dataLonga(d: string): string {
