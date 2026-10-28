@@ -53,7 +53,7 @@ As planilhas ficam na pasta **GestorCC** do Drive da conta do setor:
 | Conta | Para que serve | Recomendação |
 |---|---|---|
 | **Conta Google do setor** | Dona do Apps Script, das planilhas, da pasta GestorCC e da agenda | Pelo menos duas pessoas do setor com acesso |
-| **gestorcc.webapp@gmail.com** | Dona do site no Firebase | A senha fica com o setor; ative a verificação em duas etapas |
+| **gestorcc.webapp@gmail.com** | Dona do site no Firebase e da chave do Gemini (busca) | A senha fica com o setor; ative a verificação em duas etapas; nunca cadastre faturamento |
 | **GitHub** (`lionelbrondani/GestorCC`) | Código-fonte | Peça para ser colaborador, ou que o repositório seja transferido para uma conta do setor |
 | Sua conta de **gestor no GestorCC** | Usar o sistema | Criada em **Pessoas**, com o modelo de permissão "gestor" |
 

@@ -360,7 +360,7 @@ A barra de busca entende perguntas como "quem trabalha sábado?" ou "o que preci
 
 Para ligar:
 
-1. Com a conta do setor, abra <https://aistudio.google.com/apikey> e crie uma chave de API, no plano gratuito.
+1. Com a conta **gestorcc.webapp@gmail.com** (a do sistema; a do setor também serve), abra <https://aistudio.google.com/apikey> e crie uma chave de API, no plano gratuito, num projeto novo. Não cadastre faturamento: com ele, o uso passa a ser cobrado.
 2. Nas **Propriedades do script**, crie `GEMINI_API_KEY` com a chave.
 3. Opcional: crie `GEMINI_MODELO` para trocar o modelo. O padrão é `gemini-3.8-flash` (desde a versão 0.16.0; o `gemini-2.5-flash` não é mais liberado para chaves novas).
 4. Cole o `Code.js` novo, crie uma **Nova versão** e publique o site com o `VITE_RECURSOS` da fase 7.
