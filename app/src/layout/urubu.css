@@ -1,0 +1,123 @@
+/* Assistente: botão flutuante e painel de conversa */
+.urubu-botao {
+  position: fixed;
+  right: 20px;
+  bottom: 20px;
+  z-index: 45;
+  display: grid;
+  place-items: center;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  border: 2px solid var(--cor-destaque);
+  background: var(--cor-superficie);
+  box-shadow: var(--sombra-2);
+  cursor: pointer;
+}
+.urubu-botao:hover {
+  transform: translateY(-2px);
+}
+.urubu-painel {
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  z-index: 46;
+  display: flex;
+  flex-direction: column;
+  width: min(400px, calc(100vw - 32px));
+  height: min(620px, calc(100vh - 100px));
+  background: var(--cor-superficie);
+  border: 1px solid var(--cor-borda);
+  border-radius: var(--raio-3);
+  box-shadow: var(--sombra-2);
+  overflow: hidden;
+}
+.urubu-topo {
+  display: flex;
+  align-items: center;
+  gap: var(--esp-2);
+  padding: var(--esp-2) var(--esp-3);
+  background: var(--cor-nav);
+  color: var(--cor-nav-texto);
+}
+.urubu-topo > div {
+  display: grid;
+  flex: 1;
+}
+.urubu-topo .pequeno {
+  color: var(--cor-nav-texto-2);
+}
+.urubu-topo .cc-botao {
+  color: var(--cor-nav-texto);
+}
+.urubu-conversa {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--esp-2);
+  padding: var(--esp-3);
+  background: var(--cor-fundo);
+}
+.urubu-msg {
+  max-width: 88%;
+  display: grid;
+  gap: var(--esp-2);
+}
+.urubu-msg p {
+  margin: 0;
+  padding: var(--esp-2) var(--esp-3);
+  border-radius: var(--raio-2);
+  background: var(--cor-superficie);
+  border: 1px solid var(--cor-borda);
+}
+.urubu-msg[data-de='eu'] {
+  align-self: flex-end;
+}
+.urubu-msg[data-de='eu'] p {
+  background: var(--cor-destaque-suave);
+  border-color: var(--cor-destaque);
+}
+.urubu-msg[data-de='urubu'] {
+  align-self: flex-start;
+}
+.urubu-msg .busca-resposta {
+  margin-bottom: 0;
+  background: var(--cor-superficie);
+}
+.urubu-sugestoes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--esp-2);
+}
+.urubu-envio {
+  display: flex;
+  gap: var(--esp-2);
+  padding: var(--esp-2);
+  border-top: 1px solid var(--cor-borda);
+}
+.urubu-envio .cc-entrada {
+  flex: 1;
+}
+@media (max-width: 899px) {
+  /* acima da barra de baixo do celular */
+  .urubu-botao {
+    right: 12px;
+    bottom: calc(var(--altura-barra-inferior, 64px) + 12px);
+    width: 56px;
+    height: 56px;
+  }
+  .urubu-painel {
+    right: 8px;
+    left: 8px;
+    width: auto;
+    bottom: calc(var(--altura-barra-inferior, 64px) + 8px);
+    height: calc(100vh - var(--altura-topo, 60px) - var(--altura-barra-inferior, 64px) - 24px);
+  }
+}
+@media print {
+  .urubu-botao,
+  .urubu-painel {
+    display: none !important;
+  }
+}

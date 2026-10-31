@@ -1,0 +1,19 @@
+{
+  "name": "@gestorcc/api",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "node build.mjs",
+    "test": "vitest run",
+    "push:teste": "npm run build && cd ambientes/teste && clasp push -f",
+    "push:producao": "npm run build && cd ambientes/producao && clasp push -f"
+  },
+  "devDependencies": {
+    "@google/clasp": "2.4.2",
+    "@types/google-apps-script": "1.0.83",
+    "@types/node": "22.9.0",
+    "esbuild": "0.24.0",
+    "typescript": "5.6.3",
+    "vitest": "2.1.8"
+  }
+}

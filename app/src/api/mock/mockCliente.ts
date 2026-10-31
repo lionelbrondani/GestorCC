@@ -1,0 +1,1272 @@
+import { interpretarSimulado } from '../../busca/interpretarSimulado';
+import {
+  AO_SETOR,
+  calcularScores,
+  DIAS_SCORE,
+  DIAS_SCORE_FUTURO,
+  diasBloqueados,
+  diasOcupados,
+  diferencaDias,
+  ehGestor,
+  ErroApi,
+  erroDaSaida,
+  erroDoAchado,
+  erroDoBloqueio,
+  errosCortesias,
+  errosDaFicha,
+  errosDoPedido,
+  eventoDoPedido,
+  fichaTravada,
+  fichaVazia,
+  formatarCod,
+  formatarData,
+  itensDaAgenda,
+  limparAchado,
+  dadosParaEquipe,
+  limparFicha,
+  limparPedido,
+  limparPessoas,
+  MAX_DIAS_CALENDARIO,
+  meusGanhos,
+  MODULO_DO_EMAIL,
+  normalizarMatricula,
+  O_SETOR,
+  pode,
+  prazoCortesias,
+  prazoDaFicha,
+  ROTULO_STATUS_OCORRENCIA,
+  separarEmails,
+  somarDias,
+  validarRetirada,
+  validarTransicao,
+  type Acao,
+  type Achado,
+  type BloqueioData,
+  type DestinoCortesias,
+  type Entrada,
+  type Escala,
+  type FichaPublica,
+  type FichaTecnica,
+  type Id,
+  type Modulo,
+  type Ocorrencia,
+  type PedidoDatas,
+  type Pessoa,
+  type Saida,
+} from '@shared';
+import type { ApiCliente } from '../cliente';
+import { criarArmazenamento, type Banco } from './armazenamento';
+
+export interface OpcoesMock {
+  latenciaMs?: number;
+  hoje?: string;
+  persistir?: boolean;
+}
+
+type Contexto = { banco: Banco; eu: Pessoa | null; hoje: string; agora: string };
+type Handler<A extends Acao> = (dados: Entrada<A>, ctx: Contexto) => Saida<A>;
+type Regra = 'publica' | 'logado' | [Modulo, 'ver' | 'editar'];
+
+const erro = (codigo: string, mensagem: string) => new ErroApi(codigo, mensagem);
+const SEM_PERMISSAO = () => erro('SEM_PERMISSAO', 'Você não tem permissão para esta ação.');
+
+let contadorId = 0;
+const novoId = (prefixo: string) => `${prefixo}-${Date.now().toString(36)}-${(++contadorId).toString(36)}`;
+
+function exigir(ctx: Contexto, modulo: Modulo, nivel: 'ver' | 'editar') {
+  if (!ctx.eu || !pode(ctx.eu.permissoes, modulo, nivel)) throw SEM_PERMISSAO();
+}
+
+function registrar(ctx: Contexto, entidade: string, entidadeId: Id, acao: string, justificativa = '') {
+  ctx.banco.historico.unshift({ id: novoId('h'), quando: ctx.agora, quemId: ctx.eu?.id ?? '', entidade, entidadeId, acao, justificativa });
+}
+
+function notificar(ctx: Contexto, pessoaIds: Id[], texto: string, link: string) {
+  for (const pessoaId of new Set(pessoaIds)) {
+    ctx.banco.notificacoes.unshift({ id: novoId('n'), pessoaId, texto, link, criadaEm: ctx.agora, lida: false });
+  }
+}
+
+function nomeSessao(ctx: Contexto, sessaoId: Id): string {
+  const s = ctx.banco.sessoes.find((x) => x.id === sessaoId);
+  const ev = s && ctx.banco.eventos.find((e) => e.id === s.eventoId);
+  if (!s || !ev) return 'sessão';
+  return `${ev.nome}${s.rotulo ? ` – ${s.rotulo}` : ''} (${s.data.split('-').reverse().join('/')})`;
+}
+
+function sessaoAbertaParaMim(ctx: Contexto, sessaoId: Id): boolean {
+  const s = ctx.banco.sessoes.find((x) => x.id === sessaoId);
+  if (!s || s.status !== 'ativa') return false;
+  if (s.convocacao && s.convocacao.abertaAte >= ctx.agora) return true;
+  return ctx.banco.rodadas.some((r) => r.status === 'aberta' && r.prazo >= ctx.agora && r.sessaoIds.includes(sessaoId));
+}
+
+/** PDFs anexados no protótipo (só na memória da página). */
+const ANEXOS_PROTOTIPO = new Map<string, string>();
+/** Autorizados do almoxarifado desativados no protótipo (os ativos ficam no banco). */
+const AUTORIZADOS_INATIVOS = new Set<string>();
+
+/** Destinos de cortesias do protótipo (só em memória). */
+const CORTESIAS_PROTOTIPO = new Map<Id, Omit<DestinoCortesias, 'travada' | 'prazo'>>();
+
+function destinoCompleto(ctx: Contexto, id: Id): DestinoCortesias {
+  const d = CORTESIAS_PROTOTIPO.get(id);
+  if (!d) throw erro('NAO_ENCONTRADO', 'Destino não encontrado.');
+  const prazo = prazoCortesias(sessoesDaFicha(ctx, d.eventoId).map((s) => s.data));
+  return { ...d, pessoas: [...d.pessoas], prazo, travada: fichaTravada({ trava: d.trava, prazo, hoje: ctx.hoje }) };
+}
+
+function destinoPorToken(ctx: Contexto, token: string) {
+  const d = [...CORTESIAS_PROTOTIPO.values()].find((x) => x.token === token);
+  const ev = d && ctx.banco.eventos.find((e) => e.id === d.eventoId);
+  if (!d || !ev) throw erro('LINK', `Este link não vale mais. Peça um novo ${AO_SETOR}.`);
+  if (ev.status === 'cancelado') throw erro('LINK', 'Este evento foi cancelado.');
+  const c = destinoCompleto(ctx, d.id);
+  return {
+    d: c,
+    publica: {
+      evento: { nome: ev.nome, datas: sessoesDaFicha(ctx, ev.id).map((s) => s.data) },
+      destino: { nome: c.nome, quantidade: c.quantidade, pedirMatricula: c.pedirMatricula },
+      travada: c.travada, prazo: c.prazo, pessoas: c.pessoas, diasGuardarDados: ctx.banco.config.diasGuardarCortesias,
+    },
+  };
+}
+
+function gravarPessoasMock(id: Id, bruto: unknown) {
+  const d = CORTESIAS_PROTOTIPO.get(id)!;
+  const pessoas = limparPessoas(bruto, d.quantidade);
+  const [e] = errosCortesias(pessoas, d.pedirMatricula);
+  if (e) throw erro('VALIDACAO', `Linha ${e.indice + 1}: ${e.mensagem}`);
+  d.pessoas = pessoas;
+}
+
+/** Fichas técnicas do protótipo (só em memória), por evento. */
+const FICHAS_PROTOTIPO = new Map<Id, Omit<FichaTecnica, 'travada' | 'prazo'>>();
+
+function sessoesDaFicha(ctx: Contexto, eventoId: Id) {
+  return ctx.banco.sessoes.filter((s) => s.eventoId === eventoId && s.status === 'ativa').sort((a, b) => a.data.localeCompare(b.data));
+}
+
+function fichaCompleta(ctx: Contexto, eventoId: Id): FichaTecnica {
+  const f = FICHAS_PROTOTIPO.get(eventoId)!;
+  const prazo = prazoDaFicha(sessoesDaFicha(ctx, eventoId).map((s) => s.data));
+  return { ...f, dados: limparFicha(f.dados, sessoesDaFicha(ctx, eventoId)), prazo, travada: fichaTravada({ trava: f.trava, prazo, hoje: ctx.hoje }) };
+}
+
+function fichaPorToken(ctx: Contexto, token: string) {
+  const f = [...FICHAS_PROTOTIPO.values()].find((x) => x.token === token);
+  const ev = f && ctx.banco.eventos.find((e) => e.id === f.eventoId);
+  if (!f || !ev) throw erro('LINK', `Este link não vale mais. Peça um novo ${AO_SETOR}.`);
+  if (ev.status === 'cancelado') throw erro('LINK', 'Este evento foi cancelado.');
+  return { f: fichaCompleta(ctx, ev.id), ev };
+}
+
+function fichaPublica(ctx: Contexto, token: string): FichaPublica {
+  const { f, ev } = fichaPorToken(ctx, token);
+  return {
+    evento: { nome: ev.nome, sessoes: sessoesDaFicha(ctx, ev.id).map((s) => ({ id: s.id, data: s.data, rotulo: s.rotulo ?? '', inicio: s.inicio, fim: s.fim })) },
+    status: f.status, travada: f.travada, prazo: f.prazo, enviadaEm: f.enviadaEm, dados: f.dados,
+    linkFolder: ctx.banco.config.linksFormularios.find((l) => /folder/i.test(l.nome))?.url ?? '',
+    diasGuardarDados: ctx.banco.config.diasGuardarFicha,
+  };
+}
+
+/** Ficha enviada de evento não cancelado (o panorama da equipe só mostra essas). */
+function fichaEnviada(ctx: Contexto, eventoId: Id) {
+  const ev = ctx.banco.eventos.find((e) => e.id === eventoId);
+  if (!ev || ev.status === 'cancelado' || FICHAS_PROTOTIPO.get(eventoId)?.status !== 'enviada') return null;
+  return { f: fichaCompleta(ctx, eventoId), ev };
+}
+
+function publicoDaPessoa(p: Pessoa): Pessoa {
+  return { ...p, emailAcademico: '', emailAlternativo: undefined, matricula: '', siape: undefined };
+}
+
+const REGRAS: Record<Acao, Regra> = {
+  'sistema.ping': 'publica',
+  'pessoas.importar': ['pessoas', 'editar'],
+  'auth.entrar': 'publica',
+  'auth.trocarSenha': 'logado',
+  'perfil.salvarAgenda': 'logado',
+  'pessoas.listar': 'logado',
+  'pessoas.salvar': ['pessoas', 'editar'],
+  'pessoas.redefinirSenha': ['pessoas', 'editar'],
+  'dadosPessoais.obter': 'logado',
+  'dadosPessoais.salvar': 'logado',
+  'eventos.listar': 'logado',
+  'eventos.salvar': ['eventos', 'editar'],
+  'eventos.cancelar': ['eventos', 'editar'],
+  'sessoes.cancelar': ['eventos', 'editar'],
+  'feriados.listar': 'logado',
+  'feriados.salvar': ['configuracoes', 'editar'],
+  'rodadas.listar': 'logado',
+  'rodadas.salvar': ['escalas', 'editar'],
+  'disponibilidades.listar': 'logado',
+  'disponibilidades.marcar': 'logado',
+  'disponibilidades.marcarVarios': 'logado',
+  'escalas.listar': 'logado',
+  'escalas.salvarRascunho': ['escalas', 'editar'],
+  'escalas.publicar': ['escalas', 'editar'],
+  'escalas.trocar': ['escalas', 'editar'],
+  'escalas.convocar': ['escalas', 'editar'],
+  'escalas.confirmarPresenca': ['escalas', 'editar'],
+  'avaliacoes.listar': ['escalas', 'ver'],
+  'avaliacoes.salvar': ['escalas', 'editar'],
+  'lotes.listar': ['pagamentos', 'ver'],
+  'lotes.criar': ['pagamentos', 'editar'],
+  'lotes.adicionarItens': ['pagamentos', 'editar'],
+  'lotes.retirarItem': ['pagamentos', 'editar'],
+  'lotes.marcarPago': ['pagamentos', 'editar'],
+  'lotes.cancelar': ['pagamentos', 'editar'],
+  'ganhos.meus': 'logado',
+  'externos.registrarEnvio': ['pagamentos', 'editar'],
+  'almox.importar': ['almoxEstoque', 'editar'],
+  'contratos.listar': ['contratos', 'ver'],
+  'contratos.salvar': ['contratos', 'editar'],
+  'contratos.salvarAditivo': ['contratos', 'editar'],
+  'contratantes.salvar': ['contratos', 'editar'],
+  'contratos.anexar': ['contratos', 'editar'],
+  'contratos.anexo': ['contratos', 'ver'],
+  'documentos.gerar': ['contratos', 'editar'],
+  'almox.listar': 'logado',
+  'almox.movimentos': ['almoxEstoque', 'ver'],
+  'almox.salvarItem': ['almoxEstoque', 'editar'],
+  'almox.ajustar': ['almoxEstoque', 'editar'],
+  'almox.retirar': ['almoxSaidas', 'editar'],
+  'almox.autorizados': ['almoxSaidas', 'ver'],
+  'almox.salvarAutorizado': ['almoxSaidas', 'editar'],
+  'almox.pedidos': ['almoxEstoque', 'ver'],
+  'almox.criarPedido': ['almoxEstoque', 'editar'],
+  'almox.receber': ['almoxEstoque', 'editar'],
+  'infra.listar': 'logado',
+  'infra.relatar': 'logado',
+  'infra.atualizar': ['infraestrutura', 'editar'],
+  'infra.importarFormulario': ['infraestrutura', 'editar'],
+  'infra.foto': 'logado',
+  'busca.interpretar': ['busca', 'ver'],
+  'ficha.abrir': 'publica',
+  'ficha.salvar': 'publica',
+  'ficha.anexar': 'publica',
+  'fichas.listar': ['eventos', 'editar'],
+  'cortesias.listar': ['eventos', 'editar'],
+  'cortesias.resumo': ['eventos', 'editar'],
+  'cortesias.salvarDestino': ['eventos', 'editar'],
+  'cortesias.removerDestino': ['eventos', 'editar'],
+  'cortesias.novoLink': ['eventos', 'editar'],
+  'cortesias.travar': ['eventos', 'editar'],
+  'cortesias.salvarPessoas': ['eventos', 'editar'],
+  'cortesia.abrir': 'publica',
+  'cortesia.salvar': 'publica',
+  'fichas.obter': ['eventos', 'editar'],
+  'fichas.link': ['eventos', 'editar'],
+  'fichas.salvar': ['eventos', 'editar'],
+  'fichas.travar': ['eventos', 'editar'],
+  'fichas.lancarAgenda': ['eventos', 'editar'],
+  'fichas.anexo': ['eventos', 'editar'],
+  'fichas.panorama': 'logado',
+  'fichas.panoramaVer': 'logado',
+  'fichas.panoramaAnexo': 'logado',
+  'avisos.listar': 'logado',
+  'avisos.salvar': ['mural', 'editar'],
+  'avisos.confirmarLeitura': 'logado',
+  'notificacoes.listar': 'logado',
+  'notificacoes.marcarLidas': 'logado',
+  'historico.listar': 'logado',
+  'config.obter': 'logado',
+  'config.salvar': ['configuracoes', 'editar'],
+  'sistema.saude': ['configuracoes', 'editar'],
+  'logs.listar': ['configuracoes', 'editar'],
+  'bolsistas.score': ['pessoas', 'ver'],
+  'almox.qr': ['almoxSaidas', 'editar'],
+  'retirada.abrir': 'publica',
+  'retirada.registrar': 'publica',
+  'auth.entrarGoogle': 'publica',
+  'pedido.abrir': 'publica',
+  'pedido.enviar': 'publica',
+  'pedidos.listar': ['eventos', 'editar'],
+  'pedidos.aprovar': ['eventos', 'editar'],
+  'pedidos.recusar': ['eventos', 'editar'],
+  'pedido.calendario': 'publica',
+  'bloqueios.listar': ['eventos', 'ver'],
+  'bloqueios.salvar': ['eventos', 'editar'],
+  'bloqueios.remover': ['eventos', 'editar'],
+  'achados.listar': ['achados', 'ver'],
+  'achados.salvar': ['achados', 'editar'],
+  'achados.foto': ['achados', 'ver'],
+  'achados.situacao': ['achados', 'editar'],
+  'emails.cota': 'logado',
+  'emails.enviar': 'logado',
+};
+
+/** Protótipo: os pedidos de data ficam só na memória da página; um de exemplo (fictício) cai no dia do Concerto de Natal. */
+const PEDIDOS_PROTOTIPO: PedidoDatas[] = [
+  {
+    id: 'pd-exemplo', protocolo: 'PD-2026-0001', status: 'novo', recebidoEm: '2026-10-23T14:20', decididoEm: '', motivoRecusa: '', eventoId: null, listaEspera: false,
+    evento: 'Mostra de Dança Exemplo', categoria: 'Show musical', categoriaOutra: '',
+    dias: [
+      { data: '2026-12-11', atividade: 'montagem', inicio: '08:00', fim: '17:00' },
+      { data: '2026-12-12', atividade: 'evento', inicio: '19:00', fim: '21:00' },
+    ],
+    observacoesHorarios: 'Passagem de som no próprio dia, à tarde.', programacao: 'Apresentações de escolas de dança da região.', indicacao: 'Livre',
+    pessoasEnvolvidas: 60, espacos: ['Palco', 'Plateia', 'Camarins'], espacoOutro: '', publico: 900, informacoes: '',
+    solicitante: { razaoSocial: 'Produtora Exemplo Ltda', documento: '11.222.333/0001-81', endereco: 'Rua do Teste, 10 - Centro, Cidade Exemplo/UF', cep: '01001-000', inscricaoEstadual: 'Isento', inscricaoMunicipal: '123' },
+    responsavel: { nome: 'Pessoa Exemplo', cpf: '529.982.247-25', email: 'contato@produtora.exemplo', telefone: '(00) 99999-0000' },
+  },
+  {
+    id: 'pd-exemplo-2', protocolo: 'PD-2026-0002', status: 'novo', recebidoEm: '2026-10-24T09:05', decididoEm: '', motivoRecusa: '', eventoId: null, listaEspera: true,
+    evento: 'Sarau de Poesia Exemplo', categoria: 'Outro', categoriaOutra: 'Sarau',
+    dias: [{ data: '2026-11-28', atividade: 'evento', inicio: '19:30', fim: '21:30' }],
+    observacoesHorarios: '', programacao: 'Leitura de poemas com música ao vivo.', indicacao: 'Livre',
+    pessoasEnvolvidas: 12, espacos: ['Palco', 'Plateia'], espacoOutro: '', publico: 250, informacoes: 'Se o dia 28 não liberar, temos interesse em outra data em dezembro.',
+    solicitante: { razaoSocial: 'Coletivo Literário Exemplo', documento: '11.222.333/0001-81', endereco: 'Rua do Teste, 20 - Centro, Cidade Exemplo/UF', cep: '01001-000', inscricaoEstadual: 'Isento', inscricaoMunicipal: 'Isento' },
+    responsavel: { nome: 'Pessoa Exemplo Dois', cpf: '529.982.247-25', email: 'sarau@coletivo.exemplo', telefone: '(00) 99999-0001' },
+  },
+];
+
+/** Protótipo: chave do QR da porta do almoxarifado (na API fica nas propriedades do script). */
+let CHAVE_QR_PROTOTIPO = 'qr-prototipo';
+
+/** Protótipo: trocas pedidas pelo próprio bolsista (fictícias), para o score. */
+const TROCAS_PEDIDAS_PROTOTIPO: { pessoaId: Id; quando: string }[] = [
+  { pessoaId: 'p27', quando: '2026-10-21T16:20' },
+  { pessoaId: 'p27', quando: '2026-09-12T10:00' },
+];
+
+/** Protótipo: datas bloqueadas pela gestão (fictícias), só na memória da página. */
+const BLOQUEIOS_PROTOTIPO: BloqueioData[] = [{ id: 'bl-exemplo', de: '2026-12-24', ate: '2027-01-03', motivo: 'Recesso de fim de ano' }];
+
+/** Cancelou sessão: o dia que ficou livre avisa quem gerencia, se há pedido na lista de espera para ele. */
+function avisarListaEspera(ctx: Contexto, datas: string[]) {
+  const ainda = new Set(diasOcupados(ctx.banco.sessoes, ctx.banco.eventos, '0000-01-01', '9999-12-31'));
+  const gestores = ctx.banco.pessoas.filter((p) => p.ativo && pode(p.permissoes, 'eventos', 'editar')).map((p) => p.id);
+  for (const p of PEDIDOS_PROTOTIPO.filter((x) => x.status === 'novo' && x.listaEspera)) {
+    const dia = p.dias.map((d) => d.data).sort().find((d) => datas.includes(d) && !ainda.has(d));
+    if (dia) notificar(ctx, gestores, `O dia ${formatarData(dia)} ficou livre: o pedido ${p.protocolo} (${p.evento}) está na lista de espera.`, '/pedidos');
+  }
+}
+
+/** Protótipo: nenhum e-mail sai de verdade; só confere como a API e desconta da cota do dia. */
+const COTA_EMAILS_PROTOTIPO = 100;
+let emailsMandados = 0;
+
+type Handlers = { [A in Acao]: Handler<A> };
+
+const handlers: Handlers = {
+  'auth.entrar': ({ email, senha }, ctx) => {
+    const p = ctx.banco.pessoas.find((x) => x.emailAcademico.toLowerCase() === email.trim().toLowerCase() && x.ativo);
+    const cred = p && ctx.banco.senhas[p.id];
+    if (!p || !cred || cred.senha !== senha.trim()) throw erro('CREDENCIAIS', 'E-mail ou senha incorretos.');
+    return { token: `tok-${p.id}`, pessoa: p, senhaInicial: cred.inicial };
+  },
+  'sistema.ping': () => ({ versao: 'prototipo' }),
+  'auth.entrarGoogle': () => {
+    throw erro('NAO_DISPONIVEL', 'No protótipo, entre com e-mail e senha.');
+  },
+  'emails.cota': () => ({ restante: COTA_EMAILS_PROTOTIPO - emailsMandados }),
+  'pedido.abrir': (_d, ctx) => ({ diasGuardarDados: ctx.banco.config.diasGuardarFicha, lotacao: ctx.banco.config.lotacaoTeatro }),
+  'pedido.calendario': ({ de, ate }, ctx) => {
+    if (!de || !ate || ate < de || diferencaDias(de, ate) > MAX_DIAS_CALENDARIO) throw erro('VALIDACAO', 'Peça no máximo dois meses de cada vez.');
+    return { ocupados: diasOcupados(ctx.banco.sessoes, ctx.banco.eventos, de, ate), bloqueados: diasBloqueados(BLOQUEIOS_PROTOTIPO, de, ate) };
+  },
+  'bloqueios.listar': () => [...BLOQUEIOS_PROTOTIPO].sort((a, b) => a.de.localeCompare(b.de)),
+  'bloqueios.salvar': ({ id, de, ate, motivo }, ctx) => {
+    const b = { id: id || novoId('bl'), de, ate, motivo: motivo.trim().slice(0, 200) };
+    const problema = erroDoBloqueio(b);
+    if (problema) throw erro('VALIDACAO', problema);
+    const i = BLOQUEIOS_PROTOTIPO.findIndex((x) => x.id === b.id);
+    if (i >= 0) BLOQUEIOS_PROTOTIPO[i] = b;
+    else BLOQUEIOS_PROTOTIPO.push(b);
+    registrar(ctx, 'bloqueio', b.id, `bloqueou as datas de ${formatarData(de)} a ${formatarData(ate)}`, b.motivo);
+    return b;
+  },
+  'bloqueios.remover': ({ id }, ctx) => {
+    const i = BLOQUEIOS_PROTOTIPO.findIndex((x) => x.id === id);
+    if (i < 0) throw erro('NAO_ENCONTRADO', 'Bloqueio não encontrado.');
+    const [b] = BLOQUEIOS_PROTOTIPO.splice(i, 1);
+    registrar(ctx, 'bloqueio', id, `desbloqueou as datas de ${formatarData(b.de)} a ${formatarData(b.ate)}`);
+    return null;
+  },
+  'pedido.enviar': ({ dados, site }, ctx) => {
+    if (site) return { protocolo: 'PD-0000-0000', listaEspera: false };
+    const d = limparPedido(dados);
+    const [falha] = errosDoPedido(d, ctx.hoje);
+    if (falha) throw erro('VALIDACAO', falha.mensagem);
+    const ocupados = new Set(diasOcupados(ctx.banco.sessoes, ctx.banco.eventos, '0000-01-01', '9999-12-31'));
+    const listaEspera = d.dias.some((x) => ocupados.has(x.data));
+    const ano = ctx.hoje.slice(0, 4);
+    const doAno = PEDIDOS_PROTOTIPO.filter((p) => p.protocolo.startsWith(`PD-${ano}-`)).length;
+    const protocolo = `PD-${ano}-${String(doAno + 1).padStart(4, '0')}`;
+    PEDIDOS_PROTOTIPO.push({ ...d, id: novoId('pd'), protocolo, status: 'novo', recebidoEm: ctx.agora, decididoEm: '', motivoRecusa: '', eventoId: null, listaEspera });
+    const gestores = ctx.banco.pessoas.filter((p) => p.ativo && pode(p.permissoes, 'eventos', 'editar')).map((p) => p.id);
+    notificar(ctx, gestores, `Novo pedido de data${listaEspera ? ' (lista de espera)' : ''}: ${d.evento}`, '/pedidos');
+    return { protocolo, listaEspera };
+  },
+  'pedidos.listar': () => [...PEDIDOS_PROTOTIPO.filter((p) => p.status === 'novo'), ...PEDIDOS_PROTOTIPO.filter((p) => p.status !== 'novo')],
+  'pedidos.aprovar': ({ id }, ctx) => {
+    const p = PEDIDOS_PROTOTIPO.find((x) => x.id === id);
+    if (!p) throw erro('NAO_ENCONTRADO', 'Pedido não encontrado.');
+    if (p.status !== 'novo') throw erro('DECIDIDO', 'Este pedido já foi decidido.');
+    const c = ctx.banco.config;
+    const novo = eventoDoPedido(p, { vagasBolsistas: c.vagasBolsistasPadrao, vagasServidores: c.vagasServidoresPadrao, minimoExperientes: c.minimoExperientesPadrao });
+    const criado = handlers['eventos.salvar'](novo, ctx);
+    Object.assign(p, { status: 'aprovado', eventoId: criado.evento.id, decididoEm: ctx.agora });
+    registrar(ctx, 'pedido', id, `aprovou o pedido ${p.protocolo}`);
+    return { pedido: p, eventoId: criado.evento.id };
+  },
+  'pedidos.recusar': ({ id, motivo }, ctx) => {
+    const p = PEDIDOS_PROTOTIPO.find((x) => x.id === id);
+    if (!p) throw erro('NAO_ENCONTRADO', 'Pedido não encontrado.');
+    if (!motivo.trim()) throw erro('VALIDACAO', 'Informe o motivo da recusa.');
+    if (p.status !== 'novo') throw erro('DECIDIDO', 'Este pedido já foi decidido.');
+    Object.assign(p, { status: 'recusado', motivoRecusa: motivo.trim(), decididoEm: ctx.agora });
+    registrar(ctx, 'pedido', id, `recusou o pedido ${p.protocolo}`);
+    return p;
+  },
+  'sistema.saude': (_d, ctx) => ({
+    versao: 'protótipo', agora: ctx.agora, ultimoBackup: `${ctx.hoje}T03:00`, ultimaRotina: ctx.agora,
+    agendaLigada: true, agendaPendentes: 0, emailsRestantes: COTA_EMAILS_PROTOTIPO - emailsMandados, erros: [],
+    tabelas: [
+      { tabela: 'pessoas', linhas: ctx.banco.pessoas.length },
+      { tabela: 'eventos', linhas: ctx.banco.eventos.length },
+      { tabela: 'sessoes', linhas: ctx.banco.sessoes.length },
+      { tabela: 'escalas', linhas: ctx.banco.escalas.length },
+      { tabela: 'historico', linhas: ctx.banco.historico.length },
+    ],
+  }),
+  'emails.enviar': ({ tipo, para, pessoaIds }, ctx) => {
+    if (!pode(ctx.eu!.permissoes, MODULO_DO_EMAIL[tipo], 'editar')) throw SEM_PERMISSAO();
+    const dasPessoas = (pessoaIds ?? []).map((id) => ctx.banco.pessoas.find((p) => p.id === id && p.ativo)?.emailAcademico ?? '');
+    const { validos, invalidos } = separarEmails([...para, ...dasPessoas].join(' '));
+    if (invalidos.length) throw erro('VALIDACAO', `E-mail inválido: ${invalidos.join(', ')}.`);
+    if (!validos.length) throw erro('VALIDACAO', 'Informe para quem vai o e-mail.');
+    emailsMandados += validos.length;
+    registrar(ctx, 'email', tipo, `mandou um e-mail para ${validos.length} pessoa(s)`);
+    return { enviados: validos.length, restante: COTA_EMAILS_PROTOTIPO - emailsMandados };
+  },
+  'pessoas.importar': () => ({ importadas: 0, atualizadas: 0, problemas: [] }),
+  'auth.trocarSenha': ({ atual, nova }, ctx) => {
+    const cred = ctx.banco.senhas[ctx.eu!.id];
+    if (cred.senha !== atual) throw erro('SENHA_ATUAL', 'A senha atual não confere.');
+    if (nova.length < 8) throw erro('SENHA_CURTA', 'A nova senha deve ter pelo menos 8 caracteres.');
+    ctx.banco.senhas[ctx.eu!.id] = { senha: nova, inicial: false };
+    registrar(ctx, 'pessoa', ctx.eu!.id, 'trocou a senha');
+    return { token: `tok-${ctx.eu!.id}` };
+  },
+
+  'perfil.salvarAgenda': ({ email }, ctx) => {
+    const p = ctx.banco.pessoas.find((x) => x.id === ctx.eu!.id)!;
+    if (email !== null && ![p.emailAcademico, p.emailAlternativo].includes(email)) {
+      throw erro('EMAIL', 'Escolha um dos e-mails do seu cadastro.');
+    }
+    p.convitesAgenda = email;
+    registrar(ctx, 'pessoa', p.id, email ? 'ativou convites do Google Agenda' : 'desativou convites do Google Agenda');
+    return p;
+  },
+
+  'pessoas.listar': (_d, ctx) =>
+    pode(ctx.eu!.permissoes, 'pessoas', 'ver') || ehGestor(ctx.eu!.permissoes)
+      ? ctx.banco.pessoas
+      : ctx.banco.pessoas.filter((p) => p.ativo).map(publicoDaPessoa),
+  'pessoas.salvar': (p, ctx) => {
+    if (!normalizarMatricula(p.matricula)) throw erro('MATRICULA', 'Matrícula inválida: use 9 ou 10 dígitos.');
+    const emailEmUso = ctx.banco.pessoas.some(
+      (x) => x.id !== p.id && x.ativo && x.emailAcademico.toLowerCase() === p.emailAcademico.toLowerCase(),
+    );
+    if (emailEmUso) throw erro('EMAIL', 'Já existe uma pessoa ativa com este e-mail acadêmico.');
+    const i = ctx.banco.pessoas.findIndex((x) => x.id === p.id);
+    const salvo = { ...p, id: p.id || novoId('p') };
+    if (i >= 0) ctx.banco.pessoas[i] = salvo;
+    else {
+      ctx.banco.pessoas.push(salvo);
+      ctx.banco.senhas[salvo.id] = { senha: salvo.matricula, inicial: true };
+    }
+    registrar(ctx, 'pessoa', salvo.id, i >= 0 ? 'alterou cadastro/permissões' : 'cadastrou pessoa');
+    return salvo;
+  },
+  'pessoas.redefinirSenha': ({ pessoaId }, ctx) => {
+    const p = ctx.banco.pessoas.find((x) => x.id === pessoaId);
+    if (!p) throw erro('NAO_ENCONTRADO', 'Pessoa não encontrada.');
+    ctx.banco.senhas[p.id] = { senha: p.matricula, inicial: true };
+    registrar(ctx, 'pessoa', p.id, 'redefiniu a senha para a matrícula');
+    return null;
+  },
+  'dadosPessoais.obter': ({ pessoaId }, ctx) => {
+    if (pessoaId !== ctx.eu!.id) exigir(ctx, 'dadosPessoais', 'ver');
+    return ctx.banco.dadosPessoais.find((d) => d.pessoaId === pessoaId) ?? null;
+  },
+  'dadosPessoais.salvar': (d, ctx) => {
+    const proprio = d.pessoaId === ctx.eu!.id;
+    if (!proprio) exigir(ctx, 'dadosPessoais', 'editar');
+    const i = ctx.banco.dadosPessoais.findIndex((x) => x.pessoaId === d.pessoaId);
+    const anterior = i >= 0 ? ctx.banco.dadosPessoais[i] : null;
+    if (i >= 0) ctx.banco.dadosPessoais[i] = d;
+    else ctx.banco.dadosPessoais.push(d);
+    const mudouBanco = !anterior || anterior.banco !== d.banco || anterior.agencia !== d.agencia || anterior.conta !== d.conta;
+    if (proprio && mudouBanco) {
+      const gestores = ctx.banco.pessoas.filter((p) => pode(p.permissoes, 'dadosPessoais', 'editar')).map((p) => p.id);
+      notificar(ctx, gestores, `${ctx.eu!.nome} atualizou os dados bancários.`, `/pessoas/${ctx.eu!.id}`);
+    }
+    registrar(ctx, 'dadosPessoais', d.pessoaId, 'atualizou dados pessoais');
+    return d;
+  },
+
+  'eventos.listar': ({ de, ate }, ctx) => {
+    const sessoes = ctx.banco.sessoes.filter((s) => s.data >= de && s.data <= ate);
+    const ids = new Set(sessoes.map((s) => s.eventoId));
+    return { eventos: ctx.banco.eventos.filter((e) => ids.has(e.id)), sessoes };
+  },
+  'eventos.salvar': ({ evento, sessoes }, ctx) => {
+    const ev = { ...evento, id: evento.id || novoId('e') };
+    const i = ctx.banco.eventos.findIndex((x) => x.id === ev.id);
+    if (i >= 0) ctx.banco.eventos[i] = ev;
+    else ctx.banco.eventos.push(ev);
+    const novas = sessoes.map((s) => ({ ...s, id: s.id || novoId('s'), eventoId: ev.id }));
+    const antigas = ctx.banco.sessoes.filter((s) => s.eventoId === ev.id);
+    for (const s of novas) {
+      const anterior = antigas.find((a) => a.id === s.id);
+      if (anterior?.horarioADefinir && !s.horarioADefinir) {
+        const escalados = ctx.banco.escalas.filter((e) => e.sessaoId === s.id && e.status === 'publicado').map((e) => e.pessoaId);
+        notificar(ctx, escalados, `Horário definido: ${ev.nome}, chegada às ${s.chegada}.`, '/minhas-escalas');
+      }
+    }
+    ctx.banco.sessoes = ctx.banco.sessoes.filter((s) => s.eventoId !== ev.id).concat(novas);
+    // sessão nova entra na rodada aberta do mesmo mês com o selo "nova" (spec 7.2.3), como na API
+    for (const s of novas.filter((n) => !antigas.some((a) => a.id === n.id))) {
+      for (const r of ctx.banco.rodadas.filter((x) => x.status === 'aberta' && x.prazo >= ctx.agora)) {
+        const meses = new Set(ctx.banco.sessoes.filter((x) => r.sessaoIds.includes(x.id)).map((x) => x.data.slice(0, 7)));
+        if (meses.has(s.data.slice(0, 7)) && !r.sessaoIds.includes(s.id)) {
+          r.sessaoIds.push(s.id);
+          r.sessoesNovas = [...(r.sessoesNovas ?? []), s.id];
+        }
+      }
+    }
+    registrar(ctx, 'evento', ev.id, i >= 0 ? 'alterou evento' : 'criou evento');
+    return { evento: ev, sessoes: novas };
+  },
+  'eventos.cancelar': ({ eventoId, justificativa }, ctx) => {
+    if (!justificativa.trim()) throw erro('JUSTIFICATIVA', 'Informe o motivo do cancelamento.');
+    const ev = ctx.banco.eventos.find((e) => e.id === eventoId);
+    if (!ev) throw erro('NAO_ENCONTRADO', 'Evento não encontrado.');
+    ev.status = 'cancelado';
+    const doEvento = ctx.banco.sessoes.filter((x) => x.eventoId === eventoId);
+    for (const s of doEvento) cancelarSessao(ctx, s.id, justificativa);
+    registrar(ctx, 'evento', eventoId, 'cancelou o evento', justificativa);
+    avisarListaEspera(ctx, doEvento.map((s) => s.data));
+    return null;
+  },
+  'sessoes.cancelar': ({ sessaoId, justificativa }, ctx) => {
+    if (!justificativa.trim()) throw erro('JUSTIFICATIVA', 'Informe o motivo do cancelamento.');
+    cancelarSessao(ctx, sessaoId, justificativa);
+    avisarListaEspera(ctx, ctx.banco.sessoes.filter((s) => s.id === sessaoId).map((s) => s.data));
+    return null;
+  },
+  'feriados.listar': ({ ano }, ctx) => ctx.banco.feriados.filter((f) => f.data.startsWith(String(ano))),
+  'feriados.salvar': ({ ano, feriados }, ctx) => {
+    ctx.banco.feriados = ctx.banco.feriados.filter((f) => !f.data.startsWith(String(ano))).concat(feriados);
+    registrar(ctx, 'config', 'feriados', `atualizou feriados de ${ano}`);
+    return feriados;
+  },
+
+  'rodadas.listar': (_d, ctx) => ctx.banco.rodadas,
+  'rodadas.salvar': (r, ctx) => {
+    const salvo = { ...r, id: r.id || novoId('r') };
+    const i = ctx.banco.rodadas.findIndex((x) => x.id === salvo.id);
+    if (i >= 0) ctx.banco.rodadas[i] = salvo;
+    else ctx.banco.rodadas.push(salvo);
+    registrar(ctx, 'rodada', salvo.id, i >= 0 ? `alterou a rodada (${salvo.status})` : 'abriu a rodada');
+    return salvo;
+  },
+  'disponibilidades.listar': ({ sessaoIds }, ctx) =>
+    ctx.banco.disponibilidades.filter(
+      (d) => sessaoIds.includes(d.sessaoId) && (pode(ctx.eu!.permissoes, 'escalas', 'ver') || d.pessoaId === ctx.eu!.id),
+    ),
+  'disponibilidades.marcarVarios': ({ pessoaId, itens }, ctx) => {
+    const alvo = pessoaId ?? ctx.eu!.id;
+    if (alvo !== ctx.eu!.id) exigir(ctx, 'escalas', 'editar');
+    else if (itens.some((i) => !sessaoAbertaParaMim(ctx, i.sessaoId))) throw erro('PRAZO', 'O prazo para marcar disponibilidade nesta sessão terminou.');
+    return itens.map((i) => (handlers['disponibilidades.marcar'] as Handler<'disponibilidades.marcar'>)({ ...i, pessoaId }, ctx));
+  },
+  'disponibilidades.marcar': ({ sessaoId, disponivel, pessoaId }, ctx) => {
+    const alvo = pessoaId ?? ctx.eu!.id;
+    const porOutro = alvo !== ctx.eu!.id;
+    if (porOutro) exigir(ctx, 'escalas', 'editar');
+    else if (!sessaoAbertaParaMim(ctx, sessaoId)) {
+      throw erro('PRAZO', 'O prazo para marcar disponibilidade nesta sessão terminou.');
+    }
+    const s = ctx.banco.sessoes.find((x) => x.id === sessaoId);
+    const origem = porOutro ? 'gestor' : s?.convocacao && s.convocacao.abertaAte >= ctx.agora ? 'convocacao' : 'proprio';
+    const nova = { pessoaId: alvo, sessaoId, disponivel, origem } as const;
+    ctx.banco.disponibilidades = ctx.banco.disponibilidades
+      .filter((d) => !(d.pessoaId === alvo && d.sessaoId === sessaoId))
+      .concat(nova);
+    if (porOutro) registrar(ctx, 'sessao', sessaoId, `marcou disponibilidade por outra pessoa (${disponivel ? 'Sim' : 'Não'})`);
+    return nova;
+  },
+
+  'escalas.listar': ({ de, ate }, ctx) => {
+    const sessoes = new Set(ctx.banco.sessoes.filter((s) => s.data >= de && s.data <= ate).map((s) => s.id));
+    const doPeriodo = ctx.banco.escalas.filter((e) => sessoes.has(e.sessaoId));
+    if (pode(ctx.eu!.permissoes, 'escalas', 'ver')) return doPeriodo;
+    const minhas = new Set(doPeriodo.filter((e) => e.pessoaId === ctx.eu!.id && e.status !== 'rascunho').map((e) => e.sessaoId));
+    return doPeriodo.filter((e) => minhas.has(e.sessaoId) && e.status !== 'rascunho');
+  },
+  'escalas.salvarRascunho': ({ sessaoId, itens }, ctx) => {
+    const atuais = ctx.banco.escalas.filter((e) => e.sessaoId === sessaoId);
+    const publicadas = atuais.filter((e) => e.status !== 'rascunho');
+    const novas: Escala[] = itens
+      .filter((i) => !publicadas.some((p) => p.pessoaId === i.pessoaId && p.status !== 'cancelado'))
+      .map((i) => ({ id: novoId('x'), sessaoId, pessoaId: i.pessoaId, papel: i.papel, status: 'rascunho', adicaoDireta: i.adicaoDireta, loteId: null }));
+    ctx.banco.escalas = ctx.banco.escalas.filter((e) => !(e.sessaoId === sessaoId && e.status === 'rascunho')).concat(novas);
+    registrar(ctx, 'sessao', sessaoId, `salvou rascunho (${novas.length} pessoa(s))`);
+    return ctx.banco.escalas.filter((e) => e.sessaoId === sessaoId);
+  },
+  'escalas.publicar': ({ sessaoIds }, ctx) => {
+    const afetados: Id[] = [];
+    for (const e of ctx.banco.escalas) {
+      if (sessaoIds.includes(e.sessaoId) && e.status === 'rascunho') {
+        e.status = 'publicado';
+        afetados.push(e.pessoaId);
+      }
+    }
+    for (const s of ctx.banco.sessoes) if (sessaoIds.includes(s.id)) s.publicadaEm = ctx.agora;
+    notificar(ctx, afetados, 'Sua escala foi publicada. Confira os horários.', '/minhas-escalas');
+    registrar(ctx, 'escala', sessaoIds.join(','), `publicou ${sessaoIds.length} sessão(ões)`);
+    return null;
+  },
+  'bolsistas.score': (_d, ctx) => {
+    const de = somarDias(ctx.hoje, -DIAS_SCORE);
+    const ate = somarDias(ctx.hoje, DIAS_SCORE_FUTURO);
+    const sessoes = ctx.banco.sessoes.filter((s) => s.status === 'ativa' && s.data >= de && s.data <= ate);
+    const ids = new Set(sessoes.map((s) => s.id));
+    return calcularScores({
+      pessoas: ctx.banco.pessoas, sessoes, escalas: ctx.banco.escalas.filter((e) => ids.has(e.sessaoId)),
+      oferecidas: [...new Set(ctx.banco.rodadas.flatMap((r) => r.sessaoIds))].filter((id) => ids.has(id)),
+      disponibilidades: ctx.banco.disponibilidades,
+      avaliacoes: ctx.banco.avaliacoes.filter((a) => a.mes >= de.slice(0, 7) && a.mes <= ctx.hoje.slice(0, 7)),
+      trocasPedidas: TROCAS_PEDIDAS_PROTOTIPO.filter((t) => t.quando.slice(0, 10) >= de).map((t) => t.pessoaId),
+      de, hoje: ctx.hoje,
+    });
+  },
+  'escalas.trocar': ({ sessaoId, sai, entra, justificativa, aPedido }, ctx) => {
+    if (sai && aPedido && justificativa.trim()) TROCAS_PEDIDAS_PROTOTIPO.push({ pessoaId: sai, quando: ctx.agora });
+    if (!justificativa.trim()) throw erro('JUSTIFICATIVA', 'Informe a justificativa da troca.');
+    if (!sai && !entra) throw erro('TROCA_VAZIA', 'Escolha quem sai e/ou quem entra.');
+    const daSessao = ctx.banco.escalas.filter((e) => e.sessaoId === sessaoId && ['publicado', 'rascunho', 'realizado', 'faltou'].includes(e.status));
+    const saindo = sai ? daSessao.find((e) => e.pessoaId === sai) : undefined;
+    if (sai && !saindo) throw erro('NAO_ENCONTRADO', 'Esta pessoa não está escalada nesta sessão.');
+    if (saindo?.loteId) throw erro('EM_LOTE', 'Esta pessoa já está num lote de pagamento. Retire-a do lote antes de trocar.');
+    const papel = saindo?.papel ?? (ctx.banco.pessoas.find((p) => p.id === entra)?.tipo === 'servidor' ? 'servidor' : 'bolsista');
+    if (entra) {
+      const quem = ctx.banco.pessoas.find((p) => p.id === entra);
+      if (!quem) throw erro('NAO_ENCONTRADO', 'Pessoa não encontrada.');
+      const papelEntra = quem.tipo === 'servidor' ? 'servidor' : 'bolsista';
+      if (papelEntra !== papel) throw erro('PAPEL', 'Servidor só pode ser trocado por servidor, e bolsista por bolsista.');
+      if (daSessao.some((e) => e.pessoaId === entra)) throw erro('DUPLICADO', 'Esta pessoa já está escalada nesta sessão.');
+    }
+    if (saindo) ctx.banco.escalas = ctx.banco.escalas.filter((e) => e.id !== saindo.id);
+    if (entra) {
+      const disp = ctx.banco.disponibilidades.some((d) => d.pessoaId === entra && d.sessaoId === sessaoId && d.disponivel);
+      ctx.banco.escalas.push({ id: novoId('x'), sessaoId, pessoaId: entra, papel, status: saindo?.status === 'faltou' ? 'realizado' : (saindo?.status ?? (daSessao.some((e) => e.status === 'realizado' || e.status === 'faltou') ? 'realizado' : 'publicado')), adicaoDireta: !disp, loteId: null });
+    }
+    const nome = nomeSessao(ctx, sessaoId);
+    if (sai) notificar(ctx, [sai], `Você foi retirado(a) da escala: ${nome}.`, '/minhas-escalas');
+    if (entra) notificar(ctx, [entra], `Você foi escalado(a): ${nome}.`, '/minhas-escalas');
+    const nomeDe = (id: Id | null) => (id ? ctx.banco.pessoas.find((p) => p.id === id)?.nomeCurto ?? id : '—');
+    registrar(ctx, 'sessao', sessaoId, `troca: sai ${nomeDe(sai)}, entra ${nomeDe(entra)}`, justificativa);
+    return ctx.banco.escalas.filter((e) => e.sessaoId === sessaoId);
+  },
+  'escalas.convocar': ({ sessaoId, vagas, abertaAte }, ctx) => {
+    const s = ctx.banco.sessoes.find((x) => x.id === sessaoId);
+    if (!s) throw erro('NAO_ENCONTRADO', 'Sessão não encontrada.');
+    if (vagas < 1) throw erro('VAGAS', 'Informe ao menos 1 vaga extra.');
+    s.convocacao = { abertaAte, vagas };
+    s.vagasBolsistas += vagas;
+    const escalados = new Set(ctx.banco.escalas.filter((e) => e.sessaoId === sessaoId).map((e) => e.pessoaId));
+    const alvos = ctx.banco.pessoas.filter((p) => p.ativo && p.tipo === 'bolsista' && !escalados.has(p.id)).map((p) => p.id);
+    notificar(ctx, alvos, `Precisamos de mais ${vagas} bolsista(s): ${nomeSessao(ctx, sessaoId)}. Marque se puder.`, '/disponibilidade');
+    registrar(ctx, 'sessao', sessaoId, `abriu convocação extra (+${vagas})`, 'convocação extra');
+    return s;
+  },
+  'escalas.confirmarPresenca': ({ sessaoId, faltaram }, ctx) => {
+    for (const e of ctx.banco.escalas) {
+      if (e.sessaoId !== sessaoId || e.status !== 'publicado') continue;
+      e.status = faltaram.includes(e.pessoaId) ? 'faltou' : 'realizado';
+    }
+    registrar(ctx, 'sessao', sessaoId, `confirmou presença (${faltaram.length} falta(s))`);
+    return ctx.banco.escalas.filter((e) => e.sessaoId === sessaoId);
+  },
+  'avaliacoes.listar': ({ mes }, ctx) => ctx.banco.avaliacoes.filter((a) => a.mes === mes),
+  'avaliacoes.salvar': (a, ctx) => {
+    ctx.banco.avaliacoes = ctx.banco.avaliacoes.filter((x) => !(x.pessoaId === a.pessoaId && x.mes === a.mes)).concat(a);
+    return a;
+  },
+
+  'lotes.listar': (_d, ctx) => ({ lotes: ctx.banco.lotes, itens: ctx.banco.loteItens }),
+  'lotes.criar': (d, ctx) => {
+    if (!d.escalaIds.length) throw erro('LOTE_VAZIO', 'Selecione ao menos uma sessão.');
+    const id = novoId('L');
+    const lote = {
+      id, titulo: d.titulo, periodoReferencia: d.periodoReferencia, edital: d.edital, iniciativa: d.iniciativa,
+      incluirZerados: d.incluirZerados, status: 'enviado' as const, criadoEm: ctx.agora, pagoEm: null,
+    };
+    for (const escalaId of d.escalaIds) {
+      const e = ctx.banco.escalas.find((x) => x.id === escalaId);
+      const s = e && ctx.banco.sessoes.find((x) => x.id === e.sessaoId);
+      if (!e || !s || e.status !== 'realizado') throw erro('NAO_ELEGIVEL', 'Alguma sessão selecionada não pode ser paga.');
+      e.loteId = id;
+      ctx.banco.loteItens.push({ loteId: id, escalaId, pessoaId: e.pessoaId, valor: s.diaria ?? ctx.banco.config.diariaPadrao });
+    }
+    ctx.banco.lotes.push(lote);
+    registrar(ctx, 'lote', id, `criou lote com ${d.escalaIds.length} escala(s)`);
+    return lote;
+  },
+  'lotes.adicionarItens': ({ loteId, escalaIds }, ctx) => {
+    const lote = ctx.banco.lotes.find((l) => l.id === loteId);
+    if (!lote || lote.status !== 'enviado') throw erro('LOTE_FECHADO', 'Só é possível alterar lotes ainda não pagos.');
+    if (!escalaIds.length) throw erro('LOTE_VAZIO', 'Selecione ao menos uma sessão.');
+    const escolhidas = escalaIds.map((escalaId) => {
+      const e = ctx.banco.escalas.find((x) => x.id === escalaId);
+      const s = e && ctx.banco.sessoes.find((x) => x.id === e.sessaoId);
+      if (!e || !s || e.status !== 'realizado' || e.loteId) throw erro('NAO_ELEGIVEL', 'Alguma sessão selecionada não pode ser paga.');
+      return { e, s };
+    });
+    for (const { e, s } of escolhidas) {
+      e.loteId = loteId;
+      ctx.banco.loteItens.push({ loteId, escalaId: e.id, pessoaId: e.pessoaId, valor: s.diaria ?? ctx.banco.config.diariaPadrao });
+    }
+    registrar(ctx, 'lote', loteId, `incluiu ${escalaIds.length} escala(s) no lote`);
+    return lote;
+  },
+  'lotes.retirarItem': ({ loteId, escalaId }, ctx) => {
+    const lote = ctx.banco.lotes.find((l) => l.id === loteId);
+    if (!lote || lote.status !== 'enviado') throw erro('LOTE_FECHADO', 'Só é possível alterar lotes ainda não pagos.');
+    ctx.banco.loteItens = ctx.banco.loteItens.filter((i) => !(i.loteId === loteId && i.escalaId === escalaId));
+    const e = ctx.banco.escalas.find((x) => x.id === escalaId);
+    if (e) e.loteId = null;
+    registrar(ctx, 'lote', loteId, 'retirou uma sessão do lote');
+    return lote;
+  },
+  'lotes.marcarPago': ({ loteId, data }, ctx) => {
+    const lote = ctx.banco.lotes.find((l) => l.id === loteId);
+    if (!lote || lote.status !== 'enviado') throw erro('LOTE_FECHADO', 'Este lote não está aguardando pagamento.');
+    lote.status = 'pago';
+    lote.pagoEm = data;
+    const pessoas = ctx.banco.loteItens.filter((i) => i.loteId === loteId).map((i) => i.pessoaId);
+    notificar(ctx, pessoas, `Pagamento do ${lote.titulo} realizado.`, '/ganhos');
+    registrar(ctx, 'lote', loteId, 'marcou como pago');
+    return lote;
+  },
+  'lotes.cancelar': ({ loteId, justificativa }, ctx) => {
+    if (!justificativa.trim()) throw erro('JUSTIFICATIVA', 'Informe o motivo do cancelamento do lote.');
+    const lote = ctx.banco.lotes.find((l) => l.id === loteId);
+    if (!lote || lote.status !== 'enviado') throw erro('LOTE_FECHADO', 'Só é possível cancelar lotes ainda não pagos.');
+    lote.status = 'cancelado';
+    for (const e of ctx.banco.escalas) if (e.loteId === loteId) e.loteId = null;
+    registrar(ctx, 'lote', loteId, 'cancelou o lote', justificativa);
+    return lote;
+  },
+  'ganhos.meus': (_d, ctx) =>
+    meusGanhos(
+      ctx.eu!.id,
+      { eventos: ctx.banco.eventos, sessoes: ctx.banco.sessoes, escalas: ctx.banco.escalas, lotes: ctx.banco.lotes, itens: ctx.banco.loteItens },
+      ctx.banco.config.diariaPadrao,
+    ),
+  'almox.importar': () => ({ itens: 0, autorizados: 0, problemas: [] }),
+  'externos.registrarEnvio': ({ eventoId, campos }, ctx) => {
+    ctx.banco.envioExterno.push({ eventoId, enviadoEm: ctx.agora, campos });
+    registrar(ctx, 'evento', eventoId, 'registrou envio de dados ao pagador externo');
+    return null;
+  },
+
+  'contratos.listar': (_d, ctx) => ({ contratos: ctx.banco.contratos, aditivos: ctx.banco.aditivos, contratantes: ctx.banco.contratantes }),
+  'contratos.salvar': (c, ctx) => {
+    const salvo = { ...c, id: c.id || novoId('c') };
+    const i = ctx.banco.contratos.findIndex((x) => x.id === salvo.id);
+    if (i >= 0) ctx.banco.contratos[i] = salvo;
+    else ctx.banco.contratos.push(salvo);
+    registrar(ctx, 'contrato', salvo.id, i >= 0 ? 'alterou contrato' : 'criou contrato');
+    return salvo;
+  },
+
+  'contratos.salvarAditivo': (ad, ctx) => {
+    const salvo = { ...ad, id: ad.id || novoId('ad') };
+    const i = ctx.banco.aditivos.findIndex((x) => x.id === salvo.id);
+    if (i >= 0) ctx.banco.aditivos[i] = salvo;
+    else ctx.banco.aditivos.push(salvo);
+    registrar(ctx, 'contrato', salvo.contratoId, i >= 0 ? 'alterou aditivo' : 'registrou aditivo');
+    return salvo;
+  },
+  'contratantes.salvar': (k, ctx) => {
+    if (!k.razaoSocial.trim()) throw erro('RAZAO_SOCIAL', 'Informe a razão social ou o nome do contratante.');
+    const salvo = { ...k, id: k.id || novoId('k') };
+    const i = ctx.banco.contratantes.findIndex((x) => x.id === salvo.id);
+    if (i >= 0) ctx.banco.contratantes[i] = salvo;
+    else ctx.banco.contratantes.push(salvo);
+    registrar(ctx, 'contratante', salvo.id, i >= 0 ? 'alterou contratante' : 'cadastrou contratante');
+    return salvo;
+  },
+
+  'contratos.anexar': ({ contratoId, tipo, arquivo }, ctx) => {
+    const c = ctx.banco.contratos.find((x) => x.id === contratoId);
+    if (!c) throw erro('NAO_ENCONTRADO', 'Contrato não encontrado.');
+    if (!arquivo.startsWith('data:application/pdf')) throw erro('ARQUIVO', 'Envie o arquivo em PDF.');
+    ANEXOS_PROTOTIPO.set(`${contratoId}:${tipo}`, arquivo);
+    if (tipo === 'assinado') c.pdfAssinado = true;
+    else c.pdfFatura = true;
+    return c;
+  },
+  'contratos.anexo': ({ contratoId, tipo }) => ANEXOS_PROTOTIPO.get(`${contratoId}:${tipo}`) ?? null,
+  'documentos.gerar': () => {
+    throw erro('MODELO', 'No protótipo os documentos não são gerados: eles saem dos modelos do Google Docs quando o sistema está ligado à conta do setor.');
+  },
+
+  'almox.listar': (_d, ctx) => {
+    const p = ctx.eu!.permissoes;
+    if (!pode(p, 'almoxEstoque', 'ver') && !pode(p, 'almoxSaidas', 'ver')) throw SEM_PERMISSAO();
+    return { itens: ctx.banco.almoxItens, autorizadosExternos: ctx.banco.autorizadosExternos };
+  },
+  'almox.movimentos': ({ cod, ocorrenciaId }, ctx) =>
+    ctx.banco.almoxMovimentos
+      .filter((m) => (!cod || formatarCod(m.cod) === formatarCod(cod)) && (!ocorrenciaId || m.ocorrenciaId === ocorrenciaId))
+      .sort((a, b) => b.quando.localeCompare(a.quando)),
+  'almox.salvarItem': (item, ctx) => {
+    const cod = formatarCod(item.cod);
+    const i = ctx.banco.almoxItens.findIndex((x) => x.cod === cod);
+    const salvo = { ...item, cod, saldo: i >= 0 ? ctx.banco.almoxItens[i].saldo : 0 };
+    if (i >= 0) ctx.banco.almoxItens[i] = salvo;
+    else ctx.banco.almoxItens.push(salvo);
+    registrar(ctx, 'almox', cod, i >= 0 ? 'alterou item do catálogo' : 'cadastrou item');
+    return salvo;
+  },
+  'almox.ajustar': ({ cod, qtd, motivo }, ctx) => {
+    if (!motivo.trim()) throw erro('MOTIVO', 'Informe o motivo do ajuste.');
+    const item = ctx.banco.almoxItens.find((x) => x.cod === formatarCod(cod));
+    if (!item) throw erro('NAO_ENCONTRADO', 'Item não encontrado.');
+    if (item.saldo + qtd < 0) throw erro('ESTOQUE', 'O ajuste deixaria o saldo negativo.');
+    item.saldo += qtd;
+    ctx.banco.almoxMovimentos.push({ id: novoId('m'), quando: ctx.agora, tipo: 'ajuste', cod: item.cod, qtd, valorUnitario: item.valor, motivo });
+    registrar(ctx, 'almox', item.cod, `ajuste de estoque (${qtd > 0 ? '+' : ''}${qtd})`, motivo);
+    return item;
+  },
+  'almox.autorizados': (_d, ctx) => [
+    ...ctx.banco.autorizadosExternos.map((nome) => ({ id: nome, nome, ativo: true })),
+    ...[...AUTORIZADOS_INATIVOS].map((nome) => ({ id: nome, nome, ativo: false })),
+  ],
+  'almox.salvarAutorizado': ({ id, nome, ativo }, ctx) => {
+    const limpo = nome.trim().replace(/\s+/g, ' ');
+    if (!limpo) throw erro('VALIDACAO', 'Informe o nome.');
+    const todos = [...ctx.banco.autorizadosExternos, ...AUTORIZADOS_INATIVOS];
+    if (todos.some((n) => n !== id && n.toLowerCase() === limpo.toLowerCase())) throw erro('VALIDACAO', 'Já existe um autorizado com este nome.');
+    ctx.banco.autorizadosExternos = ctx.banco.autorizadosExternos.filter((n) => n !== id);
+    AUTORIZADOS_INATIVOS.delete(id);
+    if (ativo) ctx.banco.autorizadosExternos.push(limpo);
+    else AUTORIZADOS_INATIVOS.add(limpo);
+    return { id: limpo, nome: limpo, ativo };
+  },
+  'almox.retirar': (d, ctx) => {
+    if (!d.finalidade.trim()) throw erro('FINALIDADE', 'Informe a finalidade da retirada.');
+    if (d.cadastrarExterno && d.retiradoPorExterno && !ctx.banco.autorizadosExternos.includes(d.retiradoPorExterno.trim())) {
+      ctx.banco.autorizadosExternos.push(d.retiradoPorExterno.trim());
+    }
+    const erros = validarRetirada(d.itens, ctx.banco.almoxItens);
+    if (erros.length) throw erro('ESTOQUE', erros.map((e) => `${e.cod}: ${e.erro}`).join('; '));
+    const movs = d.itens.map((i) => {
+      const item = ctx.banco.almoxItens.find((x) => x.cod === formatarCod(i.cod))!;
+      item.saldo -= i.qtd;
+      return {
+        id: novoId('m'), quando: ctx.agora, tipo: 'saida' as const, cod: item.cod, qtd: -i.qtd, valorUnitario: item.valor,
+        retiradoPorPessoaId: d.retiradoPorPessoaId, retiradoPorExterno: d.retiradoPorExterno, eventoId: d.eventoId, finalidade: d.finalidade,
+        ocorrenciaId: d.ocorrenciaId,
+      };
+    });
+    ctx.banco.almoxMovimentos.push(...movs);
+    registrar(ctx, 'almox', movs.map((m) => m.cod).join(','), `registrou retirada de ${movs.length} item(ns)`, d.finalidade);
+    return movs;
+  },
+  'almox.qr': ({ novo }, ctx) => {
+    if (novo) {
+      CHAVE_QR_PROTOTIPO = novoId('qr');
+      registrar(ctx, 'almox', 'qr', 'gerou um QR novo para a porta do almoxarifado (o antigo deixou de valer)');
+    }
+    return { chave: CHAVE_QR_PROTOTIPO };
+  },
+  'retirada.abrir': ({ chave }, ctx) => {
+    if (chave !== CHAVE_QR_PROTOTIPO) throw erro('CHAVE', 'Este QR code não vale mais. Peça o novo ao almoxarifado.');
+    return {
+      itens: ctx.banco.almoxItens
+        .filter((i) => i.status === 'Ativo')
+        .map((i) => ({ cod: i.cod, nome: i.nomeComum || i.nomeAlmox, unidade: i.unidade }))
+        .sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR')),
+    };
+  },
+  'retirada.registrar': ({ chave, nome, itens, finalidade, site }, ctx) => {
+    if (chave !== CHAVE_QR_PROTOTIPO) throw erro('CHAVE', 'Este QR code não vale mais. Peça o novo ao almoxarifado.');
+    if (site) return { registrados: itens.length };
+    const quem = nome.trim().replace(/\s+/g, ' ');
+    if (quem.length < 3) throw erro('VALIDACAO', 'Escreva o seu nome.');
+    if (!finalidade.trim()) throw erro('FINALIDADE', 'Conte para que é a retirada.');
+    const movs = handlers['almox.retirar']({ itens, finalidade, retiradoPorExterno: `${quem} (QR da porta)` }, ctx);
+    const avisar = ctx.banco.pessoas.filter((p) => p.ativo && pode(p.permissoes, 'almoxSaidas', 'editar')).map((p) => p.id);
+    notificar(ctx, avisar, `Retirada pelo QR da porta: ${quem} levou ${movs.length} ${movs.length === 1 ? 'item' : 'itens'} (${finalidade.trim()}).`, '/almox?aba=saida');
+    return { registrados: movs.length };
+  },
+  'almox.pedidos': (_d, ctx) => ctx.banco.pedidos,
+  'almox.criarPedido': ({ itens }, ctx) => {
+    if (!itens.length) throw erro('PEDIDO_VAZIO', 'Inclua ao menos um item no pedido.');
+    const pedido = {
+      id: novoId('PED'), criadoEm: ctx.agora, solicitanteId: ctx.eu!.id, status: 'aberto' as const,
+      itens: itens.map((i) => ({ ...i, cod: formatarCod(i.cod), qtdRecebida: 0 })),
+    };
+    ctx.banco.pedidos.unshift(pedido);
+    registrar(ctx, 'pedido', pedido.id, `registrou pedido com ${itens.length} item(ns)`);
+    return pedido;
+  },
+  'almox.receber': ({ pedidoId, itens }, ctx) => {
+    const pedido = ctx.banco.pedidos.find((p) => p.id === pedidoId);
+    if (!pedido) throw erro('NAO_ENCONTRADO', 'Pedido não encontrado.');
+    for (const r of itens) {
+      if (r.qtd <= 0) continue;
+      const linha = pedido.itens.find((i) => i.cod === formatarCod(r.cod));
+      const item = ctx.banco.almoxItens.find((x) => x.cod === formatarCod(r.cod));
+      if (!linha || !item) continue;
+      linha.qtdRecebida += r.qtd;
+      item.saldo += r.qtd;
+      ctx.banco.almoxMovimentos.push({ id: novoId('m'), quando: ctx.agora, tipo: 'recebimento', cod: item.cod, qtd: r.qtd, valorUnitario: item.valor, pedidoId });
+    }
+    pedido.status = pedido.itens.every((i) => i.qtdRecebida >= i.qtdPedida) ? 'recebido' : 'parcial';
+    registrar(ctx, 'pedido', pedidoId, `registrou recebimento (${pedido.status})`);
+    return pedido;
+  },
+
+  'infra.listar': (_d, ctx) =>
+    ctx.banco.ocorrencias
+      .filter((o) => pode(ctx.eu!.permissoes, 'infraestrutura', 'ver') || o.relatorPessoaId === ctx.eu!.id)
+      .sort((a, b) => b.criadaEm.localeCompare(a.criadaEm)),
+  'infra.relatar': (d, ctx) => {
+    if (!d.titulo.trim()) throw erro('TITULO', 'Conte em poucas palavras o que aconteceu.');
+    if (!d.local) throw erro('LOCAL', 'Informe onde está o problema.');
+    const o = novaOcorrencia(ctx, {
+      ...d, status: 'nova', origem: 'app', relatorNome: ctx.eu!.nome, relatorPessoaId: ctx.eu!.id, criadaEm: ctx.agora,
+      chamadoNumero: '', chamadoLink: '', chamadoAbertoEm: null, resolvidaEm: null,
+    });
+    return o;
+  },
+  'infra.atualizar': (d, ctx) => {
+    const o = ctx.banco.ocorrencias.find((x) => x.id === d.id);
+    if (!o) throw erro('NAO_ENCONTRADO', 'Ocorrência não encontrada.');
+    if (d.chamadoNumero !== undefined) o.chamadoNumero = d.chamadoNumero.trim();
+    if (d.chamadoLink !== undefined) o.chamadoLink = d.chamadoLink.trim();
+    if (d.prioridade) o.prioridade = d.prioridade;
+    if (d.categoria) o.categoria = d.categoria;
+    if (d.local) o.local = d.local;
+    if (d.para) {
+      const problema = validarTransicao(o, d.para, { chamadoNumero: o.chamadoNumero, observacao: d.observacao });
+      if (problema) throw erro('TRANSICAO', problema);
+      o.historico.push({ quando: ctx.agora, quemId: ctx.eu!.id, de: o.status, para: d.para, observacao: d.observacao.trim() });
+      o.status = d.para;
+      if (d.para === 'chamado') o.chamadoAbertoEm = ctx.agora;
+      if (d.para === 'resolvida' || d.para === 'naoProcede') o.resolvidaEm = ctx.agora;
+      if (o.relatorPessoaId) notificar(ctx, [o.relatorPessoaId], `Sua ocorrência #${o.numero} (${o.titulo}) agora está: ${ROTULO_STATUS_OCORRENCIA[d.para]}.`, '/relatar');
+    } else if (d.observacao.trim()) {
+      o.historico.push({ quando: ctx.agora, quemId: ctx.eu!.id, de: null, para: o.status, observacao: d.observacao.trim() });
+    }
+    registrar(ctx, 'ocorrencia', o.id, d.para ? `situação: ${ROTULO_STATUS_OCORRENCIA[d.para]}` : 'atualizou a ocorrência', d.observacao);
+    return o;
+  },
+  'infra.foto': ({ id }, ctx) => ctx.banco.ocorrencias.find((o) => o.id === id)?.foto ?? null,
+  'achados.listar': (_d, ctx) => {
+    const edita = pode(ctx.eu!.permissoes, 'achados', 'editar');
+    return [...ctx.banco.achados]
+      .sort((a, b) => a.achadoEm.localeCompare(b.achadoEm) || a.numero - b.numero)
+      .map((a) => (edita ? { ...a } : { ...a, retiradoPor: '', contatoRetirada: '' }));
+  },
+  'achados.salvar': ({ id, dados, foto }, ctx) => {
+    const d = limparAchado(dados);
+    const problema = erroDoAchado(d, ctx.hoje);
+    if (problema) throw erro('VALIDACAO', problema);
+    const anterior = id ? ctx.banco.achados.find((a) => a.id === id) : undefined;
+    if (id && !anterior) throw erro('NAO_ENCONTRADO', 'Item não encontrado.');
+    const achado: Achado = anterior
+      ? { ...anterior, ...d }
+      : {
+          ...d, id: novoId('ac'), numero: Math.max(0, ...ctx.banco.achados.map((a) => a.numero)) + 1, status: 'guardado', temFoto: false,
+          registradoPorId: ctx.eu!.id, saidaEm: null, retiradoPor: '', contatoRetirada: '', destino: '', dadosApagadosEm: '',
+        };
+    if (foto !== undefined) {
+      if (foto) ctx.banco.fotosAchados[achado.id] = foto;
+      else delete ctx.banco.fotosAchados[achado.id];
+      achado.temFoto = !!foto;
+    }
+    if (anterior) Object.assign(anterior, achado);
+    else ctx.banco.achados.push(achado);
+    registrar(ctx, 'achado', achado.id, anterior ? `editou o achado #${achado.numero}` : `registrou o achado #${achado.numero}: ${achado.descricao}`);
+    return { ...achado };
+  },
+  'achados.foto': ({ id }, ctx) => ctx.banco.fotosAchados[id] ?? null,
+  'achados.situacao': ({ id, status, data, retiradoPor, contatoRetirada, destino }, ctx) => {
+    const a = ctx.banco.achados.find((x) => x.id === id);
+    if (!a) throw erro('NAO_ENCONTRADO', 'Item não encontrado.');
+    const s = { status, data: (data ?? '').trim(), retiradoPor: (retiradoPor ?? '').trim(), contatoRetirada: (contatoRetirada ?? '').trim(), destino: (destino ?? '').trim() };
+    const problema = erroDaSaida(s, a, ctx.hoje);
+    if (problema) throw erro('VALIDACAO', problema);
+    const devolvido = status === 'devolvido';
+    Object.assign(a, {
+      status, saidaEm: status === 'guardado' ? null : s.data, destino: status === 'descartado' ? s.destino : '',
+      retiradoPor: devolvido ? s.retiradoPor : '', contatoRetirada: devolvido ? s.contatoRetirada : '',
+    });
+    registrar(ctx, 'achado', a.id, `${status === 'guardado' ? 'voltou para os guardados' : devolvido ? 'devolveu ao dono' : 'descartou'}: achado #${a.numero}`);
+    return { ...a };
+  },
+  'busca.interpretar': ({ pergunta }, ctx) => {
+    const consulta = interpretarSimulado(pergunta, ctx.hoje);
+    return { consulta, consultas: consulta ? [consulta] : [], ajuda: null, motivo: null };
+  },
+  'cortesias.resumo': ({ eventoIds }) =>
+    eventoIds
+      .map((eventoId) => ({
+        eventoId,
+        destinos: [...CORTESIAS_PROTOTIPO.values()].filter((d) => d.eventoId === eventoId).map((d) => ({ nome: d.nome, quantidade: d.quantidade, lancados: d.pessoas.length })),
+      }))
+      .filter((x) => x.destinos.length),
+  'cortesias.listar': ({ eventoId }, ctx) => {
+    const contratos = ctx.banco.contratos.filter((c) => c.eventoId === eventoId && c.statusContrato !== 'Cancelado');
+    return {
+      destinos: [...CORTESIAS_PROTOTIPO.values()].filter((d) => d.eventoId === eventoId).map((d) => destinoCompleto(ctx, d.id)),
+      totalContrato: contratos.length ? contratos.reduce((n, c) => n + c.cortesiasQtd, 0) : null,
+    };
+  },
+  'cortesias.salvarDestino': ({ id, eventoId, nome, quantidade, pedirMatricula }, ctx) => {
+    if (!nome.trim()) throw erro('VALIDACAO', 'Informe o nome do destino.');
+    if (!(quantidade >= 1 && quantidade <= 2000)) throw erro('VALIDACAO', 'A quantidade deve ser de 1 a 2000.');
+    if (id) {
+      const d = CORTESIAS_PROTOTIPO.get(id)!;
+      if (quantidade < d.pessoas.length) throw erro('VALIDACAO', `Já há ${d.pessoas.length} nomes lançados. Peça para tirar nomes antes de baixar a quantidade.`);
+      Object.assign(d, { nome: nome.trim(), quantidade, pedirMatricula });
+      return destinoCompleto(ctx, id);
+    }
+    const novo = novoId('cort');
+    const token = `cortesia-${novo}-${Math.random().toString(36).slice(2, 12)}`;
+    CORTESIAS_PROTOTIPO.set(novo, { id: novo, eventoId, nome: nome.trim(), quantidade, pedirMatricula, trava: 'auto', atualizadoPeloDestinoEm: '', token, pessoas: [] });
+    return destinoCompleto(ctx, novo);
+  },
+  'cortesias.removerDestino': ({ id }) => {
+    CORTESIAS_PROTOTIPO.delete(id);
+    return null;
+  },
+  'cortesias.novoLink': ({ id }, ctx) => {
+    CORTESIAS_PROTOTIPO.get(id)!.token = `cortesia-${id}-${Math.random().toString(36).slice(2, 12)}`;
+    return destinoCompleto(ctx, id);
+  },
+  'cortesias.travar': ({ id, trava }, ctx) => {
+    CORTESIAS_PROTOTIPO.get(id)!.trava = trava;
+    return destinoCompleto(ctx, id);
+  },
+  'cortesias.salvarPessoas': ({ id, pessoas }, ctx) => {
+    gravarPessoasMock(id, pessoas);
+    return destinoCompleto(ctx, id);
+  },
+  'cortesia.abrir': ({ token }, ctx) => destinoPorToken(ctx, token).publica,
+  'cortesia.salvar': ({ token, pessoas }, ctx) => {
+    const { d } = destinoPorToken(ctx, token);
+    if (d.travada) throw erro('TRAVADA', `O prazo para lançar os nomes terminou. Fale com ${O_SETOR}.`);
+    gravarPessoasMock(d.id, pessoas);
+    CORTESIAS_PROTOTIPO.get(d.id)!.atualizadoPeloDestinoEm = ctx.agora;
+    return destinoPorToken(ctx, token).publica;
+  },
+  'fichas.listar': (_d, ctx) =>
+    [...FICHAS_PROTOTIPO.keys()]
+      .map((eventoId) => {
+        const f = fichaCompleta(ctx, eventoId);
+        const ev = ctx.banco.eventos.find((e) => e.id === eventoId)!;
+        const d = f.dados;
+        return {
+          eventoId, evento: ev.nome, eventoCancelado: ev.status === 'cancelado', datas: sessoesDaFicha(ctx, eventoId).map((s) => s.data),
+          status: f.status, travada: f.travada, prazo: f.prazo, enviadaEm: f.enviadaEm, atualizadoEm: f.atualizadoEm, token: f.token,
+          responsavel: d.responsavel.nome, tipo: d.tipo, publico: d.publico, elenco: d.elenco,
+          poltronas: d.reservarPoltronas ? d.grupos.reduce((n, g) => n + g.lugares.length, 0) : 0,
+          camarins: d.camarinsIndividuais.length + d.camarinsColetivos.length, coffeeBreak: d.coffeeBreak,
+        };
+      })
+      .sort((a, b) => (a.datas[0] ?? '9999').localeCompare(b.datas[0] ?? '9999')),
+  'fichas.obter': ({ eventoId }, ctx) => (FICHAS_PROTOTIPO.has(eventoId) ? fichaCompleta(ctx, eventoId) : null),
+  'fichas.link': ({ eventoId, novo }, ctx) => {
+    const atual = FICHAS_PROTOTIPO.get(eventoId);
+    const token = `ficha-${eventoId}-${Date.now().toString(36)}${Math.random().toString(36).slice(2, 10)}`;
+    if (!atual) {
+      FICHAS_PROTOTIPO.set(eventoId, { eventoId, status: 'rascunho', trava: 'auto', enviadaEm: '', token, dados: fichaVazia(sessoesDaFicha(ctx, eventoId)), atualizadoEm: ctx.agora, agenda: null });
+    } else if (novo) atual.token = token;
+    return fichaCompleta(ctx, eventoId);
+  },
+  'fichas.salvar': ({ eventoId, dados }, ctx) => {
+    const f = FICHAS_PROTOTIPO.get(eventoId);
+    if (!f) throw erro('NAO_ENCONTRADO', 'Gere o link da ficha técnica primeiro.');
+    Object.assign(f, { dados: limparFicha({ ...dados, anexos: f.dados.anexos.filter((a) => dados.anexos.some((x) => x.id === a.id)) }, sessoesDaFicha(ctx, eventoId)), atualizadoEm: ctx.agora });
+    return fichaCompleta(ctx, eventoId);
+  },
+  'fichas.lancarAgenda': ({ eventoId }, ctx) => {
+    const f = fichaCompleta(ctx, eventoId);
+    const itens = itensDaAgenda(f.dados, sessoesDaFicha(ctx, eventoId));
+    if (!itens.length) throw erro('VALIDACAO', 'Preencha a montagem ou a desmontagem na ficha antes de lançar na agenda.');
+    FICHAS_PROTOTIPO.get(eventoId)!.agenda = { lancadoEm: ctx.agora, itens: itens.map((i) => i.chave) };
+    return fichaCompleta(ctx, eventoId);
+  },
+  'fichas.travar': ({ eventoId, trava }, ctx) => {
+    FICHAS_PROTOTIPO.get(eventoId)!.trava = trava;
+    return fichaCompleta(ctx, eventoId);
+  },
+  'fichas.anexo': ({ anexoId }) => ANEXOS_PROTOTIPO.get(anexoId) ?? null,
+  'fichas.panorama': (_d, ctx) =>
+    handlers['fichas.listar'](null, ctx)
+      .filter((f) => f.status === 'enviada' && !f.eventoCancelado)
+      .map(({ token: _token, ...f }) => f),
+  'fichas.panoramaVer': ({ eventoId }, ctx) => {
+    const r = fichaEnviada(ctx, eventoId);
+    if (!r) return null;
+    return {
+      eventoId, enviadaEm: r.f.enviadaEm, dados: dadosParaEquipe(r.f.dados),
+      evento: { nome: r.ev.nome, sessoes: sessoesDaFicha(ctx, eventoId).map((s) => ({ id: s.id, data: s.data, rotulo: s.rotulo ?? '', inicio: s.inicio, fim: s.fim })) },
+    };
+  },
+  'fichas.panoramaAnexo': ({ eventoId, anexoId }, ctx) =>
+    fichaEnviada(ctx, eventoId)?.f.dados.anexos.some((a) => a.id === anexoId) ? (ANEXOS_PROTOTIPO.get(anexoId) ?? null) : null,
+  'ficha.abrir': ({ token }, ctx) => fichaPublica(ctx, token),
+  'ficha.salvar': ({ token, dados, enviar }, ctx) => {
+    const { f, ev } = fichaPorToken(ctx, token);
+    if (f.travada) throw erro('TRAVADA', `O prazo da ficha terminou. Fale com ${O_SETOR} para alterar.`);
+    const sessoes = sessoesDaFicha(ctx, ev.id);
+    const limpa = limparFicha({ ...dados, anexos: f.dados.anexos.filter((a) => dados.anexos.some((x) => x.id === a.id)) }, sessoes);
+    const erros = enviar ? errosDaFicha(limpa, sessoes) : [];
+    if (erros.length) throw erro('FICHA_INCOMPLETA', `Faltam ${erros.length} itens: ${erros.slice(0, 5).map((e) => e.mensagem).join(' ')}`);
+    Object.assign(FICHAS_PROTOTIPO.get(ev.id)!, { dados: limpa, atualizadoEm: ctx.agora, ...(enviar ? { status: 'enviada', enviadaEm: ctx.agora } : {}) });
+    return fichaPublica(ctx, token);
+  },
+  'ficha.anexar': ({ token, nome, arquivo }, ctx) => {
+    const { ev } = fichaPorToken(ctx, token);
+    const f = FICHAS_PROTOTIPO.get(ev.id)!;
+    if (f.dados.anexos.length >= 5) throw erro('ARQUIVO', 'Limite de 5 arquivos por ficha.');
+    const anexo = { id: novoId('anexo'), nome };
+    ANEXOS_PROTOTIPO.set(anexo.id, arquivo);
+    f.dados = { ...f.dados, anexos: [...f.dados.anexos, anexo] };
+    return anexo;
+  },
+  'infra.importarFormulario': (_d, ctx) => {
+    const pendentes = ctx.banco.respostasFormularioInfra;
+    for (const r of pendentes) novaOcorrencia(ctx, r);
+    ctx.banco.respostasFormularioInfra = [];
+    registrar(ctx, 'ocorrencia', 'formulario', `importou ${pendentes.length} resposta(s) do formulário`);
+    return { importadas: pendentes.length };
+  },
+
+  'avisos.listar': (_d, ctx) => {
+    const eu = ctx.eu!;
+    const gestor = ehGestor(eu.permissoes);
+    const editor = pode(eu.permissoes, 'mural', 'editar');
+    return ctx.banco.avisos
+      .filter((a) => editor || !a.validoAte || a.validoAte >= ctx.hoje)
+      .filter(
+        (a) =>
+          editor ||
+          a.publico === 'todos' ||
+          (a.publico === 'gestores' && gestor) ||
+          (a.publico === 'bolsistas' && eu.tipo === 'bolsista') ||
+          (a.publico === 'pessoas' && a.pessoasIds.includes(eu.id)),
+      )
+      .sort((a, b) => Number(b.fixado) - Number(a.fixado) || b.criadoEm.localeCompare(a.criadoEm));
+  },
+  'avisos.salvar': (a, ctx) => {
+    if (!a.titulo.trim()) throw erro('TITULO', 'Informe o título do aviso.');
+    const salvo = { ...a, id: a.id || novoId('a'), autorId: a.autorId || ctx.eu!.id, criadoEm: a.criadoEm || ctx.agora };
+    const i = ctx.banco.avisos.findIndex((x) => x.id === salvo.id);
+    if (i >= 0) ctx.banco.avisos[i] = salvo;
+    else ctx.banco.avisos.unshift(salvo);
+    registrar(ctx, 'aviso', salvo.id, i >= 0 ? 'alterou aviso' : 'publicou aviso');
+    return salvo;
+  },
+  'avisos.confirmarLeitura': ({ avisoId }, ctx) => {
+    const a = ctx.banco.avisos.find((x) => x.id === avisoId);
+    if (a && !a.leituras.includes(ctx.eu!.id)) a.leituras.push(ctx.eu!.id);
+    return null;
+  },
+  'notificacoes.listar': (_d, ctx) => ctx.banco.notificacoes.filter((n) => n.pessoaId === ctx.eu!.id),
+  'notificacoes.marcarLidas': (_d, ctx) => {
+    for (const n of ctx.banco.notificacoes) if (n.pessoaId === ctx.eu!.id) n.lida = true;
+    return null;
+  },
+  'logs.listar': ({ de, ate, quemId, texto, pagina }, ctx) => {
+    const semAcento = (s: string) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+    const palavras = semAcento(texto ?? '').split(/\s+/).filter(Boolean);
+    const todos = ctx.banco.historico
+      .filter((h) => h.quando.slice(0, 10) >= de && h.quando.slice(0, 10) <= ate && (!quemId || h.quemId === quemId))
+      .filter((h) => palavras.every((p) => semAcento(`${h.entidade} ${h.acao} ${h.justificativa}`).includes(p)))
+      .sort((a, b) => b.quando.localeCompare(a.quando));
+    const n = Math.max(1, pagina ?? 1);
+    return { total: todos.length, itens: todos.slice((n - 1) * 100, n * 100) };
+  },
+  'historico.listar': ({ entidade, entidadeId }, ctx) => {
+    if (!ehGestor(ctx.eu!.permissoes)) throw SEM_PERMISSAO();
+    return ctx.banco.historico.filter(
+      (h) => (!entidade || h.entidade === entidade) && (!entidadeId || h.entidadeId.split(',').includes(entidadeId)),
+    );
+  },
+  'config.obter': (_d, ctx) => ctx.banco.config,
+  'config.salvar': (c, ctx) => {
+    ctx.banco.config = c;
+    registrar(ctx, 'config', 'geral', 'alterou configurações');
+    return c;
+  },
+};
+
+function novaOcorrencia(ctx: Contexto, dados: Omit<Ocorrencia, 'id' | 'numero' | 'historico'>): Ocorrencia {
+  const numero = Math.max(0, ...ctx.banco.ocorrencias.map((o) => o.numero)) + 1;
+  const o: Ocorrencia = { ...dados, id: novoId('oc'), numero, historico: [] };
+  ctx.banco.ocorrencias.push(o);
+  const responsaveis = ctx.banco.pessoas.filter((p) => p.ativo && pode(p.permissoes, 'infraestrutura', 'editar')).map((p) => p.id);
+  notificar(ctx, responsaveis, `Nova ocorrência #${numero}: ${o.titulo} (${o.local}).`, `/infra/${o.id}`);
+  return o;
+}
+
+function cancelarSessao(ctx: Contexto, sessaoId: Id, justificativa: string) {
+  const s = ctx.banco.sessoes.find((x) => x.id === sessaoId);
+  if (!s) throw erro('NAO_ENCONTRADO', 'Sessão não encontrada.');
+  s.status = 'cancelada';
+  const afetados: Id[] = [];
+  for (const e of ctx.banco.escalas) {
+    if (e.sessaoId !== sessaoId || e.status === 'cancelado') continue;
+    if (e.loteId && ctx.banco.lotes.some((l) => l.id === e.loteId && l.status !== 'cancelado')) continue;
+    e.status = 'cancelado';
+    afetados.push(e.pessoaId);
+  }
+  notificar(ctx, afetados, `Sessão cancelada: ${nomeSessao(ctx, sessaoId)}. Você não precisa comparecer.`, '/minhas-escalas');
+  registrar(ctx, 'sessao', sessaoId, 'cancelou a sessão', justificativa);
+}
+
+/** Copia profunda simples para que a tela nunca altere o banco por referência. */
+const copiar = <T,>(v: T): T => (v === null || v === undefined ? v : JSON.parse(JSON.stringify(v)));
+
+export function criarMockCliente(opcoes: OpcoesMock = {}): ApiCliente & { restaurar(): void } {
+  const latencia = opcoes.latenciaMs ?? 250;
+  const hoje = opcoes.hoje ?? '2026-10-24';
+  const arm = criarArmazenamento(opcoes.persistir ?? true, hoje);
+  let token: string | null = null;
+
+  return {
+    definirToken(t) {
+      token = t;
+    },
+    restaurar() {
+      arm.restaurar();
+    },
+    async chamar<A extends Acao>(acao: A, dados: Entrada<A>): Promise<Saida<A>> {
+      if (latencia > 0) await new Promise((r) => setTimeout(r, latencia));
+      const eu = token ? arm.banco.pessoas.find((p) => `tok-${p.id}` === token && p.ativo) ?? null : null;
+      const regra = REGRAS[acao];
+      if (regra !== 'publica' && !eu) throw erro('SESSAO', 'Sua sessão expirou. Entre novamente.');
+      const agora = `${hoje}T${new Date().toTimeString().slice(0, 5)}`;
+      const ctx: Contexto = { banco: arm.banco, eu, hoje, agora };
+      if (Array.isArray(regra)) exigir(ctx, regra[0], regra[1]);
+      const resultado = (handlers[acao] as Handler<A>)(copiar(dados), ctx);
+      arm.salvar();
+      return copiar(resultado);
+    },
+  };
+}

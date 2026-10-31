@@ -1,0 +1,124 @@
+.barra-h {
+  display: grid;
+  grid-template-columns: minmax(90px, 160px) 1fr auto;
+  align-items: center;
+  gap: var(--esp-3);
+  font-size: 0.88rem;
+}
+.barra-h + .barra-h {
+  margin-top: 8px;
+}
+.barra-h > div {
+  height: 14px;
+  background: #ececea;
+  border-radius: 999px;
+  overflow: hidden;
+}
+.barra-h > div > span {
+  display: block;
+  height: 100%;
+  background: var(--cor-texto);
+  border-radius: inherit;
+}
+.barra-h:nth-child(odd) > div > span {
+  background: var(--cor-destaque-escuro);
+}
+.leitor {
+  width: 100%;
+  max-width: 360px;
+  border-radius: var(--raio-2);
+  overflow: hidden;
+  background: #000;
+}
+.etiquetas-grade {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 8px;
+}
+.etiqueta-qr {
+  border: 1px dashed #999;
+  padding: 8px;
+  text-align: center;
+  font-size: 9pt;
+  break-inside: avoid;
+}
+.etiqueta-qr img {
+  width: 110px;
+  height: 110px;
+}
+@media print {
+  .etiquetas-grade {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+/* página do QR da porta (celular) */
+.retirada-qr {
+  max-width: 560px;
+}
+.retirada-qr-achados,
+.retirada-qr-escolhidos {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 4px;
+}
+.retirada-qr-achados .cc-botao {
+  width: 100%;
+  justify-content: flex-start;
+}
+.retirada-qr-escolhidos li {
+  display: grid;
+  grid-template-columns: 1fr 80px auto;
+  gap: var(--esp-2);
+  align-items: center;
+}
+
+/* cartaz do QR da porta: uma folha A4 */
+.qr-porta {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: var(--esp-5);
+  text-align: center;
+  background: #fff;
+  color: #232323;
+  border: 1px solid var(--cor-borda);
+  border-radius: var(--raio-2);
+}
+.qr-porta h1 {
+  margin: 0;
+  font-size: 2.4rem;
+}
+.qr-porta-sub {
+  margin: 4px 0 var(--esp-4);
+  font-size: 1.2rem;
+}
+.qr-porta-codigo {
+  width: 120mm;
+  max-width: 100%;
+  height: auto;
+}
+.qr-porta ol {
+  text-align: left;
+  font-size: 1.15rem;
+  max-width: 460px;
+  margin: var(--esp-4) auto;
+}
+.qr-porta-link {
+  font-size: 0.75rem;
+  color: #666;
+  word-break: break-all;
+}
+@media print {
+  .qr-porta {
+    border: none;
+    max-width: none;
+  }
+}
+@media print {
+  body:has(.qr-porta) .cc-pagina-cabecalho,
+  body:has(.qr-porta) .cc-abas {
+    display: none !important;
+  }
+}

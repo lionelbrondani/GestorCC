@@ -1,0 +1,44 @@
+import { DO_SETOR, pode } from '@shared';
+import { useSearchParams } from 'react-router-dom';
+import { useEu } from '../../auth/SessaoContexto';
+import { Abas, Pagina } from '../../componentes';
+import { Autorizados } from './Autorizados';
+import { Estoque } from './Estoque';
+import { Etiquetas } from './Etiquetas';
+import { PainelAlmox } from './PainelAlmox';
+import { QrPorta } from './QrPorta';
+import { Pedidos } from './Pedidos';
+import { Saida } from './Saida';
+import './almox.css';
+
+type Aba = 'estoque' | 'saida' | 'autorizados' | 'pedidos' | 'painel' | 'etiquetas' | 'qr';
+
+export function Almox() {
+  const eu = useEu();
+  const [params, setParams] = useSearchParams();
+  const veEstoque = pode(eu.permissoes, 'almoxEstoque', 'ver');
+  const fazSaida = pode(eu.permissoes, 'almoxSaidas', 'editar');
+  const abas = [
+    veEstoque && { id: 'estoque' as const, rotulo: 'Estoque' },
+    fazSaida && { id: 'saida' as const, rotulo: 'Saída' },
+    fazSaida && { id: 'autorizados' as const, rotulo: 'Quem pode retirar' },
+    veEstoque && { id: 'pedidos' as const, rotulo: 'Pedidos' },
+    veEstoque && { id: 'painel' as const, rotulo: 'Painel' },
+    veEstoque && { id: 'etiquetas' as const, rotulo: 'Etiquetas QR' },
+    fazSaida && { id: 'qr' as const, rotulo: 'QR da porta' },
+  ].filter((a): a is { id: Aba; rotulo: string } => !!a);
+  const aba = (abas.find((a) => a.id === params.get('aba'))?.id ?? abas[0]?.id) as Aba;
+
+  return (
+    <Pagina titulo="Almoxarifado" subtitulo={`Estoque, retiradas e pedidos ${DO_SETOR}.`}>
+      <Abas abas={abas} ativa={aba} aoMudar={(a) => setParams({ aba: a }, { replace: true })} />
+      {aba === 'estoque' && <Estoque />}
+      {aba === 'saida' && <Saida />}
+      {aba === 'autorizados' && <Autorizados />}
+      {aba === 'pedidos' && <Pedidos />}
+      {aba === 'painel' && <PainelAlmox />}
+      {aba === 'etiquetas' && <Etiquetas />}
+      {aba === 'qr' && <QrPorta />}
+    </Pagina>
+  );
+}

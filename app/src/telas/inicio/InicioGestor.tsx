@@ -1,0 +1,202 @@
+import { diaDaSemanaCurto, ehGestor, formatarReais, pode, somarDias, valorTotalContrato } from '@shared';
+import {
+  CalendarPlus,
+  ChevronRight,
+  ClipboardCheck,
+  ClipboardList,
+  FileSignature,
+  FileText,
+  Package,
+  PackageSearch,
+  Send,
+  TriangleAlert,
+  Users,
+  Wallet,
+  Wrench,
+  type LucideIcon,
+} from 'lucide-react';
+import { useState } from 'react';
+import { Link } from 'react-router-dom';
+import { usePeriodo, usePessoas } from '../../api/consultas';
+import { useConsulta } from '../../api/hooks';
+import { useEu } from '../../auth/SessaoContexto';
+import { Botao, Carregando, Cartao, Etiqueta, Pagina } from '../../componentes';
+import { hoje, janela } from '../../util/hoje';
+import { chegadaTexto, dataLonga, tituloSessao } from '../../util/sessoes';
+import { CartaoAviso } from '../pessoal/Avisos';
+import { InicioBolsista } from './InicioBolsista';
+import { calcularPendencias, prazoRelativo, type TipoPendencia } from './pendencias';
+import { InicioSimples } from './InicioSimples';
+import { recursoAtivo } from '../../recursos';
+import { itensVisiveis } from '../../layout/menu';
+import './inicio.css';
+
+const ICONE_PENDENCIA: Record<TipoPendencia, LucideIcon> = {
+  presenca: ClipboardCheck,
+  rodada: ClipboardList,
+  vagas: Users,
+  publicar: Send,
+  apoio: Wrench,
+  ficha: FileText,
+  pagamento: Wallet,
+  estoque: Package,
+  contrato: FileSignature,
+  infra: TriangleAlert,
+  pedido: CalendarPlus,
+  achados: PackageSearch,
+};
+
+/** Quantas pendências aparecem antes do "ver todas": o mais urgente fica à vista sem afogar a tela. */
+const PENDENCIAS_A_VISTA = 8;
+
+export function Inicio() {
+  const eu = useEu();
+  if (!recursoAtivo('eventos')) return <InicioSimples />;
+  return ehGestor(eu.permissoes) ? <InicioGestor /> : <InicioBolsista />;
+}
+
+export function InicioGestor() {
+  const eu = useEu();
+  const p = eu.permissoes;
+  const { de, ate } = janela(60, 90);
+  const periodo = usePeriodo(de, ate);
+  // só consulta áreas ligadas nesta fase (VITE_RECURSOS); as outras ainda respondem NAO_DISPONIVEL
+  const comEscalas = recursoAtivo('escalas');
+  const escalas = useConsulta('escalas.listar', { de, ate }, { habilitada: comEscalas });
+  const rodadas = useConsulta('rodadas.listar', null, { habilitada: comEscalas });
+  const pessoas = usePessoas();
+  const idsRodadas = (rodadas.data ?? []).filter((r) => r.status === 'aberta').flatMap((r) => r.sessaoIds);
+  const disp = useConsulta('disponibilidades.listar', { sessaoIds: idsRodadas }, { habilitada: comEscalas && !!rodadas.data });
+  const almox = useConsulta('almox.listar', null, { habilitada: recursoAtivo('almoxEstoque') && pode(p, 'almoxEstoque', 'ver') });
+  const contratos = useConsulta('contratos.listar', null, { habilitada: recursoAtivo('contratos') && pode(p, 'contratos', 'ver') });
+  const avisos = useConsulta('avisos.listar', null);
+  const ocorrencias = useConsulta('infra.listar', null, { habilitada: recursoAtivo('infraestrutura') && pode(p, 'infraestrutura', 'ver') });
+  const fichas = useConsulta('fichas.listar', null, { habilitada: pode(p, 'eventos', 'editar') });
+  const lotes = useConsulta('lotes.listar', null, { habilitada: recursoAtivo('pagamentos') && pode(p, 'pagamentos', 'editar') });
+  const pedidos = useConsulta('pedidos.listar', null, { habilitada: pode(p, 'eventos', 'editar') });
+  const comAchados = recursoAtivo('achados') && pode(p, 'achados', 'editar');
+  const achados = useConsulta('achados.listar', null, { habilitada: comAchados });
+  const config = useConsulta('config.obter', null, { habilitada: comAchados });
+  const [todas, setTodas] = useState(false);
+
+  if (periodo.isLoading || escalas.isLoading) return <Carregando />;
+
+  const h = hoje();
+  const fimSemana = somarDias(h, 6);
+  const ativas = periodo.sessoes.filter((s) => s.status === 'ativa').sort((a, b) => a.data.localeCompare(b.data) || (a.chegada ?? '').localeCompare(b.chegada ?? ''));
+  const deHoje = ativas.filter((s) => s.data === h);
+  const daSemana = ativas.filter((s) => s.data > h && s.data <= fimSemana);
+  const pendencias = calcularPendencias({
+    sessoes: periodo.sessoes, escalas: escalas.data ?? [], eventos: periodo.eventos, rodadas: rodadas.data ?? [],
+    disponibilidades: disp.data ?? [], pessoas: pessoas.lista, itens: almox.data?.itens ?? [], contratos: contratos.data?.contratos ?? [],
+    ocorrencias: ocorrencias.data ?? [], fichas: fichas.data, pedidos: pedidos.data, lotes: lotes.data?.lotes, hoje: h, permissoes: p,
+    achados: achados.data, prazoAchados: config.data?.diasAchados,
+  });
+  const urgentes = pendencias.filter((pd) => pd.quando && pd.quando <= h).length;
+  const ano = h.slice(0, 4);
+  const doAno = (contratos.data?.contratos ?? []).filter((c) => c.numero.endsWith(ano) && c.statusContrato !== 'Cancelado');
+  const contratado = doAno.reduce((acc, c) => acc + valorTotalContrato(c, contratos.data?.aditivos ?? []), 0);
+  const pago = doAno.filter((c) => c.statusFatura === 'Paga').reduce((acc, c) => acc + valorTotalContrato(c, contratos.data?.aditivos ?? []), 0);
+  const escaladosNa = (sessaoId: string) => (escalas.data ?? []).filter((e) => e.sessaoId === sessaoId && e.papel === 'bolsista' && ['publicado', 'rascunho', 'realizado'].includes(e.status)).length;
+
+  const ListaSessoes = ({ lista, vazio }: { lista: typeof ativas; vazio: string }) =>
+    lista.length === 0 ? (
+      <p className="texto-3 pequeno">{vazio}</p>
+    ) : (
+      <ul className="inicio-lista">
+        {lista.map((s) => (
+          <li key={s.id}>
+            <Link to={`/agenda/${s.eventoId}`}>
+              <span className="inicio-data" aria-hidden>
+                <b>{s.data.slice(8, 10)}</b>
+                <small>{diaDaSemanaCurto(s.data)}</small>
+              </span>
+              <div className="inicio-sessao">
+                <strong>{tituloSessao(periodo.evento.get(s.eventoId), s)}</strong>
+                <div className="pequeno texto-2">
+                  {dataLonga(s.data)} · chegada {chegadaTexto(s)}
+                </div>
+              </div>
+              <Etiqueta tom={escaladosNa(s.id) >= s.vagasBolsistas ? 'sucesso' : 'aviso'}>
+                {escaladosNa(s.id)}/{s.vagasBolsistas}
+              </Etiqueta>
+            </Link>
+          </li>
+        ))}
+      </ul>
+    );
+
+  return (
+    <Pagina titulo={`Bom trabalho, ${eu.nome.split(' ')[0]}!`} subtitulo={`Hoje é ${dataLonga(h)}.`}>
+      <nav className="inicio-atalhos" aria-label="Atalhos">
+        {itensVisiveis(eu).gestao.slice(0, 8).map((i, k) => (
+          <Link key={i.rota} to={i.rota} className="inicio-atalho" data-cor={k % 6}>
+            <span className="inicio-atalho-icone" aria-hidden>
+              <i.icone size={22} />
+            </span>
+            <span>{i.rotulo}</span>
+          </Link>
+        ))}
+      </nav>
+      <Cartao titulo={`O que precisa de você (${pendencias.length})`} destaque={urgentes > 0}>
+        {pendencias.length === 0 ? (
+          <p className="texto-3 pequeno">Tudo em dia. 🎉</p>
+        ) : (
+          <>
+            <ul className="inicio-lista inicio-pendencias">
+              {pendencias.slice(0, todas ? undefined : PENDENCIAS_A_VISTA).map((pd, i) => {
+                const Icone = ICONE_PENDENCIA[pd.tipo];
+                const prazo = pd.quando ? prazoRelativo(pd.quando, h) : null;
+                return (
+                  <li key={i}>
+                    <Link to={pd.link}>
+                      <span className="linha inicio-pendencia">
+                        <Icone size={18} aria-hidden className="inicio-icone-pendencia" />
+                        {pd.texto}
+                      </span>
+                      <span className="linha inicio-pendencia-prazo">
+                        {prazo && <Etiqueta tom={prazo.tom ?? 'neutro'}>{prazo.texto}</Etiqueta>}
+                        <ChevronRight size={16} aria-hidden />
+                      </span>
+                    </Link>
+                  </li>
+                );
+              })}
+            </ul>
+            {pendencias.length > PENDENCIAS_A_VISTA && (
+              <Botao variante="fantasma" tamanho="pequeno" onClick={() => setTodas(!todas)}>
+                {todas ? 'Mostrar só as mais urgentes' : `Ver todas as ${pendencias.length}`}
+              </Botao>
+            )}
+          </>
+        )}
+      </Cartao>
+
+      <div className="grade-2">
+        <Cartao titulo="Hoje" destaque={deHoje.length > 0}>
+          <ListaSessoes lista={deHoje} vazio="Nenhum evento hoje." />
+        </Cartao>
+        <Cartao titulo="Próximos 7 dias">
+          <ListaSessoes lista={daSemana} vazio="Nada marcado para a semana." />
+        </Cartao>
+      </div>
+
+      {contratos.data && (
+        <div className="grade-cartoes">
+          <Cartao>
+            <div className="cc-rotulo-numero">Contratado em {ano}</div>
+            <div className="cc-numero">{formatarReais(contratado)}</div>
+          </Cartao>
+          <Cartao>
+            <div className="cc-rotulo-numero">Faturas pagas</div>
+            <div className="cc-numero">{formatarReais(pago)}</div>
+          </Cartao>
+        </div>
+      )}
+
+      {(avisos.data ?? []).filter((a) => a.fixado).map((a) => (
+        <CartaoAviso key={a.id} aviso={a} compacto />
+      ))}
+    </Pagina>
+  );
+}

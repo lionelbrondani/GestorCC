@@ -1,0 +1,74 @@
+.sobre {
+  display: grid;
+  gap: var(--esp-3);
+  line-height: 1.55;
+}
+.sobre p {
+  margin: 0;
+}
+.sobre-marca {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: var(--esp-3);
+  border-bottom: 3px solid var(--cor-destaque);
+}
+.sobre-marca img {
+  height: 44px;
+  width: auto;
+}
+.sobre-cartoes {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: var(--esp-2);
+}
+.sobre-cartoes li {
+  display: flex;
+  gap: var(--esp-2);
+  align-items: flex-start;
+  padding: var(--esp-3);
+  border-radius: var(--raio-2);
+  background: var(--cor-destaque-suave);
+}
+.sobre-cartoes li:nth-child(2) {
+  background: var(--cor-info-suave);
+}
+.sobre-cartoes span {
+  display: grid;
+}
+.sobre-cartoes small {
+  color: var(--cor-texto-2);
+}
+.sobre-email {
+  font-size: 1.05rem;
+  text-align: center;
+  padding: var(--esp-3);
+  border-radius: var(--raio-2);
+  border: 2px dashed var(--cor-borda-forte);
+}
+.sobre-email a {
+  font-weight: 700;
+  word-break: break-all;
+}
+.sobre-rodape {
+  text-align: center;
+  font-size: 13px;
+  color: var(--cor-texto-3);
+}
+.sobre-rodape svg {
+  color: var(--cor-erro);
+  vertical-align: -2px;
+}
+.cc-credito button,
+.login-credito button {
+  border: none;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+  padding: 0;
+}

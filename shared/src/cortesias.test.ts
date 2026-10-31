@@ -1,0 +1,43 @@
+import { describe, expect, it } from 'vitest';
+import { errosCortesias, limparPessoas, prazoCortesias } from './cortesias';
+
+describe('cortesias: lista de quem recebe', () => {
+  it('limpa: corta espaços e textos longos, descarta linhas vazias e o que passa da quantidade', () => {
+    const bruto = [{ nome: ' Ana Souza ', matricula: ' 202600001 ' }, { nome: '', matricula: '' }, { nome: 'x'.repeat(200), matricula: '1' }, { nome: 'Sobra', matricula: '2' }, 'lixo'];
+    expect(limparPessoas(bruto, 2)).toEqual([
+      { nome: 'Ana Souza', matricula: '202600001' },
+      { nome: 'x'.repeat(120), matricula: '1' },
+    ]);
+    expect(limparPessoas(null, 5)).toEqual([]);
+  });
+
+  it('cada pessoa precisa de nome; a matrícula só quando o destino pede', () => {
+    const pessoas = [{ nome: 'Ana', matricula: '' }, { nome: '', matricula: '123' }];
+    expect(errosCortesias(pessoas, true)).toEqual([
+      { indice: 0, campo: 'matricula', mensagem: 'Informe o CPF ou a matrícula.' },
+      { indice: 1, campo: 'nome', mensagem: 'Informe o nome.' },
+    ]);
+    expect(errosCortesias(pessoas, false)).toEqual([{ indice: 1, campo: 'nome', mensagem: 'Informe o nome.' }]);
+  });
+
+  it('aceita CPF no lugar da matrícula: 11 dígitos precisam ser um CPF válido, com ou sem pontos', () => {
+    expect(errosCortesias([{ nome: 'Ana', matricula: '529.982.247-25' }, { nome: 'Bia', matricula: '202600001' }], true)).toEqual([]);
+    expect(errosCortesias([{ nome: 'Ana', matricula: '529.982.247-26' }], true)).toEqual([{ indice: 0, campo: 'matricula', mensagem: 'CPF inválido: confira os números.' }]);
+    expect(errosCortesias([{ nome: 'Ana', matricula: '52998224725' }, { nome: 'Ana S.', matricula: '529.982.247-25' }], true)).toEqual([
+      { indice: 1, campo: 'matricula', mensagem: 'Este CPF ou matrícula já está na lista.' },
+    ]);
+  });
+
+  it('a mesma matrícula não recebe duas vezes', () => {
+    expect(errosCortesias([{ nome: 'Ana', matricula: '123' }, { nome: 'Bia', matricula: '124' }], true)).toEqual([]);
+    expect(errosCortesias([{ nome: 'Ana', matricula: '123' }, { nome: 'Ana S.', matricula: '0123 ' }], true)).toHaveLength(1);
+    expect(errosCortesias([{ nome: 'Ana', matricula: '123' }, { nome: 'Ana S.', matricula: '123' }], true)).toEqual([
+      { indice: 1, campo: 'matricula', mensagem: 'Este CPF ou matrícula já está na lista.' },
+    ]);
+  });
+
+  it('o prazo é o dia anterior à primeira sessão', () => {
+    expect(prazoCortesias(['2026-12-13', '2026-12-12'])).toBe('2026-12-11');
+    expect(prazoCortesias([])).toBe('');
+  });
+});

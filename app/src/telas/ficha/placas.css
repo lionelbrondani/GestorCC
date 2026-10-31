@@ -1,0 +1,96 @@
+/*
+ * Placa do camarim no modelo do setor (PDF de referência): folha A4 em pé, sem margem; a placa ocupa 95,8 × 269,8 mm,
+ * a 41,9 mm da esquerda e 9,7 mm do topo. O fundo (arte do setor e faixa) é a imagem do modelo,
+ * cortada na borda direita da faixa; o nome vai na faixa, de baixo para cima.
+ */
+.placas-nomes {
+  display: grid;
+  gap: var(--esp-2);
+  max-width: 520px;
+  margin-bottom: var(--esp-4);
+}
+.placas-nomes .cc-entrada {
+  flex: 1;
+}
+.placas-previa {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--esp-3);
+}
+/* na tela, a folha aparece reduzida; as medidas de dentro são as reais */
+.placa-moldura {
+  width: calc(210mm * 0.3);
+  height: calc(297mm * 0.3);
+  overflow: hidden;
+  background: #fff;
+  box-shadow: var(--sombra-2);
+}
+.placa-folha {
+  position: relative;
+  width: 210mm;
+  height: 297mm;
+  background: #fff;
+  transform: scale(0.3);
+  transform-origin: top left;
+}
+.placa {
+  position: absolute;
+  left: 41.87mm;
+  top: 9.74mm;
+  width: 95.8mm;
+  height: 269.83mm;
+  overflow: hidden;
+  background: url('/placas/camarim.jpg') 0 0 / 136.82mm 269.83mm no-repeat;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+.placa-faixa {
+  position: absolute;
+  left: 55.74mm;
+  top: 59.73mm;
+  width: 40.06mm;
+  height: 210.1mm;
+}
+.placa-nome {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 191.7mm;
+  height: 40.06mm;
+  transform: translate(-50%, -50%) rotate(-90deg);
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+  white-space: nowrap;
+  color: #fff;
+  font-family: Arial, Helvetica, sans-serif;
+  font-weight: 700;
+  line-height: 1;
+}
+
+@page placa {
+  size: A4 portrait;
+  margin: 0;
+}
+@media print {
+  .placas .cc-pagina-cabecalho {
+    display: none;
+  }
+  .placas-previa {
+    display: block;
+  }
+  .placa-moldura {
+    width: auto;
+    height: auto;
+    overflow: visible;
+    box-shadow: none;
+  }
+  .placa-folha {
+    page: placa;
+    transform: none;
+    break-after: page;
+  }
+  .placa-moldura:last-child .placa-folha {
+    break-after: auto;
+  }
+}

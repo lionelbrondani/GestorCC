@@ -1,0 +1,86 @@
+import { pode, SETOR, type Modulo, type Pessoa } from '@shared';
+import { recursoAtivo, type Recurso } from '../recursos';
+import {
+  Banknote,
+  BarChart3,
+  Bell,
+  BookOpen,
+  CalendarCheck,
+  CalendarPlus,
+  CalendarDays,
+  ClipboardCheck,
+  ClipboardList,
+  FileSignature,
+  FileText,
+  Home,
+  Megaphone,
+  Package,
+  PackageSearch,
+  PiggyBank,
+  ScrollText,
+  Settings,
+  UserRound,
+  Users,
+  Wallet,
+  Wrench,
+  TriangleAlert,
+  type LucideIcon,
+} from 'lucide-react';
+
+export interface ItemMenu {
+  rota: string;
+  rotulo: string;
+  icone: LucideIcon;
+  modulo?: Modulo;
+  /** Nível mínimo no módulo (padrão: ver). */
+  nivel?: 'ver' | 'editar';
+  /** Área pessoal que só aparece quando o recurso está ligado. */
+  recurso?: Recurso;
+}
+
+export const ITENS_GESTAO: ItemMenu[] = [
+  { rota: '/agenda', rotulo: 'Agenda', icone: CalendarDays, modulo: 'eventos' },
+  { rota: '/fichas', rotulo: 'Fichas técnicas', icone: ClipboardCheck, modulo: 'eventos', nivel: 'editar' },
+  { rota: '/pedidos', rotulo: 'Pedidos de data', icone: CalendarPlus, modulo: 'eventos', nivel: 'editar' },
+  { rota: '/escalas', rotulo: 'Escalas', icone: ClipboardList, modulo: 'escalas' },
+  { rota: '/pagamentos', rotulo: 'Pagamentos', icone: Banknote, modulo: 'pagamentos' },
+  { rota: '/relatorio-mensal', rotulo: 'Relatório mensal', icone: BarChart3, modulo: 'escalas', nivel: 'editar' },
+  { rota: '/orcamento', rotulo: 'Execução orçamentária', icone: PiggyBank, modulo: 'pagamentos', nivel: 'editar' },
+  { rota: '/contratos', rotulo: 'Contratos', icone: FileSignature, modulo: 'contratos' },
+  { rota: '/almox', rotulo: 'Almoxarifado', icone: Package, modulo: 'almoxEstoque' },
+  { rota: '/infra', rotulo: 'Infraestrutura', icone: Wrench, modulo: 'infraestrutura' },
+  { rota: '/achados', rotulo: 'Achados e perdidos', icone: PackageSearch, modulo: 'achados' },
+  { rota: '/mural', rotulo: 'Mural', icone: Megaphone, modulo: 'mural' },
+  { rota: '/pessoas', rotulo: 'Pessoas', icone: Users, modulo: 'pessoas' },
+  { rota: '/formularios', rotulo: 'Formulários', icone: FileText, modulo: 'formularios' },
+  { rota: '/configuracoes', rotulo: 'Configurações', icone: Settings, modulo: 'configuracoes' },
+  { rota: '/logs', rotulo: 'Logs do sistema', icone: ScrollText, modulo: 'configuracoes', nivel: 'editar' },
+];
+
+/** Crédito de quem desenvolveu o sistema (login e rodapé do menu). */
+export const CREDITO = SETOR.credito.curto;
+
+export const ITEM_INICIO: ItemMenu = { rota: '/', rotulo: 'Início', icone: Home };
+
+export const ITENS_PESSOAIS: ItemMenu[] = [
+  { rota: '/minhas-escalas', rotulo: 'Minhas escalas', icone: CalendarCheck, recurso: 'escalasPessoais' },
+  { rota: '/disponibilidade', rotulo: 'Disponibilidade', icone: ClipboardList, recurso: 'escalasPessoais' },
+  { rota: '/fichas-eventos', rotulo: 'Fichas dos eventos', icone: ClipboardCheck, recurso: 'eventos' },
+  { rota: '/ganhos', rotulo: 'Ganhos', icone: Wallet, recurso: 'pagamentos' },
+  { rota: '/avisos', rotulo: 'Avisos', icone: Bell },
+  { rota: '/relatar', rotulo: 'Relatar problema', icone: TriangleAlert, recurso: 'relatar' },
+  { rota: '/perfil', rotulo: 'Perfil', icone: UserRound },
+  { rota: '/manual', rotulo: 'Manual', icone: BookOpen },
+];
+
+export function itensVisiveis(p: Pessoa): { gestao: ItemMenu[]; pessoais: ItemMenu[] } {
+  const gestao = ITENS_GESTAO.filter((i) => {
+    if (!i.modulo) return true;
+    if (!recursoAtivo(i.modulo) && !(i.modulo === 'almoxEstoque' && recursoAtivo('almoxSaidas'))) return false;
+    if (i.modulo === 'almoxEstoque') return pode(p.permissoes, 'almoxEstoque', 'ver') || pode(p.permissoes, 'almoxSaidas', 'ver');
+    if (i.modulo === 'mural') return pode(p.permissoes, 'mural', 'editar');
+    return pode(p.permissoes, i.modulo, i.nivel ?? 'ver');
+  });
+  const pessoais = ITENS_PESSOAIS.filter((i) => (i.rota !== '/ganhos' || p.tipo === 'bolsista') && (!i.recurso || recursoAtivo(i.recurso)));
+  return { gestao, pessoais };
+}

@@ -1,0 +1,45 @@
+import { diaDaSemana, formatarData, mesExtenso, NO_SETOR_COMPLETO, SETOR, tituloComAtividade, type Evento, type Pessoa, type Sessao } from '@shared';
+
+export function tituloSessao(evento: Evento | undefined, sessao: Sessao): string {
+  return tituloComAtividade(evento?.nome ?? 'Evento', sessao);
+}
+
+export function dataLonga(d: string): string {
+  return `${formatarData(d)} (${diaDaSemana(d)})`;
+}
+
+export function horarioTexto(s: Sessao): string {
+  if (s.horarioADefinir || !s.chegada) return 'Horário a definir';
+  return `Chegada ${s.chegada}${s.inicio ? ` · início ${s.inicio}` : ''}${s.fim ? ` · fim ${s.fim}` : ''}`;
+}
+
+/** '2026-10-02' → 'OUT/26' (para selos de data). */
+export function mesCurto(d: string): string {
+  return `${mesExtenso(Number(d.slice(5, 7))).slice(0, 3)}/${d.slice(2, 4)}`;
+}
+
+export function chegadaTexto(s: Sessao): string {
+  return s.horarioADefinir || !s.chegada ? 'a definir' : s.chegada;
+}
+
+function compacto(data: string, hora: string): string {
+  return `${data.replace(/-/g, '')}T${hora.replace(':', '')}00`;
+}
+
+export function linkGoogleAgenda(evento: Evento | undefined, s: Sessao): string {
+  const inicio = s.chegada ?? s.inicio ?? '08:00';
+  const fim = s.fim ?? s.inicio ?? inicio;
+  const params = new URLSearchParams({
+    action: 'TEMPLATE',
+    text: `${tituloSessao(evento, s)} (escala)`,
+    dates: `${compacto(s.data, inicio)}/${compacto(s.data, fim)}`,
+    ctz: 'America/Sao_Paulo',
+    details: `Escala ${NO_SETOR_COMPLETO}. Chegada: ${chegadaTexto(s)}.`,
+    location: SETOR.local,
+  });
+  return `https://calendar.google.com/calendar/render?${params.toString()}`;
+}
+
+export function nomesOrdenados(pessoas: Pessoa[]): Pessoa[] {
+  return [...pessoas].sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR', { sensitivity: 'base' }));
+}

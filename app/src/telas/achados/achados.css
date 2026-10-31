@@ -1,0 +1,80 @@
+.achados-busca {
+  max-width: 360px;
+  margin: var(--esp-2) 0;
+}
+.achados-lista {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--esp-2);
+}
+.achados-item {
+  display: flex;
+  gap: var(--esp-3);
+  align-items: flex-start;
+  width: 100%;
+  padding: var(--esp-3);
+  text-align: left;
+  font: inherit;
+  color: inherit;
+  background: var(--cor-superficie);
+  border: 1px solid var(--cor-borda);
+  border-radius: var(--raio-2);
+  cursor: pointer;
+}
+.achados-item:hover {
+  border-color: var(--cor-borda-forte);
+}
+/* sombra, e não borda, para o texto não sair do alinhamento dos outros itens */
+.achados-item[data-vencido='true'] {
+  box-shadow: inset 4px 0 0 var(--cor-erro);
+}
+.achados-icone {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--cor-superficie-2);
+  color: var(--cor-texto-2);
+}
+.achados-texto {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.achados-item[data-vencido='true'] .achados-prazo {
+  color: var(--cor-erro);
+  font-weight: 600;
+}
+.achados-foto {
+  align-self: center;
+  max-width: 100%;
+  max-height: 50vh;
+  object-fit: contain;
+  border-radius: var(--raio-2);
+}
+.achados-miniatura {
+  height: 56px;
+  border-radius: 6px;
+}
+.achados-dados {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 4px var(--esp-3);
+  margin: 0;
+}
+.achados-dados dt {
+  color: var(--cor-texto-2);
+  font-size: 0.85rem;
+}
+.achados-dados dd {
+  margin: 0;
+}
+.achados-saida {
+  padding-top: var(--esp-3);
+  border-top: 1px solid var(--cor-borda);
+}

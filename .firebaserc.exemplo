@@ -1,0 +1,13 @@
+{
+  "projects": {
+    "default": "COLE_AQUI_O_ID_DO_PROJETO_FIREBASE"
+  },
+  "targets": {
+    "COLE_AQUI_O_ID_DO_PROJETO_FIREBASE": {
+      "hosting": {
+        "teste": ["COLE_AQUI_O_NOME_DO_SITE_DE_TESTE"],
+        "producao": ["COLE_AQUI_O_NOME_DO_SITE_DE_PRODUCAO"]
+      }
+    }
+  }
+}
